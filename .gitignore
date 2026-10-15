@@ -1,0 +1,21 @@
+# Environment variables - never commit these
+.env
+
+# Virtual environment
+.venv
+
+# Python cache files
+__pycache__/
+*.pyc
+*.pyo
+
+# Jupyter notebook checkpoints
+.ipynb_checkpoints/
+
+
+# VS Code settings
+.vscode/
+
+# Windows files
+Thumbs.db
+desktop.ini

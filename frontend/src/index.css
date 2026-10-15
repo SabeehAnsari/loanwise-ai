@@ -1,0 +1,135 @@
+@import "tailwindcss";
+
+:root {
+  --bg: #F8F9FC;
+  --surface: #FFFFFF;
+  --navy: #0A2540;
+  --navy-light: #1a3a5c;
+  --accent: #0070F3;
+  --accent-light: #E8F1FF;
+  --success: #00A878;
+  --success-light: #E6F7F3;
+  --danger: #E63946;
+  --danger-light: #FDECEA;
+  --warning: #F4A261;
+  --warning-light: #FEF3E8;
+  --text-primary: #0A2540;
+  --text-secondary: #4A5568;
+  --text-muted: #8896A4;
+  --border: #E2E8F0;
+  --shadow-sm: 0 1px 3px rgba(10,37,64,0.08), 0 1px 2px rgba(10,37,64,0.04);
+  --shadow-md: 0 4px 16px rgba(10,37,64,0.10), 0 2px 4px rgba(10,37,64,0.06);
+  --shadow-lg: 0 8px 32px rgba(10,37,64,0.12), 0 4px 8px rgba(10,37,64,0.08);
+}
+
+* { box-sizing: border-box; }
+
+body {
+  background-color: var(--bg);
+  color: var(--text-primary);
+  font-family: 'DM Sans', sans-serif;
+  -webkit-font-smoothing: antialiased;
+}
+
+h1, h2, h3 {
+  font-family: 'Playfair Display', serif;
+}
+
+.card {
+  background: var(--surface);
+  border-radius: 12px;
+  box-shadow: var(--shadow-md);
+  border: 1px solid var(--border);
+}
+
+.card-accent-blue { border-top: 3px solid var(--accent); }
+.card-accent-green { border-top: 3px solid var(--success); }
+.card-accent-red { border-top: 3px solid var(--danger); }
+.card-accent-navy { border-top: 3px solid var(--navy); }
+.card-accent-warning { border-top: 3px solid var(--warning); }
+
+.btn-primary {
+  background: var(--navy);
+  color: white;
+  font-family: 'DM Sans', sans-serif;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+  transition: all 0.2s ease;
+}
+
+.btn-primary:hover {
+  background: var(--navy-light);
+  box-shadow: var(--shadow-md);
+  transform: translateY(-1px);
+}
+
+.btn-primary:disabled {
+  background: #CBD5E0;
+  transform: none;
+  box-shadow: none;
+  cursor: not-allowed;
+}
+
+.input-field {
+  width: 100%;
+  background: var(--surface);
+  border: 1.5px solid var(--border);
+  color: var(--text-primary);
+  border-radius: 8px;
+  padding: 10px 14px;
+  font-size: 14px;
+  font-family: 'DM Sans', sans-serif;
+  transition: border-color 0.2s ease, box-shadow 0.2s ease;
+  outline: none;
+}
+
+.input-field:focus {
+  border-color: var(--accent);
+  box-shadow: 0 0 0 3px rgba(0,112,243,0.12);
+}
+
+.input-field.error {
+  border-color: var(--danger);
+  box-shadow: 0 0 0 3px rgba(230,57,70,0.10);
+}
+
+.label {
+  display: block;
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--text-secondary);
+  margin-bottom: 6px;
+}
+
+.fade-in {
+  animation: fadeIn 0.4s ease forwards;
+}
+
+.slide-up {
+  animation: slideUp 0.5s ease forwards;
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+@keyframes slideUp {
+  from { opacity: 0; transform: translateY(16px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.progress-bar {
+  height: 6px;
+  border-radius: 99px;
+  background: var(--border);
+  overflow: hidden;
+}
+
+.progress-fill {
+  height: 100%;
+  border-radius: 99px;
+  transition: width 0.8s cubic-bezier(0.4, 0, 0.2, 1);
+}
