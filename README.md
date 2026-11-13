@@ -37,7 +37,7 @@ A user signs in, submits a loan application, and the backend runs it through a m
 - **LLM email generation with guardrails**: GPT-generated decision emails are validated (no invented rates or payment amounts, the correct decision stated without contradiction, length, required signature) and regenerated up to 3 times before escalating to human review.
 - **Product recommendations**: eligibility is decided by deterministic rules; the LLM only writes the recommendation text.
 - **Persistence**: every application, including rule rejections and human-review cases, is stored in Supabase (PostgreSQL) under row-level security.
-- **Tested**: 66 pytest tests (rules, guardrails, feature parity between training and serving, scoring invariants, end-to-end API with all external services stubbed) run in GitHub Actions together with frontend lint and build.
+- **Tested**: 69 pytest tests (rules, guardrails, feature parity between training and serving, scoring invariants, end-to-end API with all external services stubbed) run in GitHub Actions together with frontend lint and build.
 
 ## Architecture
 
@@ -171,7 +171,7 @@ source .venv/bin/activate                  # Windows: .venv\Scripts\activate
 pip install -r requirements-dev.txt         # or requirements.txt for the API only
 
 cd src
-uvicorn main:app --reload --port 8000
+python -m uvicorn main:app --reload --port 8000
 ```
 
 Interactive API docs: http://127.0.0.1:8000/docs
@@ -189,7 +189,7 @@ Open the URL Vite prints (default http://localhost:5173), create an account, and
 ### 5. Run the tests
 
 ```bash
-pytest          # from the repository root; no API keys or network needed
+python -m pytest   # from the repository root; no API keys or network needed
 ```
 
 ### Retraining the model
