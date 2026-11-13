@@ -2,6 +2,8 @@ export default function DecisionCard({ result }) {
   const approved = result.decision === "APPROVED"
   const review = result.status === "HUMAN_REVIEW"
   const rejected = result.status === "REJECTED_BY_RULES"
+  const hasProbability = typeof result.probability === "number"
+  const maxImpact = Math.max(...(result.explanation || []).map(f => Math.abs(f.impact)), 1e-6)
 
   const config = rejected
     ? { bg: "var(--warning-light)", border: "var(--warning)", text: "var(--warning)", label: "REJECTED", accent: "card-accent-warning" }
@@ -31,21 +33,56 @@ export default function DecisionCard({ result }) {
           )}
         </div>
 
-        <div className="text-right">
-          <p className="text-xs font-semibold uppercase tracking-widest mb-2"
-            style={{ color: "var(--text-muted)" }}>Confidence Score</p>
-          <p className="text-3xl font-bold" style={{ color: config.text, fontFamily: "'Playfair Display', serif" }}>
-            {(result.probability * 100).toFixed(1)}%
-          </p>
-        </div>
+        {hasProbability && (
+          <div className="text-right">
+            <p className="text-xs font-semibold uppercase tracking-widest mb-2"
+              style={{ color: "var(--text-muted)" }}>Approval Probability</p>
+            <p className="text-3xl font-bold" style={{ color: config.text, fontFamily: "'Playfair Display', serif" }}>
+              {(result.probability * 100).toFixed(1)}%
+            </p>
+          </div>
+        )}
       </div>
 
-      <div className="mt-5">
-        <div className="progress-bar">
-          <div className="progress-fill"
-            style={{ width: `${result.probability * 100}%`, background: config.text }} />
+      {hasProbability && (
+        <div className="mt-5">
+          <div className="progress-bar">
+            <div className="progress-fill"
+              style={{ width: `${result.probability * 100}%`, background: config.text }} />
+          </div>
         </div>
-      </div>
+      )}
+
+      {result.explanation?.length > 0 && (
+        <div className="mt-5 pt-5" style={{ borderTop: "1px solid var(--border)" }}>
+          <p className="text-xs font-semibold uppercase tracking-widest mb-1"
+            style={{ color: "var(--text-muted)" }}>
+            Key Factors
+          </p>
+          <p className="text-xs mb-3" style={{ color: "var(--text-muted)" }}>
+            What moved this decision most (SHAP contributions)
+          </p>
+          <ul className="space-y-2">
+            {result.explanation.map((f) => {
+              const positive = f.direction === "positive"
+              const width = Math.min(Math.abs(f.impact) / maxImpact * 100, 100)
+              return (
+                <li key={f.feature} className="flex items-center gap-3 text-sm">
+                  <span className="w-36 sm:w-48 shrink-0" style={{ color: "var(--text-secondary)" }}>{f.label}</span>
+                  <div className="flex-1 progress-bar">
+                    <div className="progress-fill"
+                      style={{ width: `${width}%`, background: positive ? "var(--success)" : "var(--danger)" }} />
+                  </div>
+                  <span className="w-20 text-right text-xs font-medium"
+                    style={{ color: positive ? "var(--success)" : "var(--danger)" }}>
+                    {positive ? "▲ helps" : "▼ hurts"}
+                  </span>
+                </li>
+              )
+            })}
+          </ul>
+        </div>
+      )}
 
       {result.marketing?.eligible_products?.length > 0 && (
         <div className="mt-5 pt-5" style={{ borderTop: "1px solid var(--border)" }}>

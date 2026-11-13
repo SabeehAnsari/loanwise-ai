@@ -1,6 +1,6 @@
 # LoanWise AI
 
-**An end-to-end, AI-assisted loan decisioning platform:** a React frontend, a FastAPI backend serving an XGBoost model, an automated fairness gate, and LLM-generated decision emails with guardrails.
+**An end-to-end, AI-assisted loan decisioning platform:** a React frontend, a FastAPI backend serving a cross-validated XGBoost model with per-applicant SHAP explanations, a fairness audit, and LLM-generated decision emails with guardrails.
 
 ![Python](https://img.shields.io/badge/Python-3.11%2B-3776AB?logo=python&logoColor=white)
 ![FastAPI](https://img.shields.io/badge/FastAPI-009688?logo=fastapi&logoColor=white)
@@ -9,6 +9,7 @@
 ![Tailwind CSS](https://img.shields.io/badge/Tailwind_CSS-06B6D4?logo=tailwindcss&logoColor=white)
 ![XGBoost](https://img.shields.io/badge/XGBoost-EC6B23)
 ![Supabase](https://img.shields.io/badge/Supabase-3ECF8E?logo=supabase&logoColor=white)
+[![CI](https://github.com/SabeehAnsari/loanwise-ai/actions/workflows/ci.yml/badge.svg)](https://github.com/SabeehAnsari/loanwise-ai/actions/workflows/ci.yml)
 
 > **Educational project.** LoanWise AI is built on a small public dataset to demonstrate full stack and applied-ML engineering. It is **not** intended for real lending decisions. See [Limitations](#limitations).
 
@@ -21,20 +22,22 @@
 
 ## Overview
 
-A user signs in, submits a loan application, and the backend runs it through a multi-stage pipeline: hard business rules, ML scoring, a fairness check, an LLM-written decision email validated by guardrails, and product recommendations. The result, fairness metrics and email are shown in the UI, emailed to the signed-in user's address, and stored in PostgreSQL.
+A user signs in, submits a loan application, and the backend runs it through a multi-stage pipeline: hard business rules, ML scoring with an explanation, a fairness gate, an LLM-written decision email validated by guardrails, and product recommendations. The result, fairness metrics and email are shown in the UI, emailed to the signed-in user's address, and stored in PostgreSQL.
 
 ## Features
 
 - **Full stack web app**: responsive React 19 + Vite + Tailwind CSS UI with email/password authentication (Supabase Auth, JWT-based sessions).
-- **Typed REST API**: FastAPI with Pydantic request validation and auto-generated OpenAPI docs at `/docs`.
-- **Secured API**: protected endpoints verify the user's Supabase JWT server-side, CORS is restricted to configured origins, and `/predict` is rate-limited per IP.
-- **ML scoring**: XGBoost classifier trained on engineered features (log-income, income-to-loan ratio).
+- **Typed REST API**: FastAPI with range-checked Pydantic validation and auto-generated OpenAPI docs at `/docs`.
+- **Secured API**: protected endpoints verify the user's Supabase JWT server-side, CORS is restricted to configured origins, `/predict` is rate-limited per IP, and LLM output is HTML-escaped before it is emailed.
+- **Rigorous model evaluation**: seven candidates, including majority-class and credit-history-rule baselines, compared with repeated stratified cross-validation. Preprocessing is fitted inside each fold to avoid leakage.
+- **Protected attributes excluded**: gender and marital status are *not* model inputs. Removing them cost no accuracy, and a test proves that flipping them cannot change a score.
+- **Per-applicant explanations**: every decision shows its top factors, computed with TreeSHAP (XGBoost's built-in `pred_contribs`).
+- **Fairness audit**: approval-rate and false-negative-rate gaps by gender and marital status, measured on out-of-fold predictions with bootstrap confidence intervals. If the deployed model fails the audit, automated decisions are switched off.
 - **Business-rule layer** that runs *before* the model, so clearly ineligible applications never reach it.
-- **Fairness gate**: computes gender and marital-status approval disparity plus a false-negative-rate gap, combines them into a weighted bias score, and routes the case to human review when the score exceeds a threshold.
-- **LLM email generation with guardrails**: GPT-generated decision emails are validated (no invented rates or payment amounts, correct decision, length, required signature) and regenerated up to 3 times before escalating to human review.
+- **LLM email generation with guardrails**: GPT-generated decision emails are validated (no invented rates or payment amounts, the correct decision stated without contradiction, length, required signature) and regenerated up to 3 times before escalating to human review.
 - **Product recommendations**: eligibility is decided by deterministic rules; the LLM only writes the recommendation text.
-- **Persistence**: every processed application, decision and fairness metric is stored in Supabase (PostgreSQL).
-- **Reproducible data science workflow**: six Jupyter notebooks covering exploration, preprocessing, training, and the bias and email/marketing stages.
+- **Persistence**: every application, including rule rejections and human-review cases, is stored in Supabase (PostgreSQL) under row-level security.
+- **Tested**: 66 pytest tests (rules, guardrails, feature parity between training and serving, scoring invariants, end-to-end API with all external services stubbed) run in GitHub Actions together with frontend lint and build.
 
 ## Architecture
 
@@ -43,77 +46,100 @@ flowchart LR
     UI["React + Vite UI<br/>(Supabase Auth)"] -->|POST /predict| API[FastAPI]
     API --> RULES{"Business rules<br/>income / loan cap / DTI"}
     RULES -->|fail| DENY["Denied by rules"]
-    RULES -->|pass| MODEL["XGBoost scoring"]
-    MODEL --> FAIR{"Fairness gate<br/>bias score > 0.20?"}
-    FAIR -->|yes| HR["Human review"]
-    FAIR -->|no| EMAIL["LLM email<br/>+ guardrails, max 3 tries"]
+    RULES -->|pass| MODEL["XGBoost scoring<br/>+ SHAP explanation"]
+    MODEL --> FAIR{"Model passed<br/>fairness audit?"}
+    FAIR -->|no| HR["Human review"]
+    FAIR -->|yes| EMAIL["LLM email<br/>+ guardrails, max 3 tries"]
     EMAIL -->|all attempts fail| HR
     EMAIL --> MKT["Product recommendations"]
     MKT --> SEND["Send email<br/>(Resend)"]
     SEND --> DB[("Supabase<br/>PostgreSQL")]
+    NB["Notebook 07<br/>(offline)"] -.->|loan_model.json<br/>model_report.json| API
 ```
 
 ## Tech stack
 
 | Layer | Technologies |
 |---|---|
-| Frontend | React 19, Vite, Tailwind CSS 4, Axios, Supabase JS client |
+| Frontend | React 19, Vite, Tailwind CSS 4, Supabase JS client |
 | Backend | Python, FastAPI, Pydantic, Uvicorn, httpx |
-| ML / data | XGBoost, scikit-learn, pandas, NumPy, Jupyter |
+| ML / data | XGBoost (with TreeSHAP), scikit-learn, pandas, NumPy, Jupyter |
 | AI | OpenAI API (`gpt-4o-mini`) with rule-based guardrails |
 | Data & auth | Supabase (PostgreSQL + Auth) |
 | Email | Resend |
+| Quality | pytest, ESLint, GitHub Actions |
 
-## Model performance
+## Model evaluation
 
-Trained on the public *Loan Prediction* dataset (614 labelled applications) with a stratified 80/10/10 train/validation/test split (`random_state=42`).
+Data: the public *Loan Prediction* dataset (614 labelled applications, 68.7% approved). Protocol, from [`notebooks/07_model_evaluation.ipynb`](notebooks/07_model_evaluation.ipynb): repeated stratified 5-fold cross-validation (10 repeats, 50 fits per model, the same splits for every model), with imputation and feature engineering fitted inside each training fold.
 
-| Split | Rows | Accuracy | Precision | Recall | F1 | ROC-AUC |
-|---|---|---|---|---|---|---|
-| Validation | 61 | 0.754 | 0.886 | 0.738 | 0.805 | 0.841 |
-| **Test** | 62 | **0.790** | **0.857** | **0.837** | **0.847** | **0.824** |
+| Model | Accuracy | Balanced acc. | F1 | ROC-AUC |
+|---|---|---|---|---|
+| Majority class | 0.687 ± 0.004 | 0.500 | 0.815 | 0.500 |
+| Credit-history rule (approve iff good credit) | 0.809 ± 0.027 | 0.705 | 0.877 | 0.705 |
+| Logistic regression | 0.808 ± 0.027 | 0.704 | 0.875 | 0.704 |
+| Random forest | 0.817 ± 0.026 | 0.729 | 0.879 | 0.765 |
+| XGBoost, original config (notebook 03) | 0.760 ± 0.034 | 0.710 | 0.828 | 0.762 |
+| XGBoost, shallow | 0.814 ± 0.026 | 0.722 | 0.878 | 0.768 |
+| **XGBoost, shallow, no gender/marital (deployed)** | **0.815 ± 0.028** | **0.722** | **0.878** | **0.768 ± 0.047** |
 
-> The dataset is small, so the hold-out sets are small and these figures carry wide uncertainty. They are reported for transparency, not as production-grade benchmarks.
+What this shows:
+
+- **The original model underperformed a one-line rule.** It lost to the credit-history rule in 47 of 50 folds, mainly because `scale_pos_weight` down-weighted the approved class. Its earlier single-split test accuracy (0.790 on 62 rows) was flattering noise.
+- **No model beats the credit-history rule on accuracy by a meaningful margin.** Credit history dominates this dataset: its mean |SHAP| is 0.84, against 0.17 for the next feature.
+- **The model's value is in ranking.** ROC-AUC is 0.768 against 0.705, better in 49 of 50 folds. The model separates risk *within* the good-credit group, which a binary rule cannot do.
+- **Removing gender and marital status costs nothing**, so the deployed model does not use them.
+
+Choosing the best of seven candidates on the same CV makes the final estimate slightly optimistic, and with 614 rows every figure carries wide uncertainty.
+
+<p align="center"><img src="docs/screenshots/shap_importance.png" width="60%" alt="Global feature importance (mean absolute SHAP value)" /></p>
 
 ## Fairness audit
 
-The fairness gate combines three disparity measures into one score:
+The audit runs offline, on **out-of-fold** predictions: each applicant is scored by a model that never saw them. Gaps are averaged over 10 repetitions, and the confidence intervals come from 1,000 bootstrap resamples. The results are stored in `src/model_report.json` and served at `GET /model`.
 
 ```
-bias_score = 0.40 * gender_disparity + 0.40 * FNR_disparity + 0.20 * marital_status_disparity
+bias_score = 0.40 * gender_approval_gap + 0.40 * gender_FNR_gap + 0.20 * marital_approval_gap
 ```
 
-If `bias_score > 0.20`, the application is routed to human review instead of receiving an automated decision.
+| Metric | Original model (with gender/marital) | Deployed model | 95% CI (deployed) |
+|---|---|---|---|
+| Gender approval-rate gap | 0.090 | 0.039 | 0.002 – 0.128 |
+| Marital-status approval-rate gap | 0.128 | 0.012 | 0.001 – 0.083 |
+| False-negative-rate gap (by gender) | 0.064 | 0.035 | 0.002 – 0.111 |
+| **Bias score** (threshold 0.20) | 0.087 | **0.032** | 0.010 – 0.099 |
 
-| Metric (current model, full dataset) | Value |
-|---|---|
-| Gender approval-rate disparity | 0.021 |
-| Marital-status approval-rate disparity | 0.160 |
-| False-negative-rate disparity (by gender) | 0.004 |
-| **Weighted bias score** | **0.042** (threshold 0.20) |
+Every point estimate fell after the protected attributes were removed. The intervals overlap, though, because there are only 112 female applicants, so the improvement is suggestive rather than proven. The attributes can still have an indirect effect through correlated features such as co-applicant income, which is why outcomes are still audited by group.
 
-The audit is a **model-level** check computed over the dataset, so it reflects the behaviour of the deployed model rather than a per-applicant judgement. See [Limitations](#limitations).
+**How the gate works:** the audit describes the *deployed model*, so it is the same for every applicant. If a retrained model's bias score exceeds 0.20, the API routes every application to human review instead of deciding automatically. Per-applicant transparency comes from the SHAP explanation attached to each decision.
 
 ## Project structure
 
 ```
 .
-├── src/                     # FastAPI backend
-│   ├── main.py              # API routes and pipeline orchestration
-│   ├── auth.py              # Supabase JWT verification (FastAPI dependency)
-│   ├── bias_agent.py        # Fairness metrics and bias score
-│   ├── email_agent.py       # LLM email generation + guardrail validation
-│   ├── marketing_agent.py   # Rule-based eligibility + LLM recommendation text
-│   ├── email_sender.py      # Resend integration
-│   ├── database.py          # Supabase REST persistence
-│   └── loan_model.pkl       # Trained XGBoost model
-├── frontend/                # React + Vite + Tailwind UI
-│   └── src/components/      # Login, LoanForm, DecisionCard, BiasReport, EmailPreview
-├── notebooks/               # EDA, preprocessing, training, agent development
-├── data/                    # Raw and processed datasets
-├── docs/                    # Database schema and screenshots
-├── requirements.txt
-└── .env.example
+├── src/                       # FastAPI backend
+│   ├── main.py                # API routes and pipeline orchestration
+│   ├── features.py            # Feature engineering shared by training, serving and tests
+│   ├── scoring.py             # Model loading, scoring and TreeSHAP explanations
+│   ├── rules.py               # Hard business rules (run before the model)
+│   ├── bias_agent.py          # Fairness gate built from the offline audit
+│   ├── email_agent.py         # LLM email generation + guardrail validation
+│   ├── marketing_agent.py     # Rule-based eligibility + LLM recommendation text
+│   ├── email_sender.py        # Resend integration
+│   ├── database.py            # Supabase REST persistence
+│   ├── auth.py                # Supabase JWT verification (FastAPI dependency)
+│   ├── loan_model.json        # Deployed XGBoost model (portable JSON, no pickle)
+│   └── model_report.json      # CV metrics + fairness audit for the deployed model
+├── tests/                     # pytest suite (no network access needed)
+├── frontend/                  # React + Vite + Tailwind UI
+│   └── src/components/        # Login, LoanForm, DecisionCard, BiasReport, EmailPreview
+├── notebooks/                 # 01–02 EDA/preprocessing, 03 original training (superseded),
+│                              # 04–06 agent development, 07 evaluation + final model
+├── data/                      # Raw and processed datasets
+├── docs/                      # Database schema and figures
+├── .github/workflows/ci.yml   # Tests, lint and build on every push
+├── requirements.txt           # API runtime
+└── requirements-dev.txt       # + pytest and notebook tooling
 ```
 
 ## Getting started
@@ -142,7 +168,7 @@ Run [`docs/supabase_schema.sql`](docs/supabase_schema.sql) in the Supabase SQL e
 ```bash
 python -m venv .venv
 source .venv/bin/activate                  # Windows: .venv\Scripts\activate
-pip install -r requirements.txt
+pip install -r requirements-dev.txt         # or requirements.txt for the API only
 
 cd src
 uvicorn main:app --reload --port 8000
@@ -159,6 +185,16 @@ npm run dev
 ```
 
 Open the URL Vite prints (default http://localhost:5173), create an account, and submit an application.
+
+### 5. Run the tests
+
+```bash
+pytest          # from the repository root; no API keys or network needed
+```
+
+### Retraining the model
+
+Run `notebooks/07_model_evaluation.ipynb` from start to finish. It rewrites `src/loan_model.json` and `src/model_report.json`, and the API serves the new model on its next start.
 
 ### Environment variables
 
@@ -179,6 +215,7 @@ Open the URL Vite prints (default http://localhost:5173), create an account, and
 |---|---|---|
 | `GET` | `/` | API info |
 | `GET` | `/health` | Health check |
+| `GET` | `/model` | Model card: features, CV metrics and fairness audit |
 | `POST` | `/predict` | Run the full decision pipeline (auth required) |
 | `GET` | `/applications/{user_id}` | List your own past applications (auth required) |
 
@@ -203,7 +240,7 @@ Protected endpoints expect a Supabase access token: `Authorization: Bearer <toke
 }
 ```
 
-The decision email goes to the authenticated user's own address. `loan_amount` is in thousands and `loan_amount_term` in months. The response contains the `decision`, model `probability`, the `bias_report`, the generated `email`, and `marketing` recommendations. When a case is escalated the `status` is `HUMAN_REVIEW`; when it fails a business rule it is `REJECTED_BY_RULES`.
+The decision email goes to the authenticated user's own address. `loan_amount` is in thousands and `loan_amount_term` in months. The response contains the `decision`, model `probability`, an `explanation` (the top SHAP factors for this applicant), the `bias_report` (the model-level fairness audit), the generated `email`, and `marketing` recommendations. `gender` and `married` are collected for the audit only and do not affect the score. When a case is escalated the `status` is `HUMAN_REVIEW`; when it fails a business rule it is `REJECTED_BY_RULES`.
 
 ### Business rules (evaluated before the model)
 
@@ -218,25 +255,31 @@ The decision email goes to the authenticated user's own address. `loan_amount` i
 
 - **Deterministic rules before and around the LLM.** Eligibility and approval are never decided by the language model; it only writes text, and its output is validated before use.
 - **Fail safe, not silent.** Any case that trips the fairness gate or fails email guardrails is escalated to human review instead of being auto-decided.
-- **Same feature engineering in training and serving.** `preprocess_input` mirrors the notebook pipeline and column order exactly.
+- **One feature pipeline.** `src/features.py` is imported by the training notebook, the API and the tests, and a test checks that the training and serving paths produce identical features.
+- **Baselines first.** A model is only worth deploying if it beats simple rules. Here it matches the credit-history rule on accuracy and beats it on ranking, and the README reports that honestly.
+- **Portable model artefact.** The model is saved as XGBoost JSON rather than a pickle, so loading it cannot execute arbitrary code.
 
 ## Limitations
 
 This is a learning project, and these limitations are deliberate to state:
 
-- **Not for real lending.** The model is trained on ~600 public records. Gender and marital status are used as model features, which would be inappropriate and, in many jurisdictions, unlawful in production credit decisions. They are included here so the fairness audit has something meaningful to measure.
-- **Fairness audit scope.** The score is computed on the dataset, including rows the model was trained on, and is the same for every applicant. It is a model-level audit, not a per-applicant explanation.
-- **Small evaluation sets** (about 60 rows each) mean the reported metrics are noisy.
+- **Not for real lending.** The model is trained on ~600 public records from an unknown population and has never been validated on real applicants.
+- **Fairness through unawareness is not enough.** Gender and marital status are excluded as inputs, but correlated features can still carry their effect. The audit measures outcomes, but with 112 female applicants its confidence intervals are wide.
+- **Model-level audit.** The fairness gate describes the deployed model as a whole. Individual transparency comes from SHAP explanations, which describe the model's reasoning, not causal effects.
+- **Simplified rules.** The debt-to-income rule ignores interest, and the guardrails are regex-based, so they can miss unusual wording.
 - **Email sending** uses Resend's shared test sender, which only delivers to the account owner's address until a domain is verified.
 
 ## Roadmap
 
 - [x] Server-side verification of Supabase JWTs on protected endpoints
 - [x] Rate limiting on `/predict` (10 requests/minute per IP), since it calls a paid LLM API
-- [ ] Automated tests (pytest for rules and guardrails, Vitest for the UI) and GitHub Actions CI
+- [x] Automated tests (pytest) and GitHub Actions CI
+- [x] Persist human-review and rule-rejected cases
+- [x] Per-applicant explanations (TreeSHAP) and a stronger evaluation protocol (repeated CV with baselines)
+- [x] Remove protected attributes from the model and audit on out-of-fold predictions
+- [ ] Vitest tests for the UI
+- [ ] Application history page (the `/applications` endpoint already exists)
 - [ ] Dockerfile and docker-compose for one-command setup
-- [ ] Persist human-review and rule-rejected cases
-- [ ] Per-applicant explanations (e.g. SHAP) and a stronger evaluation protocol (cross-validation)
 - [ ] Deployment (frontend + API) with a live demo link
 
 ## Data

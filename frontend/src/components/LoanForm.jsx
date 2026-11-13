@@ -6,11 +6,12 @@ const VALIDATION_RULES = {
   loan_amount: { min: 1, max: 10000, message: "Loan amount must be between $1,000 and $10,000,000" }
 }
 
-function Field({ label, children, error }) {
+function Field({ label, children, error, hint }) {
   return (
     <div>
       <label className="label">{label}</label>
       {children}
+      {hint && !error && <p className="mt-1 text-xs" style={{ color: "var(--text-muted)" }}>{hint}</p>}
       {error && <p className="mt-1 text-xs" style={{ color: "var(--danger)" }}>{error}</p>}
     </div>
   )
@@ -88,14 +89,14 @@ export default function LoanForm({ onSubmit, loading }) {
             placeholder="John Smith" style={inputStyle("name")} />
         </Field>
 
-        <Field label="Gender">
+        <Field label="Gender" hint="Fairness monitoring only — not used by the model">
           <select name="gender" value={form.gender} onChange={handle} style={selectStyle}>
             <option value={1}>Male</option>
             <option value={0}>Female</option>
           </select>
         </Field>
 
-        <Field label="Marital Status">
+        <Field label="Marital Status" hint="Fairness monitoring only — not used by the model">
           <select name="married" value={form.married} onChange={handle} style={selectStyle}>
             <option value={1}>Married</option>
             <option value={0}>Not Married</option>

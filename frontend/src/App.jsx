@@ -8,6 +8,14 @@ import EmailPreview from "./components/EmailPreview"
 
 const API_URL = import.meta.env.VITE_API_URL || "http://127.0.0.1:8000"
 
+function errorMessage(status) {
+  if (status === 401) return "Your session has expired. Please sign out and sign in again."
+  if (status === 422) return "Some application fields are invalid. Please check the form and try again."
+  if (status === 429) return "Too many applications in a short time. Please wait a minute and try again."
+  if (status >= 500) return "The server hit an error while processing the application. Please try again later."
+  return `Request failed (HTTP ${status}).`
+}
+
 export default function App() {
   const [user, setUser] = useState(null)
   const [authLoading, setAuthLoading] = useState(true)
@@ -47,7 +55,10 @@ export default function App() {
         },
         body: JSON.stringify(formData)
       })
-      if (!response.ok) throw new Error("API request failed")
+      if (!response.ok) {
+        setError(errorMessage(response.status))
+        return
+      }
       const data = await response.json()
       setResult(data)
     } catch {
@@ -99,7 +110,7 @@ export default function App() {
           <div className="flex items-center gap-4">
             {/* Pipeline steps */}
             <div className="hidden md:flex items-center gap-2">
-              {["ML Model", "Bias Check", "Email Agent", "Marketing"].map((step, i) => (
+              {["ML Model", "Fairness Audit", "Email Agent", "Marketing"].map((step, i) => (
                 <div key={i} className="flex items-center gap-2">
                   <span className="text-xs px-2 py-1 rounded-md font-medium"
                     style={{ background: "var(--accent-light)", color: "var(--accent)" }}>
@@ -163,8 +174,8 @@ export default function App() {
                 </p>
                 <div className="mt-6 grid grid-cols-2 gap-3">
                   {[
-                    { label: "ML Model", desc: "XGBoost classifier" },
-                    { label: "Bias Check", desc: "Fairness scoring" },
+                    { label: "ML Model", desc: "XGBoost + SHAP reasons" },
+                    { label: "Fairness Audit", desc: "Model-level, out-of-fold" },
                     { label: "Email Agent", desc: "GPT-4o-mini generation" },
                     { label: "Marketing", desc: "Product matching" },
                   ].map((s, i) => (
@@ -197,7 +208,7 @@ export default function App() {
 
             {error && (
               <div className="card card-accent-red p-6 fade-in" style={{ marginTop: 52 }}>
-                <p className="font-semibold mb-1" style={{ color: "var(--danger)" }}>Connection Error</p>
+                <p className="font-semibold mb-1" style={{ color: "var(--danger)" }}>Something went wrong</p>
                 <p className="text-sm" style={{ color: "var(--text-secondary)" }}>{error}</p>
               </div>
             )}
