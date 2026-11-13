@@ -44,6 +44,7 @@ LOAN_PRODUCTS = [
         "min_income": 5000,
         "max_loan": 200,
         "requires_credit_history": True,
+        "requires_self_employed": True,
         "suitable_for": "Self-employed applicants with good credit"
     },
     {
@@ -62,15 +63,25 @@ def get_eligible_products(applicant_data: dict) -> list:
     Filters loan products based on hard eligibility rules.
     This runs BEFORE the LLM to reduce hallucination risk.
     The LLM only writes recommendations — it never decides eligibility.
+
+    A product is offered only if the applicant meets its income floor and
+    credit requirement, is self-employed when the product requires it, and
+    the requested amount (in thousands) fits within the product's max_loan.
     """
     eligible = []
     total_income = applicant_data.get('total_income', 0)
     credit_history = applicant_data.get('credit_history', 0)
+    self_employed = applicant_data.get('self_employed', 0)
+    loan_amount = applicant_data.get('loan_amount', 0)
 
     for product in LOAN_PRODUCTS:
         if total_income < product['min_income']:
             continue
         if product['requires_credit_history'] and credit_history != 1.0:
+            continue
+        if product.get('requires_self_employed') and self_employed != 1:
+            continue
+        if loan_amount > product['max_loan']:
             continue
         eligible.append(product)
 

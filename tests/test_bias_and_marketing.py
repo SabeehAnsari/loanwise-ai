@@ -42,8 +42,26 @@ def test_poor_credit_excludes_credit_gated_products():
     assert eligible == {"Personal Loan", "Education Loan", "Secured Loan"}
 
 
-def test_high_income_good_credit_gets_everything():
-    assert len(get_eligible_products({"total_income": 10_000, "credit_history": 1.0})) == 5
+def test_self_employed_high_income_good_credit_small_loan_gets_everything():
+    profile = {"total_income": 10_000, "credit_history": 1.0, "self_employed": 1, "loan_amount": 40}
+    assert len(get_eligible_products(profile)) == 5
+
+
+def test_business_loan_requires_self_employment():
+    profile = {"total_income": 10_000, "credit_history": 1.0, "loan_amount": 40}
+    assert "Business Loan" not in names(get_eligible_products({**profile, "self_employed": 0}))
+    assert "Business Loan" in names(get_eligible_products({**profile, "self_employed": 1}))
+
+
+def test_products_whose_cap_is_below_the_requested_amount_are_excluded():
+    # Regression: salaried applicant, $5,000/month, $128k request was offered all five products
+    profile = {"total_income": 5000, "credit_history": 1.0, "self_employed": 0, "loan_amount": 128}
+    assert names(get_eligible_products(profile)) == {"Home Improvement Loan"}
+
+
+def test_requested_amount_exactly_at_cap_is_allowed():
+    profile = {"total_income": 3000, "credit_history": 0.0, "loan_amount": 50}
+    assert "Personal Loan" in names(get_eligible_products(profile))
 
 
 def test_marketing_agent_skips_llm_when_nothing_is_eligible(monkeypatch):
