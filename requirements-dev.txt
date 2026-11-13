@@ -1,0 +1,10 @@
+# Everything in requirements.txt plus tests and notebooks
+-r requirements.txt
+pytest==8.4.2
+
+# Notebooks
+jupyterlab
+nbconvert
+matplotlib
+seaborn
+joblib==1.5.3

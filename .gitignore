@@ -19,3 +19,5 @@ __pycache__/
 # Windows files
 Thumbs.db
 desktop.ini
+# Test cache
+.pytest_cache/
