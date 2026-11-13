@@ -1,3 +1,4 @@
+import html
 import resend
 import os
 from dotenv import load_dotenv
@@ -36,7 +37,8 @@ def send_loan_email(
     )
 
     # Convert plain text to basic HTML for better email rendering
-    html_body = email_body.replace("\n", "<br>")
+    # Escape first: the body is LLM output and must not be able to inject HTML
+    html_body = html.escape(email_body).replace("\n", "<br>")
     html_body = f"""
     <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px;">
         <div style="background: #1a1a2e; padding: 20px; border-radius: 8px; margin-bottom: 20px;">

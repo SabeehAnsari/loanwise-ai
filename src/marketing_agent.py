@@ -4,7 +4,14 @@ from dotenv import load_dotenv
 
 load_dotenv()
 
-client = OpenAI(api_key=os.getenv("OPENAI_API_KEY"))
+_client = None
+
+
+def get_client() -> OpenAI:
+    global _client
+    if _client is None:
+        _client = OpenAI(api_key=os.getenv("OPENAI_API_KEY"))
+    return _client
 
 LOAN_PRODUCTS = [
     {
@@ -111,7 +118,7 @@ Write a short, friendly paragraph (max 100 words) recommending these products.
 - Write ONLY the recommendation paragraph, nothing else
 """
 
-    response = client.chat.completions.create(
+    response = get_client().chat.completions.create(
         model="gpt-4o-mini",
         max_tokens=300,
         messages=[

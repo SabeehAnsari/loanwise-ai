@@ -5,7 +5,14 @@ from dotenv import load_dotenv
 
 load_dotenv()
 
-client = OpenAI(api_key=os.getenv("OPENAI_API_KEY"))
+_client = None
+
+
+def get_client() -> OpenAI:
+    global _client
+    if _client is None:
+        _client = OpenAI(api_key=os.getenv("OPENAI_API_KEY"))
+    return _client
 
 
 def generate_loan_email(applicant_data: dict, prediction: int) -> str:
@@ -44,14 +51,15 @@ STRICT RULES YOU MUST FOLLOW:
 4. Do NOT mention any fees, charges, or penalties not provided
 5. Keep the email under 200 words
 6. Use a professional, empathetic tone
-7. End with next steps appropriate to the decision
-8. Address the applicant by name
-9. Sign off as "The LoanWise AI Team"
+7. State the decision explicitly in the first paragraph ("approved" or "not approved")
+8. End with next steps appropriate to the decision
+9. Address the applicant by name
+10. Sign off as "The LoanWise AI Team"
 
 Write only the email — no subject line, no extra commentary.
 """
 
-    response = client.chat.completions.create(
+    response = get_client().chat.completions.create(
         model="gpt-4o-mini",
         max_tokens=500,
         messages=[
@@ -68,7 +76,31 @@ Write only the email — no subject line, no extra commentary.
     return response.choices[0].message.content
 
 
-def validate_email(email_text: str, applicant_data: dict) -> dict:
+# Phrases that state a denial, including negated forms of "approve".
+_DENIAL_PATTERNS = [
+    r"\bdenied\b",
+    r"\bdeclined\b",
+    r"\bunsuccessful\b",
+    r"\bregret to inform\b",
+    r"(?:\bnot|n't|\bnever)\s+(?:been\s+|be\s+)?approved\b",
+    r"\b(?:unable|not able|cannot|can't|could not|couldn't)\s+(?:to\s+)?approve\b",
+    r"\bnot\s+in\s+a\s+position\s+to\s+approve\b",
+]
+_NEGATED_APPROVED = r"(?:\bnot|n't|\bnever)\s+(?:been\s+|be\s+)?approved\b"
+
+
+def mentions_approval(text: str) -> bool:
+    """True if the text states an approval ("approved" not negated, or congratulations)."""
+    approved = len(re.findall(r"\bapproved\b", text, re.IGNORECASE))
+    negated = len(re.findall(_NEGATED_APPROVED, text, re.IGNORECASE))
+    return approved > negated or bool(re.search(r"\bcongratulat", text, re.IGNORECASE))
+
+
+def mentions_denial(text: str) -> bool:
+    return any(re.search(p, text, re.IGNORECASE) for p in _DENIAL_PATTERNS)
+
+
+def validate_email(email_text: str, prediction: int) -> dict:
     """
     Checks the generated email against guardrail rules.
 
@@ -104,12 +136,12 @@ def validate_email(email_text: str, applicant_data: dict) -> dict:
     if word_count > 300:
         violations.append(f"GUARDRAIL FAILED: Email too long ({word_count} words, max 300)")
 
-    # Guardrail 4: Correct decision mentioned
-    decision_word = "approved" if applicant_data.get('prediction') == 1 else "denied"
-    opposite_word = "denied" if applicant_data.get('prediction') == 1 else "approved"
-    if (opposite_word.lower() in email_text.lower() and
-            decision_word.lower() not in email_text.lower()):
-        violations.append("GUARDRAIL FAILED: Email mentions wrong decision")
+    # Guardrail 4: The email must state the actual decision, and not the opposite one
+    approval, denial = mentions_approval(email_text), mentions_denial(email_text)
+    if prediction == 1 and (denial or not approval):
+        violations.append("GUARDRAIL FAILED: Email does not clearly state the approval")
+    if prediction == 0 and (approval or not denial):
+        violations.append("GUARDRAIL FAILED: Email does not clearly state the denial")
 
     # Guardrail 5: Must be signed by LoanWise AI Team
     if "loanwise" not in email_text.lower():
@@ -122,7 +154,8 @@ def validate_email(email_text: str, applicant_data: dict) -> dict:
     }
 
 
-def generate_validated_email(applicant_data: dict, prediction: int, max_retries: int = 3) -> dict:
+def generate_validated_email(applicant_data: dict, prediction: int, max_retries: int = 3,
+                             generate=None) -> dict:
     """
     Full pipeline: generate email → validate → retry if needed.
 
@@ -130,15 +163,17 @@ def generate_validated_email(applicant_data: dict, prediction: int, max_retries:
         applicant_data : dict of applicant features
         prediction     : 0 (denied) or 1 (approved)
         max_retries    : number of attempts before escalating to human review
+        generate       : email generator (defaults to the OpenAI-backed one; injectable for tests)
 
     Returns:
         dict with status, email text, attempt count, and validation result
     """
-    applicant_data['prediction'] = prediction
+    generate = generate or generate_loan_email
+    validation = None
 
     for attempt in range(1, max_retries + 1):
-        email_text = generate_loan_email(applicant_data, prediction)
-        validation = validate_email(email_text, applicant_data)
+        email_text = generate(applicant_data, prediction)
+        validation = validate_email(email_text, prediction)
 
         if validation['passed']:
             return {
