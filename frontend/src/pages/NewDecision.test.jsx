@@ -1,5 +1,5 @@
 import { afterEach, describe, expect, it, vi } from "vitest"
-import { screen, within } from "@testing-library/react"
+import { screen, waitFor, within } from "@testing-library/react"
 import userEvent from "@testing-library/user-event"
 import { json, renderApp } from "../test/renderApp"
 import { APPROVED, RULES_REJECTED, USER } from "../test/fixtures"
@@ -30,9 +30,12 @@ describe("New decision", () => {
     await user.click(await screen.findByRole("button", { name: /run “strong applicant”/i }))
     expect(await screen.findByRole("heading", { name: "Approved" })).toBeInTheDocument()
     expect(predict).toHaveBeenCalledWith(expect.objectContaining({ name: "Priya Raman" }))
-    const lit = within(pipeline()).getAllByRole("listitem").filter((li) => li.dataset.lit === "true")
-    expect(lit).toHaveLength(1)
-    expect(lit[0]).toHaveTextContent(/model \+ shap/i)
+    // The sidebar pipeline updates a render after the result appears.
+    await waitFor(() => {
+      const lit = within(pipeline()).getAllByRole("listitem").filter((li) => li.dataset.lit === "true")
+      expect(lit).toHaveLength(1)
+      expect(lit[0]).toHaveTextContent(/model \+ shap/i)
+    })
     expect(screen.getByRole("link", { name: /open as page/i })).toHaveAttribute("href", "/app/decisions/app-1")
   })
 
@@ -46,7 +49,7 @@ describe("New decision", () => {
   it("shows which business rule stopped a rejected application", async () => {
     renderApp("/app/new?sample=rules", { user: USER, predict: () => json(RULES_REJECTED) })
     expect(await screen.findByRole("heading", { name: "Business rules" })).toBeInTheDocument()
-    expect(within(pipeline()).getByText("Failed")).toBeInTheDocument()
+    expect(await within(pipeline()).findByText("Failed")).toBeInTheDocument()
   })
 
   it("shows an error with a working retry", async () => {
