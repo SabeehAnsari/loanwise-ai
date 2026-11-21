@@ -1,0 +1,28 @@
+# One-command setup: `docker compose up --build`, then open http://localhost:8080
+# Reads the root .env (see .env.example) for keys; nothing secret is baked into images
+# except the public Supabase anon key, which the browser needs anyway.
+services:
+  api:
+    build: .
+    env_file: .env
+    environment:
+      # The web container is served on :8080; keep :5173 for `npm run dev`.
+      ALLOWED_ORIGINS: http://localhost:8080,http://localhost:5173
+    ports:
+      - "8000:8000"
+    restart: unless-stopped
+
+  web:
+    build:
+      context: ./frontend
+      args:
+        VITE_SUPABASE_URL: ${SUPABASE_URL:?Set SUPABASE_URL in .env}
+        VITE_SUPABASE_ANON_KEY: ${SUPABASE_ANON_KEY:?Set SUPABASE_ANON_KEY in .env}
+        # The browser calls the API directly, so this must be reachable from your machine.
+        VITE_API_URL: ${VITE_API_URL:-http://localhost:8000}
+    ports:
+      - "8080:80"
+    depends_on:
+      api:
+        condition: service_healthy
+    restart: unless-stopped

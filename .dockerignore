@@ -1,0 +1,6 @@
+# Only requirements.txt and src/ are needed for the API image.
+*
+!requirements.txt
+!src/
+src/__pycache__/
+src/**/*.pyc

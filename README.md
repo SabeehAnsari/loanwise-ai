@@ -148,6 +148,8 @@ Every point estimate fell after the protected attributes were removed. The inter
 │                              # 04–06 agent development, 07 evaluation + final model
 ├── data/                      # Raw and processed datasets
 ├── docs/                      # Database schema and figures
+├── Dockerfile                 # API image (frontend/Dockerfile serves the web app via nginx)
+├── docker-compose.yml         # One-command setup: API on :8000, web on :8080
 ├── .github/workflows/ci.yml   # Tests, lint and build on every push
 ├── requirements.txt           # API runtime
 └── requirements-dev.txt       # + pytest and notebook tooling
@@ -155,13 +157,33 @@ Every point estimate fell after the protected attributes were removed. The inter
 
 ## Getting started
 
-### Prerequisites
+### Quick start with Docker
+
+With [Docker](https://docs.docker.com/get-docker/) installed, the API and the web app start with one command:
+
+```bash
+git clone https://github.com/SabeehAnsari/loanwise-ai.git
+cd loanwise-ai
+cp .env.example .env          # fill in your Supabase, OpenAI and Resend keys
+docker compose up --build
+```
+
+Then open http://localhost:8080 (the API is on http://localhost:8000, docs at `/docs`). You still need to run the database schema once ([Set up the database](#2-set-up-the-database) below).
+
+- `.env` is read by both containers: the API gets every key at runtime; the web image is built with only the public Supabase URL and anon key.
+- CORS is set to allow `http://localhost:8080` and `http://localhost:5173` inside Compose.
+- To serve the web app against an API on another host, set `VITE_API_URL` in `.env` before building.
+- `docker compose down` stops everything; add `--build` after code changes.
+
+### Manual setup
+
+#### Prerequisites
 
 - Python 3.11+
 - Node.js 20.19+ (required by Vite 8)
 - A [Supabase](https://supabase.com) project, an [OpenAI](https://platform.openai.com) API key, and a [Resend](https://resend.com) API key
 
-### 1. Clone and configure
+#### 1. Clone and configure
 
 ```bash
 git clone https://github.com/SabeehAnsari/loanwise-ai.git
@@ -170,13 +192,13 @@ cp .env.example .env                       # then fill in your keys
 cp frontend/.env.example frontend/.env.local
 ```
 
-### 2. Set up the database
+#### 2. Set up the database
 
 Run [`docs/supabase_schema.sql`](docs/supabase_schema.sql) in the Supabase SQL editor to create the `applications` table and Row Level Security policies.
 
 Already have the table from an earlier version? Run the two `alter table … add column if not exists` lines at the end of that file, so each application also stores its SHAP factors and rejection message for the decision pages. Until you do, applications still save, just without those two fields.
 
-### 3. Run the backend
+#### 3. Run the backend
 
 ```bash
 python -m venv .venv
@@ -189,7 +211,7 @@ python -m uvicorn main:app --reload --port 8000
 
 Interactive API docs: http://127.0.0.1:8000/docs
 
-### 4. Run the frontend
+#### 4. Run the frontend
 
 ```bash
 cd frontend
@@ -199,7 +221,7 @@ npm run dev
 
 Open the URL Vite prints (default http://localhost:5173). The landing page is public; **Try the demo** creates an account and runs a sample applicant. The app uses client-side routes (`/app/new`, `/app/history`, `/app/decisions/:id`, `/app/model`), so a static host must rewrite unknown paths to `index.html`.
 
-### 5. Run the tests
+#### 5. Run the tests
 
 ```bash
 python -m pytest   # backend, from the repository root; no API keys or network needed
@@ -296,7 +318,7 @@ This is a learning project, and these limitations are deliberate to state:
 - [x] UI redesign: landing page, sign-in, app shell with sidebar pipeline, rule-rejection and human-review states, sample applicants
 - [x] Application history page with per-decision pages
 - [x] Vitest tests for the UI
-- [ ] Dockerfile and docker-compose for one-command setup
+- [x] Dockerfile and docker-compose for one-command setup
 - [ ] Deployment (frontend + API) with a live demo link
 
 ## Data
