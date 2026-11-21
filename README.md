@@ -16,9 +16,11 @@
 ## Screenshots
 
 <p align="center">
-  <img src="docs/screenshots/application-and-decision.png" width="48%" alt="Loan application form with the approved decision, confidence score and eligible products" />
-  <img src="docs/screenshots/fairness-and-email.png" width="48%" alt="Fairness analysis report, generated decision email and personalized offers" />
+  <img src="docs/screenshots/application-and-decision.png" width="48%" alt="Pipeline strip with each stage's result, the grouped application form, and an approved verdict with its SHAP factors (Fig. 1) and the fairness audit (Table 1)" />
+  <img src="docs/screenshots/fairness-and-email.png" width="48%" alt="Live repayment-to-income check on the form, group approval rates, and the guardrail-checked decision letter with personalised offers" />
 </p>
+
+The interface presents each decision like a statistical release: the five pipeline stages are numbered and fill in with their results, the verdict leads, and the evidence follows as numbered exhibits (Fig. 1 SHAP factors, Table 1 fairness audit, Doc. 1 decision letter, Table 2 eligible products).
 
 ## Overview
 
@@ -27,6 +29,7 @@ A user signs in, submits a loan application, and the backend runs it through a m
 ## Features
 
 - **Full stack web app**: responsive React 19 + Vite + Tailwind CSS UI with email/password authentication (Supabase Auth, JWT-based sessions).
+- **Explainable interface**: a pipeline rail shows which stage passed, failed or was skipped (and the one that decided the outcome); SHAP factors are drawn as a diverging bar chart; the fairness audit shows each gap with its 95% CI against the limit; rule rejections show which business rule failed. One-click sample applicants, a live repayment-to-income check, and a model card (loaded from `/model`) before the first run. Design records live in [`PRODUCT.md`](PRODUCT.md) and [`DESIGN.md`](DESIGN.md).
 - **Typed REST API**: FastAPI with range-checked Pydantic validation and auto-generated OpenAPI docs at `/docs`.
 - **Secured API**: protected endpoints verify the user's Supabase JWT server-side, CORS is restricted to configured origins, `/predict` is rate-limited per IP, and LLM output is HTML-escaped before it is emailed.
 - **Rigorous model evaluation**: seven candidates, including majority-class and credit-history-rule baselines, compared with repeated stratified cross-validation. Preprocessing is fitted inside each fold to avoid leakage.
@@ -132,7 +135,12 @@ Every point estimate fell after the protected attributes were removed. The inter
 │   └── model_report.json      # CV metrics + fairness audit for the deployed model
 ├── tests/                     # pytest suite (no network access needed)
 ├── frontend/                  # React + Vite + Tailwind UI
-│   └── src/components/        # Login, LoanForm, DecisionCard, BiasReport, EmailPreview
+│   ├── src/index.css          # Design tokens and component styles
+│   ├── src/pipeline.js        # Maps an API response to the five pipeline stages
+│   ├── src/useModelReport.js  # Loads the public model card from /model
+│   └── src/components/        # PipelineRail, LoanForm, ResultPanel, DecisionCard,
+│                              # BiasReport, EmailPreview, Login, Icons
+├── PRODUCT.md, DESIGN.md      # Product context and the UI design system
 ├── notebooks/                 # 01–02 EDA/preprocessing, 03 original training (superseded),
 │                              # 04–06 agent development, 07 evaluation + final model
 ├── data/                      # Raw and processed datasets
@@ -277,6 +285,7 @@ This is a learning project, and these limitations are deliberate to state:
 - [x] Persist human-review and rule-rejected cases
 - [x] Per-applicant explanations (TreeSHAP) and a stronger evaluation protocol (repeated CV with baselines)
 - [x] Remove protected attributes from the model and audit on out-of-fold predictions
+- [x] UI redesign: pipeline rail, numbered exhibits, rule-rejection and human-review states, sample applicants
 - [ ] Vitest tests for the UI
 - [ ] Application history page (the `/applications` endpoint already exists)
 - [ ] Dockerfile and docker-compose for one-command setup
