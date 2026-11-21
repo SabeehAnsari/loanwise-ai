@@ -40,7 +40,7 @@ A user signs in, submits a loan application, and the backend runs it through a m
 - **LLM email generation with guardrails**: GPT-generated decision emails are validated (no invented rates or payment amounts, the correct decision stated without contradiction, length, required signature) and regenerated up to 3 times before escalating to human review.
 - **Product recommendations**: eligibility is decided by deterministic rules; the LLM only writes the recommendation text.
 - **Persistence**: every application, including rule rejections and human-review cases, is stored in Supabase (PostgreSQL) under row-level security.
-- **Tested**: 73 pytest tests (rules, guardrails, feature parity between training and serving, scoring invariants, persistence, end-to-end API with all external services stubbed) run in GitHub Actions together with frontend lint and build.
+- **Tested**: 73 pytest tests (rules, guardrails, feature parity between training and serving, scoring invariants, persistence, end-to-end API with all external services stubbed) and 78 Vitest + React Testing Library UI tests (form validation, pipeline stages, routing and auth guards, running a decision, history filters, decision pages) run in GitHub Actions together with frontend lint and build.
 
 ## Architecture
 
@@ -70,7 +70,7 @@ flowchart LR
 | AI | OpenAI API (`gpt-4o-mini`) with rule-based guardrails |
 | Data & auth | Supabase (PostgreSQL + Auth) |
 | Email | Resend |
-| Quality | pytest, ESLint, GitHub Actions |
+| Quality | pytest, Vitest, React Testing Library, ESLint, GitHub Actions |
 
 ## Model evaluation
 
@@ -202,7 +202,10 @@ Open the URL Vite prints (default http://localhost:5173). The landing page is pu
 ### 5. Run the tests
 
 ```bash
-python -m pytest   # from the repository root; no API keys or network needed
+python -m pytest   # backend, from the repository root; no API keys or network needed
+
+cd frontend
+npm test           # UI (Vitest + React Testing Library, jsdom); `npm run test:watch` while editing
 ```
 
 ### Retraining the model
@@ -292,7 +295,7 @@ This is a learning project, and these limitations are deliberate to state:
 - [x] Remove protected attributes from the model and audit on out-of-fold predictions
 - [x] UI redesign: landing page, sign-in, app shell with sidebar pipeline, rule-rejection and human-review states, sample applicants
 - [x] Application history page with per-decision pages
-- [ ] Vitest tests for the UI
+- [x] Vitest tests for the UI
 - [ ] Dockerfile and docker-compose for one-command setup
 - [ ] Deployment (frontend + API) with a live demo link
 

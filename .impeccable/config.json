@@ -281,6 +281,69 @@
         ],
         "createdAt": "2026-11-21T13:21:44.081Z",
         "reason": "assistant decided: unchosen landing-structure sketch, not shipping UI"
+      },
+      {
+        "rule": "design-system-font",
+        "value": "*",
+        "files": [
+          ".impeccable/mocks/decision/assigned.html"
+        ],
+        "createdAt": "2026-11-21T13:38:04.569Z",
+        "reason": "assistant decided: decision-round sketch drawn in the old Archivo world, not shipping UI"
+      },
+      {
+        "rule": "design-system-font",
+        "value": "*",
+        "files": [
+          ".impeccable/mocks/decision/landing/evidence-first.html"
+        ],
+        "createdAt": "2026-11-21T13:38:04.727Z",
+        "reason": "assistant decided: decision-round sketch drawn in the old Archivo world, not shipping UI"
+      },
+      {
+        "rule": "design-system-font",
+        "value": "*",
+        "files": [
+          ".impeccable/mocks/decision/landing/pipeline-walk.html"
+        ],
+        "createdAt": "2026-11-21T13:38:04.870Z",
+        "reason": "assistant decided: decision-round sketch drawn in the old Archivo world, not shipping UI"
+      },
+      {
+        "rule": "design-system-font",
+        "value": "*",
+        "files": [
+          ".impeccable/mocks/decision/landing/annotated-release.html"
+        ],
+        "createdAt": "2026-11-21T13:38:05.020Z",
+        "reason": "assistant decided: decision-round sketch drawn in the old Archivo world, not shipping UI"
+      },
+      {
+        "rule": "design-system-font",
+        "value": "*",
+        "files": [
+          ".impeccable/mocks/decision/landing/five-questions.html"
+        ],
+        "createdAt": "2026-11-21T13:38:05.180Z",
+        "reason": "assistant decided: decision-round sketch drawn in the old Archivo world, not shipping UI"
+      },
+      {
+        "rule": "design-system-font",
+        "value": "*",
+        "files": [
+          ".impeccable/mocks/decision/landing/report-cover.html"
+        ],
+        "createdAt": "2026-11-21T13:38:05.343Z",
+        "reason": "assistant decided: decision-round sketch drawn in the old Archivo world, not shipping UI"
+      },
+      {
+        "rule": "design-system-font",
+        "value": "*",
+        "files": [
+          ".impeccable/mocks/decision/landing/signup-hero.html"
+        ],
+        "createdAt": "2026-11-21T13:38:05.486Z",
+        "reason": "assistant decided: decision-round sketch drawn in the old Archivo world, not shipping UI"
       }
     ]
   }
