@@ -1,179 +1,245 @@
-import { useState } from "react"
+import { useId, useState } from "react"
+import { Alert, ArrowRight } from "./Icons"
 
-const VALIDATION_RULES = {
-  applicant_income: { min: 500, max: 1000000, message: "Monthly income must be between $500 and $1,000,000" },
-  coapplicant_income: { min: 0, max: 1000000, message: "Co-applicant income must be between $0 and $1,000,000" },
-  loan_amount: { min: 1, max: 10000, message: "Loan amount must be between $1,000 and $10,000,000" }
+const EMPTY = {
+  name: "", gender: 1, married: 0,
+  dependents: 0, education: 1, self_employed: 0,
+  applicant_income: "", coapplicant_income: "",
+  loan_amount: "", loan_amount_term: 360,
+  credit_history: 1, property_area: 2,
 }
 
-function Field({ label, children, error, hint }) {
+// Synthetic sample applicants so a reviewer can run the pipeline in one click.
+const SAMPLES = [
+  {
+    label: "Strong applicant",
+    data: { name: "Priya Raman", gender: 0, married: 1, dependents: 1, education: 1, self_employed: 0,
+      applicant_income: 5400, coapplicant_income: 1800, loan_amount: 128, loan_amount_term: 360,
+      credit_history: 1, property_area: 2 },
+  },
+  {
+    label: "Prior defaults",
+    data: { name: "Daniel Okafor", gender: 1, married: 0, dependents: 2, education: 0, self_employed: 1,
+      applicant_income: 3100, coapplicant_income: 0, loan_amount: 160, loan_amount_term: 360,
+      credit_history: 0, property_area: 0 },
+  },
+  {
+    label: "Fails rules",
+    data: { name: "Mara Lindqvist", gender: 0, married: 0, dependents: 0, education: 1, self_employed: 0,
+      applicant_income: 2200, coapplicant_income: 0, loan_amount: 300, loan_amount_term: 120,
+      credit_history: 1, property_area: 1 },
+  },
+]
+
+const TERMS = [
+  [360, "360 mo · 30 yrs"], [180, "180 mo · 15 yrs"], [120, "120 mo · 10 yrs"],
+  [60, "60 mo · 5 yrs"], [36, "36 mo · 3 yrs"], [12, "12 mo · 1 yr"],
+]
+
+const money = (n) => "$" + Math.round(n).toLocaleString("en-US")
+
+function repaymentRatio(form) {
+  const income = Number(form.applicant_income || 0) + Number(form.coapplicant_income || 0)
+  const amount = Number(form.loan_amount || 0)
+  if (!income || !amount || !form.loan_amount_term) return null
+  const monthly = (amount * 1000) / form.loan_amount_term
+  return { monthly, ratio: monthly / income }
+}
+
+function validate(form) {
+  const e = {}
+  if (form.name.trim().length < 2) e.name = "Enter the applicant's full name (at least 2 characters)."
+  const income = Number(form.applicant_income)
+  if (!form.applicant_income || income < 500) e.applicant_income = "Monthly income must be at least $500."
+  else if (income > 1_000_000) e.applicant_income = "Monthly income must be at most $1,000,000."
+  if (Number(form.coapplicant_income) < 0) e.coapplicant_income = "Co-applicant income can't be negative."
+  const amount = Number(form.loan_amount)
+  if (!form.loan_amount || amount < 1) e.loan_amount = "Enter a loan amount of at least 1 (that's $1,000)."
+  else if (amount > 10_000) e.loan_amount = "The maximum loan is 10,000 (that's $10 million)."
+  return e
+}
+
+function Field({ label, hint, error, children, className = "", htmlFor }) {
+  const id = useId()
   return (
-    <div>
-      <label className="label">{label}</label>
+    <div className={className}>
+      <label className="field-label" htmlFor={htmlFor}>{label}</label>
       {children}
-      {hint && !error && <p className="mt-1 text-xs" style={{ color: "var(--text-muted)" }}>{hint}</p>}
-      {error && <p className="mt-1 text-xs" style={{ color: "var(--danger)" }}>{error}</p>}
+      {error
+        ? <p className="field-error" id={`${htmlFor}-err`}><Alert size={14} />{error}</p>
+        : hint && <p className="field-hint" id={id}>{hint}</p>}
     </div>
   )
 }
 
+function Segmented({ legend, name, value, options, onChange, hint, className = "" }) {
+  return (
+    <fieldset className={className} style={{ border: 0, padding: 0, margin: 0, minWidth: 0 }}>
+      <legend className="field-label" style={{ padding: 0 }}>{legend}</legend>
+      <div className="seg">
+        {options.map(([v, text]) => (
+          <label key={v}>
+            <input type="radio" name={name} value={v} checked={value === v}
+              onChange={() => onChange(name, v)} />
+            <span>{text}</span>
+          </label>
+        ))}
+      </div>
+      {hint && <p className="field-hint">{hint}</p>}
+    </fieldset>
+  )
+}
+
 export default function LoanForm({ onSubmit, loading }) {
-  const [form, setForm] = useState({
-    name: "", gender: 1, married: 0,
-    dependents: 0, education: 1, self_employed: 0,
-    applicant_income: "", coapplicant_income: 0,
-    loan_amount: "", loan_amount_term: 360,
-    credit_history: 1.0, property_area: 2
-  })
+  const [form, setForm] = useState(EMPTY)
   const [errors, setErrors] = useState({})
 
-  const handle = (e) => {
-    const { name, value } = e.target
-    setForm(prev => ({ ...prev, [name]: isNaN(value) || value === "" ? value : Number(value) }))
-    if (errors[name]) setErrors(prev => ({ ...prev, [name]: null }))
+  const set = (name, value) => {
+    setForm((prev) => ({ ...prev, [name]: value }))
+    if (errors[name]) setErrors((prev) => ({ ...prev, [name]: null }))
+  }
+  const onInput = (e) => {
+    const { name, value, type } = e.target
+    set(name, type === "number" ? (value === "" ? "" : Number(value)) : value)
   }
 
-  const validate = () => {
-    const e = {}
-    if (!form.name.trim() || form.name.trim().length < 2) e.name = "Full name is required (min 2 characters)"
-    if (!form.applicant_income || form.applicant_income < 500) e.applicant_income = VALIDATION_RULES.applicant_income.message
-    if (form.coapplicant_income < 0) e.coapplicant_income = "Cannot be negative"
-    if (!form.loan_amount || form.loan_amount < 1) e.loan_amount = VALIDATION_RULES.loan_amount.message
-    else if (form.loan_amount > 10000) e.loan_amount = VALIDATION_RULES.loan_amount.message
-    if (form.applicant_income && form.loan_amount && form.loan_amount_term) {
-      const totalIncome = Number(form.applicant_income) + Number(form.coapplicant_income)
-      const dti = (form.loan_amount * 1000) / form.loan_amount_term / totalIncome
-      if (dti > 0.60) e.loan_amount = `Debt-to-income ratio is ${(dti * 100).toFixed(1)}% — max allowed is 60%`
-    }
-    return e
-  }
+  const fill = (data) => { setForm(data); setErrors({}) }
 
   const handleSubmit = (e) => {
     e.preventDefault()
-    const errs = validate()
-    if (Object.keys(errs).length > 0) { setErrors(errs); return }
-    onSubmit(form)
+    const errs = validate(form)
+    if (Object.keys(errs).length) {
+      setErrors(errs)
+      document.getElementById(`f-${Object.keys(errs)[0]}`)?.focus()
+      return
+    }
+    onSubmit({
+      ...form,
+      name: form.name.trim(),
+      applicant_income: Number(form.applicant_income),
+      coapplicant_income: Number(form.coapplicant_income || 0),
+      loan_amount: Number(form.loan_amount),
+    })
   }
 
-  const inputStyle = (field) => ({
-    width: "100%",
-    background: "var(--surface)",
-    border: `1.5px solid ${errors[field] ? "var(--danger)" : "var(--border)"}`,
-    color: "var(--text-primary)",
-    borderRadius: 8,
-    padding: "10px 14px",
-    fontSize: 14,
-    fontFamily: "'DM Sans', sans-serif",
-    outline: "none",
-    boxShadow: errors[field] ? "0 0 0 3px rgba(230,57,70,0.10)" : "none"
-  })
-
-  const selectStyle = {
-    width: "100%",
-    background: "var(--surface)",
-    border: "1.5px solid var(--border)",
-    color: "var(--text-primary)",
-    borderRadius: 8,
-    padding: "10px 14px",
-    fontSize: 14,
-    fontFamily: "'DM Sans', sans-serif",
-    outline: "none"
-  }
+  const rr = repaymentRatio(form)
+  const err = (k) => ({ "aria-invalid": errors[k] ? true : undefined, "aria-describedby": errors[k] ? `f-${k}-err` : undefined })
 
   return (
-    <div className="card card-accent-blue p-6">
-      <form onSubmit={handleSubmit} className="grid grid-cols-1 md:grid-cols-2 gap-5">
+    <form onSubmit={handleSubmit} noValidate>
+      <div className="title-row">
+        <div>
+          <h1 className="page-title">New application</h1>
+          <p className="page-sub">Four short sections. The decision, its reasons, the fairness audit and the letter appear on the right.</p>
+        </div>
+      </div>
 
-        <Field label="Full Name" name="name" error={errors.name}>
-          <input name="name" value={form.name} onChange={handle}
-            placeholder="John Smith" style={inputStyle("name")} />
-        </Field>
+      <div className="samples">
+        <span className="samples-label">Try a sample:</span>
+        {SAMPLES.map((s) => (
+          <button key={s.label} type="button" className="btn-chip" onClick={() => fill(s.data)}>{s.label}</button>
+        ))}
+      </div>
 
-        <Field label="Gender" hint="Fairness monitoring only — not used by the model">
-          <select name="gender" value={form.gender} onChange={handle} style={selectStyle}>
-            <option value={1}>Male</option>
-            <option value={0}>Female</option>
-          </select>
-        </Field>
+      <fieldset className="section">
+        <div className="section-head"><legend className="section-title">Applicant</legend></div>
+        <div className="fields">
+          <Field label="Full name" error={errors.name} className="span-2" htmlFor="f-name">
+            <input id="f-name" name="name" className="input" value={form.name} onChange={onInput}
+              autoComplete="name" placeholder="e.g. Priya Raman" {...err("name")} />
+          </Field>
+          <Segmented legend="Dependents" name="dependents" value={form.dependents} onChange={set}
+            options={[[0, "0"], [1, "1"], [2, "2"], [3, "3+"]]} />
+          <Segmented legend="Education" name="education" value={form.education} onChange={set}
+            options={[[1, "Graduate"], [0, "Not graduate"]]} />
+          <Segmented legend="Employment" name="self_employed" value={form.self_employed} onChange={set}
+            options={[[0, "Salaried"], [1, "Self-employed"]]} className="span-2" />
+        </div>
+      </fieldset>
 
-        <Field label="Marital Status" hint="Fairness monitoring only — not used by the model">
-          <select name="married" value={form.married} onChange={handle} style={selectStyle}>
-            <option value={1}>Married</option>
-            <option value={0}>Not Married</option>
-          </select>
-        </Field>
+      <fieldset className="section">
+        <div className="section-head"><legend className="section-title">Finances</legend><span className="section-note">Monthly, in USD</span></div>
+        <div className="fields">
+          <Field label="Applicant income" error={errors.applicant_income} htmlFor="f-applicant_income">
+            <div className="input-wrap">
+              <span className="affix pre">$</span>
+              <input id="f-applicant_income" name="applicant_income" type="number" inputMode="decimal" min="0"
+                className="input has-prefix" value={form.applicant_income} onChange={onInput} placeholder="e.g. 5000"
+                {...err("applicant_income")} />
+            </div>
+          </Field>
+          <Field label="Co-applicant income" error={errors.coapplicant_income} hint="Leave empty if none" htmlFor="f-coapplicant_income">
+            <div className="input-wrap">
+              <span className="affix pre">$</span>
+              <input id="f-coapplicant_income" name="coapplicant_income" type="number" inputMode="decimal" min="0"
+                className="input has-prefix" value={form.coapplicant_income} onChange={onInput} placeholder="e.g. 1500"
+                {...err("coapplicant_income")} />
+            </div>
+          </Field>
+          <Segmented legend="Credit history" name="credit_history" value={form.credit_history} onChange={set}
+            options={[[1, "No defaults"], [0, "Has defaults"]]} className="span-2" />
+          <Segmented legend="Property area" name="property_area" value={form.property_area} onChange={set}
+            options={[[2, "Urban"], [1, "Semi-urban"], [0, "Rural"]]} className="span-2" />
+        </div>
+      </fieldset>
 
-        <Field label="Dependents">
-          <select name="dependents" value={form.dependents} onChange={handle} style={selectStyle}>
-            {[0,1,2,3].map(n => <option key={n} value={n}>{n}{n===3?"+":" "}</option>)}
-          </select>
-        </Field>
-
-        <Field label="Education">
-          <select name="education" value={form.education} onChange={handle} style={selectStyle}>
-            <option value={1}>Graduate</option>
-            <option value={0}>Not Graduate</option>
-          </select>
-        </Field>
-
-        <Field label="Employment Type">
-          <select name="self_employed" value={form.self_employed} onChange={handle} style={selectStyle}>
-            <option value={0}>Salaried</option>
-            <option value={1}>Self-Employed</option>
-          </select>
-        </Field>
-
-        <Field label="Property Area">
-          <select name="property_area" value={form.property_area} onChange={handle} style={selectStyle}>
-            <option value={2}>Urban</option>
-            <option value={1}>Semiurban</option>
-            <option value={0}>Rural</option>
-          </select>
-        </Field>
-
-        <Field label="Monthly Income ($)" error={errors.applicant_income}>
-          <input name="applicant_income" value={form.applicant_income} onChange={handle}
-            type="number" placeholder="5,000" style={inputStyle("applicant_income")} />
-        </Field>
-
-        <Field label="Co-applicant Income ($)" error={errors.coapplicant_income}>
-          <input name="coapplicant_income" value={form.coapplicant_income} onChange={handle}
-            type="number" placeholder="0" style={inputStyle("coapplicant_income")} />
-        </Field>
-
-        <Field label="Loan Amount ($ thousands)" error={errors.loan_amount}>
-          <input name="loan_amount" value={form.loan_amount} onChange={handle}
-            type="number" placeholder="128" style={inputStyle("loan_amount")} />
-        </Field>
-
-        <Field label="Loan Term">
-          <select name="loan_amount_term" value={form.loan_amount_term} onChange={handle} style={selectStyle}>
-            <option value={360}>360 months (30 years)</option>
-            <option value={180}>180 months (15 years)</option>
-            <option value={120}>120 months (10 years)</option>
-            <option value={60}>60 months (5 years)</option>
-            <option value={36}>36 months (3 years)</option>
-            <option value={12}>12 months (1 year)</option>
-          </select>
-        </Field>
-
-        <div className="md:col-span-2">
-          <Field label="Credit History">
-            <select name="credit_history" value={form.credit_history} onChange={handle} style={selectStyle}>
-              <option value={1.0}>Good — No defaults on record</option>
-              <option value={0.0}>Poor — Has defaults on record</option>
+      <fieldset className="section">
+        <div className="section-head"><legend className="section-title">Loan</legend></div>
+        <div className="fields">
+          <Field label="Amount" error={errors.loan_amount} htmlFor="f-loan_amount"
+            hint={form.loan_amount ? `= ${money(Number(form.loan_amount) * 1000)}` : "In thousands: 128 = $128,000"}>
+            <div className="input-wrap">
+              <span className="affix pre">$</span>
+              <input id="f-loan_amount" name="loan_amount" type="number" inputMode="decimal" min="0"
+                className="input has-prefix has-suffix" value={form.loan_amount} onChange={onInput} placeholder="e.g. 128"
+                {...err("loan_amount")} />
+              <span className="affix suf">k</span>
+            </div>
+          </Field>
+          <Field label="Term" htmlFor="f-term">
+            <select id="f-term" name="loan_amount_term" className="select" value={form.loan_amount_term}
+              onChange={(e) => set("loan_amount_term", Number(e.target.value))}>
+              {TERMS.map(([v, t]) => <option key={v} value={v}>{t}</option>)}
             </select>
           </Field>
+          {rr && (
+            <div className="span-2 ratio" data-over={rr.ratio > 0.6}>
+              <span className="ratio-track" aria-hidden="true">
+                <span className="ratio-fill" style={{ width: `${Math.min(rr.ratio / 0.6, 1) * 100}%` }} />
+                <span className="ratio-limit" />
+              </span>
+              <span>
+                Repayment {money(rr.monthly)}/mo is {(rr.ratio * 100).toFixed(1)}% of income
+                {rr.ratio > 0.6 ? ", over the 60% rule, so business rules will deny it" : " (rule limit 60%, before interest)"}
+              </span>
+            </div>
+          )}
         </div>
+      </fieldset>
 
-        <div className="md:col-span-2 pt-2">
-          <button type="submit" disabled={loading}
-            className="btn-primary w-full py-3 rounded-xl text-sm">
-            {loading ? "Processing Application..." : "Submit Application →"}
-          </button>
+      <fieldset className="section">
+        <div className="section-head">
+          <legend className="section-title">Fairness monitoring</legend>
+          <span className="section-note">Not model inputs</span>
         </div>
+        <div className="fields">
+          <Segmented legend="Gender" name="gender" value={form.gender} onChange={set}
+            options={[[1, "Male"], [0, "Female"]]} />
+          <Segmented legend="Marital status" name="married" value={form.married} onChange={set}
+            options={[[1, "Married"], [0, "Not married"]]} />
+          <p className="field-hint span-2" style={{ marginTop: 0 }}>
+            Used only to audit approval-rate gaps between groups. Changing them cannot change the score.
+          </p>
+        </div>
+      </fieldset>
 
-      </form>
-    </div>
+      <div className="submit-row">
+        <button type="submit" className="btn-primary" disabled={loading}>
+          <span>{loading ? "Running pipeline…" : "Run decision pipeline"}</span>
+          <ArrowRight size={18} />
+        </button>
+        <p className="submit-note">The decision letter is also emailed to your account address.</p>
+      </div>
+    </form>
   )
 }

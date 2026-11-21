@@ -1,0 +1,107 @@
+{
+  "detector": {
+    "ignoreRules": [],
+    "ignoreFiles": [],
+    "ignoreValues": [
+      {
+        "rule": "cramped-padding",
+        "value": "*",
+        "files": [
+          ".impeccable/mocks/decision/assigned.html"
+        ],
+        "createdAt": "2026-11-16T12:42:29.759Z",
+        "reason": "assistant decided: throwaway decision-round sketch drawn as a skeleton thumbnail, not shipping UI"
+      },
+      {
+        "rule": "undersized-ui-text",
+        "value": "*",
+        "files": [
+          ".impeccable/mocks/decision/assigned.html"
+        ],
+        "createdAt": "2026-11-16T12:42:29.903Z",
+        "reason": "assistant decided: throwaway decision-round sketch drawn as a skeleton thumbnail, not shipping UI"
+      },
+      {
+        "rule": "cramped-padding",
+        "value": "*",
+        "files": [
+          ".impeccable/mocks/decision/model-pick.html"
+        ],
+        "createdAt": "2026-11-16T12:42:30.044Z",
+        "reason": "assistant decided: throwaway decision-round sketch drawn as a skeleton thumbnail, not shipping UI"
+      },
+      {
+        "rule": "undersized-ui-text",
+        "value": "*",
+        "files": [
+          ".impeccable/mocks/decision/model-pick.html"
+        ],
+        "createdAt": "2026-11-16T12:42:30.200Z",
+        "reason": "assistant decided: throwaway decision-round sketch drawn as a skeleton thumbnail, not shipping UI"
+      },
+      {
+        "rule": "cramped-padding",
+        "value": "*",
+        "files": [
+          ".impeccable/mocks/decision/challenger-dense.html"
+        ],
+        "createdAt": "2026-11-16T12:42:30.357Z",
+        "reason": "assistant decided: throwaway decision-round sketch drawn as a skeleton thumbnail, not shipping UI"
+      },
+      {
+        "rule": "undersized-ui-text",
+        "value": "*",
+        "files": [
+          ".impeccable/mocks/decision/challenger-dense.html"
+        ],
+        "createdAt": "2026-11-16T12:42:30.527Z",
+        "reason": "assistant decided: throwaway decision-round sketch drawn as a skeleton thumbnail, not shipping UI"
+      },
+      {
+        "rule": "cramped-padding",
+        "value": "*",
+        "files": [
+          ".impeccable/mocks/decision/canon.html"
+        ],
+        "createdAt": "2026-11-16T12:42:30.665Z",
+        "reason": "assistant decided: throwaway decision-round sketch drawn as a skeleton thumbnail, not shipping UI"
+      },
+      {
+        "rule": "undersized-ui-text",
+        "value": "*",
+        "files": [
+          ".impeccable/mocks/decision/canon.html"
+        ],
+        "createdAt": "2026-11-16T12:42:30.826Z",
+        "reason": "assistant decided: throwaway decision-round sketch drawn as a skeleton thumbnail, not shipping UI"
+      },
+      {
+        "rule": "design-system-font",
+        "value": "*",
+        "files": [
+          ".impeccable/mocks/decision/model-pick.html"
+        ],
+        "createdAt": "2026-11-16T12:53:06.717Z",
+        "reason": "assistant decided: unchosen decision-round sketch in another direction's fonts, not shipping UI"
+      },
+      {
+        "rule": "design-system-font",
+        "value": "*",
+        "files": [
+          ".impeccable/mocks/decision/challenger-dense.html"
+        ],
+        "createdAt": "2026-11-16T12:53:06.853Z",
+        "reason": "assistant decided: unchosen decision-round sketch in another direction's fonts, not shipping UI"
+      },
+      {
+        "rule": "design-system-font",
+        "value": "*",
+        "files": [
+          ".impeccable/mocks/decision/canon.html"
+        ],
+        "createdAt": "2026-11-16T12:53:06.988Z",
+        "reason": "assistant decided: unchosen decision-round sketch in another direction's fonts, not shipping UI"
+      }
+    ]
+  }
+}

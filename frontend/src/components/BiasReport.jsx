@@ -1,4 +1,19 @@
-const pct = (v) => (v != null ? (v * 100).toFixed(1) + "%" : "N/A")
+import { Alert, Check } from "./Icons"
+
+const pct = (v) => (v != null ? (v * 100).toFixed(1) + "%" : "—")
+
+// Dot-and-whisker of a gap with its 95% CI, on a 0–25% axis with the 20% limit marked.
+function CiPlot({ value, ci, limit, max = 0.25 }) {
+  const x = (v) => `${Math.min(v / max, 1) * 100}%`
+  return (
+    <div className="ci" aria-hidden="true">
+      <span className="ci-axis" />
+      {ci && <span className="ci-range" style={{ left: x(ci[0]), width: `calc(${x(ci[1])} - ${x(ci[0])})` }} />}
+      <span className="ci-limit" style={{ left: x(limit) }} />
+      {value != null && <span className="ci-point" style={{ left: x(value) }} />}
+    </div>
+  )
+}
 
 export default function BiasReport({ bias }) {
   if (!bias) return null
@@ -6,6 +21,7 @@ export default function BiasReport({ bias }) {
   const threshold = bias.threshold ?? 0.2
   const ci = bias.confidence_intervals || {}
   const sizes = bias.group_sizes || {}
+  const m = bias.metrics || {}
 
   const gaps = [
     { key: "gender_disparity", label: "Gender approval gap" },
@@ -13,87 +29,74 @@ export default function BiasReport({ bias }) {
     { key: "fnr_disparity", label: "False-negative-rate gap" },
   ]
   const rates = [
-    { label: "Male approval rate", value: bias.metrics?.male_approval_rate, n: sizes.male },
-    { label: "Female approval rate", value: bias.metrics?.female_approval_rate, n: sizes.female },
-    { label: "Married approval rate", value: bias.metrics?.married_approval_rate, n: sizes.married },
-    { label: "Single approval rate", value: bias.metrics?.single_approval_rate, n: sizes.single },
+    { label: "Male", value: m.male_approval_rate, n: sizes.male },
+    { label: "Female", value: m.female_approval_rate, n: sizes.female },
+    { label: "Married", value: m.married_approval_rate, n: sizes.married },
+    { label: "Single", value: m.single_approval_rate, n: sizes.single },
   ]
 
   return (
-    <div className={`card ${cleared ? "card-accent-green" : "card-accent-red"} p-6`}>
-      <div className="flex items-center justify-between mb-2">
-        <div>
-          <p className="text-xs font-semibold uppercase tracking-widest mb-1"
-            style={{ color: "var(--text-muted)" }}>Fairness Audit · Deployed Model</p>
-          <h3 className="text-lg font-bold" style={{ color: "var(--navy)" }}>
-            Fairness Analysis
-          </h3>
-        </div>
-        <span className="text-xs px-3 py-1.5 rounded-full font-semibold"
-          style={{
-            background: cleared ? "var(--success-light)" : "var(--danger-light)",
-            color: cleared ? "var(--success)" : "var(--danger)",
-            border: `1px solid ${cleared ? "var(--success)" : "var(--danger)"}`
-          }}>
-          {bias.decision}
+    <section className="block" aria-labelledby="tbl1">
+      <div className="block-head">
+        <h3 id="tbl1" className="block-title"><span className="fig">Table 1</span>Fairness audit of the deployed model</h3>
+        <span className="status-line" data-tone={cleared ? "pass" : "fail"}>
+          {cleared ? <Check size={15} /> : <Alert size={15} />}
+          {cleared ? "Cleared" : "Failed: automation off"}
         </span>
       </div>
 
-      <p className="text-xs mb-5" style={{ color: "var(--text-muted)" }}>
-        Measured on out-of-fold predictions across the training data, so it is the same for every applicant.
-        Gender and marital status are not model inputs; they are used only for this audit.
-      </p>
+      <table className="table">
+        <thead>
+          <tr>
+            <th scope="col">Measure</th>
+            <th scope="col" className="num">Value</th>
+            <th scope="col" className="num">95% CI</th>
+            <th scope="col" className="plot"><span className="sr-only">Plot</span>
+              <div className="ci-scale" aria-hidden="true">
+                <span style={{ left: 0 }}>0</span>
+                <span className="ci-scale-limit" style={{ left: `${(threshold / 0.25) * 100}%` }}>limit {threshold.toFixed(2)}</span>              </div>
+            </th>
+          </tr>
+        </thead>
+        <tbody>
+          {gaps.map((g) => (
+            <tr key={g.key}>
+              <td>{g.label}</td>
+              <td className="num">{pct(m[g.key])}</td>
+              <td className="num" style={{ color: "var(--muted)" }}>
+                {ci[g.key] ? `${pct(ci[g.key][0])} – ${pct(ci[g.key][1])}` : "—"}
+              </td>
+              <td className="plot"><CiPlot value={m[g.key]} ci={ci[g.key]} limit={threshold} /></td>
+            </tr>
+          ))}
+          <tr>
+            <td><b>Bias score</b> <span style={{ color: "var(--muted)", fontSize: 13 }}>(combined)</span></td>
+            <td className="num"><b>{bias.bias_score?.toFixed(3)}</b></td>
+            <td className="num" style={{ color: "var(--muted)" }}>
+              {ci.bias_score ? `${ci.bias_score[0].toFixed(3)} – ${ci.bias_score[1].toFixed(3)}` : `limit ${threshold.toFixed(2)}`}
+            </td>
+            <td className="plot"><CiPlot value={bias.bias_score} ci={ci.bias_score} limit={threshold} /></td>
+          </tr>
+        </tbody>
+      </table>
 
-      <div className="mb-5 p-4 rounded-xl" style={{ background: "var(--bg)" }}>
-        <div className="flex justify-between items-center mb-2">
-          <span className="text-sm font-medium" style={{ color: "var(--text-secondary)" }}>
-            Bias Score
-          </span>
-          <div className="flex items-center gap-2">
-            <span className="text-xs" style={{ color: "var(--text-muted)" }}>Threshold: {threshold.toFixed(2)}</span>
-            <span className="text-sm font-bold"
-              style={{ color: cleared ? "var(--success)" : "var(--danger)" }}>
-              {bias.bias_score.toFixed(3)}
-            </span>
-          </div>
-        </div>
-        <div className="progress-bar">
-          <div className="progress-fill"
-            style={{
-              width: `${Math.min(bias.bias_score * 100, 100)}%`,
-              background: cleared ? "var(--success)" : "var(--danger)"
-            }} />
-        </div>
-        <div className="flex justify-between mt-1">
-          <span className="text-xs" style={{ color: "var(--text-muted)" }}>0 — Fair</span>
-          <span className="text-xs" style={{ color: "var(--text-muted)" }}>1 — Biased</span>
-        </div>
-      </div>
-
-      <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 mb-3">
-        {gaps.map((g) => (
-          <div key={g.key} className="rounded-xl p-3" style={{ background: "var(--bg)", border: "1px solid var(--border)" }}>
-            <p className="text-xs mb-1" style={{ color: "var(--text-muted)" }}>{g.label}</p>
-            <p className="text-sm font-bold" style={{ color: "var(--navy)" }}>{pct(bias.metrics?.[g.key])}</p>
-            {ci[g.key] && (
-              <p className="text-xs mt-0.5" style={{ color: "var(--text-muted)" }}>
-                95% CI {pct(ci[g.key][0])} – {pct(ci[g.key][1])}
-              </p>
-            )}
-          </div>
-        ))}
-      </div>
-
-      <div className="grid grid-cols-2 gap-3">
+      <div className="rates">
         {rates.map((r) => (
-          <div key={r.label} className="rounded-xl p-3" style={{ background: "var(--bg)", border: "1px solid var(--border)" }}>
-            <p className="text-xs mb-1" style={{ color: "var(--text-muted)" }}>
-              {r.label}{r.n ? ` (n=${r.n})` : ""}
-            </p>
-            <p className="text-sm font-bold" style={{ color: "var(--navy)" }}>{pct(r.value)}</p>
+          <div key={r.label} className="rate">
+            <b>{pct(r.value)}</b>
+            <span>{r.label} approval rate</span>
+            {r.n && <span className="rate-n">n = {r.n}</span>}
           </div>
         ))}
       </div>
-    </div>
+
+      <p className="caption">
+        Gaps are absolute differences between groups (shown as percentages, plotted as proportions); the bias score
+        combines them on the same 0–0.25 axis, so all four rows share the {threshold.toFixed(2)} limit line.
+        Measured once on out-of-fold predictions across the training data, so it is the same for every applicant.
+        Gender and marital status are not model inputs; they are used only for this audit. If the bias score
+        exceeds {threshold.toFixed(2)}, automated decisions switch off and every application goes to human review.
+      </p>
+    </section>
   )
 }

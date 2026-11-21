@@ -1,70 +1,85 @@
 import { useState } from "react"
+import { Alert, Check, Clock, Copy, Mail, Product } from "./Icons"
 
-export default function EmailPreview({ email }) {
+export function EmailPreview({ email }) {
   const [copied, setCopied] = useState(false)
-  if (!email || !email.body) return null
+  if (!email) return null
 
-  const handleCopy = () => {
-    navigator.clipboard.writeText(email.body)
-    setCopied(true)
-    setTimeout(() => setCopied(false), 2000)
+  if (email.status === "HUMAN_REVIEW" || !email.body) {
+    return (
+      <section className="block" aria-labelledby="email-h">
+        <div className="block-head">
+          <h3 id="email-h" className="block-title"><span className="fig">Doc. 1</span>Decision letter</h3>
+          <span className="status-line" data-tone="warn"><Clock size={15} />Held for human review</span>
+        </div>
+        <p className="caption" style={{ fontSize: 14.5, color: "var(--ink-2)" }}>
+          The generated letter failed the guardrails {email.attempts ?? 3} times (invented rates or amounts, a
+          contradicted decision, length or signature checks), so it was not sent. A person reviews it instead.
+        </p>
+      </section>
+    )
   }
 
-  const parts = email.body.includes("---") ? email.body.split("---") : [email.body, null]
-  const [decisionEmail, marketingEmail] = parts
+  const handleCopy = async () => {
+    try {
+      await navigator.clipboard.writeText(email.body)
+      setCopied(true)
+      setTimeout(() => setCopied(false), 2000)
+    } catch {
+      setCopied(false)
+    }
+  }
+
+  const [letter, offers] = email.body.includes("---") ? email.body.split("---") : [email.body, null]
+  const tries = email.attempts ?? 1
 
   return (
-    <div className="card card-accent-navy p-6">
-      <div className="flex items-start justify-between mb-5">
-        <div>
-          <p className="text-xs font-semibold uppercase tracking-widest mb-1"
-            style={{ color: "var(--text-muted)" }}>Generated Communication</p>
-          <h3 className="text-lg font-bold" style={{ color: "var(--navy)" }}>
-            Applicant Email
-          </h3>
-          <div className="flex items-center gap-3 mt-1">
-            <span className="text-xs" style={{ color: "var(--text-muted)" }}>
-              Passed guardrails in {email.attempts} attempt{email.attempts > 1 ? "s" : ""}
-            </span>
-            {email.sent && (
-              <span className="text-xs px-2 py-0.5 rounded-full font-medium"
-                style={{ background: "var(--success-light)", color: "var(--success)" }}>
-                ✓ Delivered to {email.recipient}
-              </span>
-            )}
-          </div>
-        </div>
-        <button onClick={handleCopy}
-          className="text-xs px-3 py-1.5 rounded-lg font-medium transition-all"
-          style={{
-            background: copied ? "var(--success-light)" : "var(--bg)",
-            color: copied ? "var(--success)" : "var(--text-secondary)",
-            border: "1px solid var(--border)"
-          }}>
-          {copied ? "✓ Copied" : "Copy"}
+    <section className="block" aria-labelledby="email-h">
+      <div className="block-head">
+        <h3 id="email-h" className="block-title"><span className="fig">Doc. 1</span>Decision letter</h3>
+        <button type="button" className="btn-secondary" onClick={handleCopy} aria-live="polite">
+          {copied ? <Check size={15} /> : <Copy size={15} />}
+          {copied ? "Copied" : "Copy text"}
         </button>
       </div>
-
-      <div className="rounded-xl p-5 mb-4" style={{ background: "var(--bg)", border: "1px solid var(--border)" }}>
-        <p className="text-xs font-semibold uppercase tracking-widest mb-3"
-          style={{ color: "var(--text-muted)" }}>Decision Letter</p>
-        <p className="text-sm leading-relaxed whitespace-pre-wrap"
-          style={{ color: "var(--text-secondary)", fontFamily: "Georgia, serif" }}>
-          {decisionEmail?.trim()}
-        </p>
+      <div className="email-meta">
+        <span className="status-line" data-tone="pass"><Check size={14} />Passed guardrails on attempt {tries} of 3</span>
+        {email.sent
+          ? <span className="status-line" data-tone="pass"><Mail size={14} />Sent to {email.recipient}</span>
+          : <span className="status-line" data-tone="warn"><Alert size={14} />Not delivered by email</span>}
       </div>
-
-      {marketingEmail && (
-        <div className="rounded-xl p-5"
-          style={{ background: "var(--accent-light)", border: "1px solid #C7DEFF" }}>
-          <p className="text-xs font-semibold uppercase tracking-widest mb-3"
-            style={{ color: "var(--accent)" }}>Personalized Offers</p>
-          <p className="text-sm leading-relaxed whitespace-pre-wrap"
-            style={{ color: "var(--text-secondary)" }}>
-            {marketingEmail?.trim()}
-          </p>
-        </div>
-      )}
-    </div>
+      <div className="letter">
+        <div className="letter-part">{letter.trim()}</div>
+        {offers && (
+          <div className="letter-part">
+            <h4>Personalised offers</h4>
+            {offers.trim()}
+          </div>
+        )}
+      </div>
+      <p className="caption">Written by gpt-4o-mini, then checked by rule-based guardrails before it could be sent.</p>
+    </section>
   )
 }
+
+export function Products({ marketing }) {
+  const list = marketing?.eligible_products
+  if (!list) return null
+  return (
+    <section className="block" aria-labelledby="prod-h">
+      <div className="block-head">
+        <h3 id="prod-h" className="block-title"><span className="fig">Table 2</span>Eligible products</h3>
+        <span className="block-meta">{marketing.product_count} matched by rules</span>
+      </div>
+      {list.length ? (
+        <ul className="products">
+          {list.map((p) => <li key={p}><Product size={18} />{p}</li>)}
+        </ul>
+      ) : (
+        <p className="caption" style={{ fontSize: 14.5 }}>No products match this profile under the eligibility rules.</p>
+      )}
+    </section>
+  )
+}
+
+export default EmailPreview

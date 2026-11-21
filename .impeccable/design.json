@@ -1,0 +1,630 @@
+{
+  "schemaVersion": 2,
+  "generatedAt": "2026-11-16T12:52:14+00:00",
+  "title": "Design System: LoanWise AI",
+  "extensions": {
+    "colorMeta": {
+      "ink": {
+        "role": "neutral",
+        "displayName": "Release Ink",
+        "canonical": "#17151C",
+        "tonalRamp": [
+          "#25232A",
+          "#3D3946",
+          "#575167",
+          "#716788",
+          "#8E86A2",
+          "#AFAABB",
+          "#CFCDD5",
+          "#F2F1F3"
+        ]
+      },
+      "ink-2": {
+        "role": "neutral",
+        "displayName": "Ink Two",
+        "canonical": "#3A3642",
+        "tonalRamp": [
+          "#252429",
+          "#3E3B44",
+          "#595464",
+          "#746C83",
+          "#918A9E",
+          "#B1ADB8",
+          "#D0CED4",
+          "#F2F2F3"
+        ]
+      },
+      "muted": {
+        "role": "neutral",
+        "displayName": "Muted Slate",
+        "canonical": "#5F5B68",
+        "tonalRamp": [
+          "#262528",
+          "#3F3D43",
+          "#5A5761",
+          "#757080",
+          "#918D9A",
+          "#B1AFB6",
+          "#D0CFD3",
+          "#F2F2F3"
+        ]
+      },
+      "ground": {
+        "role": "neutral",
+        "displayName": "Cool Ground",
+        "canonical": "#F4F4F2",
+        "tonalRamp": [
+          "#282824",
+          "#44443C",
+          "#626255",
+          "#82826E",
+          "#9C9C8C",
+          "#B7B7AE",
+          "#D4D4CF",
+          "#F3F3F2"
+        ]
+      },
+      "paper": {
+        "role": "neutral",
+        "displayName": "Paper",
+        "canonical": "#FBFBFA",
+        "tonalRamp": [
+          "#292924",
+          "#45453B",
+          "#646453",
+          "#85856B",
+          "#9F9F89",
+          "#B9B9AC",
+          "#D4D4CE",
+          "#F3F3F2"
+        ]
+      },
+      "white": {
+        "role": "neutral",
+        "displayName": "White",
+        "canonical": "#FFFFFF",
+        "tonalRamp": [
+          "#262626",
+          "#404040",
+          "#5C5C5C",
+          "#787878",
+          "#949494",
+          "#B2B2B2",
+          "#D1D1D1",
+          "#F2F2F2"
+        ]
+      },
+      "hair": {
+        "role": "neutral",
+        "displayName": "Hairline",
+        "canonical": "#DDDCD6",
+        "tonalRamp": [
+          "#282824",
+          "#44433B",
+          "#636155",
+          "#83806D",
+          "#9D9A8B",
+          "#B8B6AD",
+          "#D4D3CE",
+          "#F3F3F2"
+        ]
+      },
+      "hair-2": {
+        "role": "neutral",
+        "displayName": "Hairline Light",
+        "canonical": "#E8E7E2",
+        "tonalRamp": [
+          "#292824",
+          "#45433A",
+          "#656253",
+          "#85816A",
+          "#9F9B89",
+          "#B9B7AC",
+          "#D5D3CE",
+          "#F3F3F2"
+        ]
+      },
+      "grid": {
+        "role": "neutral",
+        "displayName": "Column Grid",
+        "canonical": "#EAE9E4",
+        "tonalRamp": [
+          "#292823",
+          "#46443A",
+          "#666252",
+          "#868269",
+          "#A09C88",
+          "#BAB7AB",
+          "#D5D4CD",
+          "#F3F3F1"
+        ]
+      },
+      "field": {
+        "role": "neutral",
+        "displayName": "Field Stroke",
+        "canonical": "#C9C7C0",
+        "tonalRamp": [
+          "#282724",
+          "#43423C",
+          "#625F56",
+          "#817D6F",
+          "#9B988C",
+          "#B7B5AE",
+          "#D3D2CF",
+          "#F3F3F2"
+        ]
+      },
+      "rail": {
+        "role": "secondary",
+        "displayName": "Violet Ink",
+        "canonical": "#2A1F4D",
+        "tonalRamp": [
+          "#211C30",
+          "#352C53",
+          "#4B3B7D",
+          "#5E46A9",
+          "#7E6ABE",
+          "#A599CC",
+          "#CAC4DE",
+          "#F1F0F5"
+        ]
+      },
+      "rail-2": {
+        "role": "secondary",
+        "displayName": "Rail Raised",
+        "canonical": "#362A60",
+        "tonalRamp": [
+          "#211D2F",
+          "#362E52",
+          "#4B3D7A",
+          "#5F4AA5",
+          "#7F6EBA",
+          "#A69BCA",
+          "#CBC5DD",
+          "#F1F0F5"
+        ]
+      },
+      "rail-line": {
+        "role": "secondary",
+        "displayName": "Rail Rule",
+        "canonical": "#4A3D78",
+        "tonalRamp": [
+          "#221F2E",
+          "#37314F",
+          "#4E4275",
+          "#63529E",
+          "#8274B4",
+          "#A89FC6",
+          "#CCC7DB",
+          "#F1F0F4"
+        ]
+      },
+      "rail-text": {
+        "role": "secondary",
+        "displayName": "Rail Text",
+        "canonical": "#E9E4FA",
+        "tonalRamp": [
+          "#1D1636",
+          "#2E2060",
+          "#3F2691",
+          "#4C28C8",
+          "#6F51D7",
+          "#9C89DC",
+          "#C6BDE6",
+          "#F0EEF7"
+        ]
+      },
+      "rail-muted": {
+        "role": "secondary",
+        "displayName": "Rail Muted",
+        "canonical": "#A99BD8",
+        "tonalRamp": [
+          "#211C31",
+          "#352B54",
+          "#493A7E",
+          "#5C45AB",
+          "#7D69BF",
+          "#A498CD",
+          "#CAC4DE",
+          "#F1EFF5"
+        ]
+      },
+      "violet": {
+        "role": "primary",
+        "displayName": "Release Violet",
+        "canonical": "#5B3FD0",
+        "tonalRamp": [
+          "#1D1835",
+          "#2F245C",
+          "#3F2D8B",
+          "#4D32BE",
+          "#7059CF",
+          "#9C8ED7",
+          "#C6BFE3",
+          "#F0EEF6"
+        ]
+      },
+      "violet-hover": {
+        "role": "primary",
+        "displayName": "Pressed Violet",
+        "canonical": "#4C33B8",
+        "tonalRamp": [
+          "#1E1934",
+          "#2F265A",
+          "#403088",
+          "#4F36B9",
+          "#715DCB",
+          "#9D91D4",
+          "#C7C0E2",
+          "#F0EFF6"
+        ]
+      },
+      "violet-tint": {
+        "role": "primary",
+        "displayName": "Violet Wash",
+        "canonical": "#ECE8FB",
+        "tonalRamp": [
+          "#1D1637",
+          "#2D1F60",
+          "#3C2592",
+          "#4926C9",
+          "#6C4FD9",
+          "#9A89DC",
+          "#C5BCE6",
+          "#F0EEF7"
+        ]
+      },
+      "pass": {
+        "role": "tertiary",
+        "displayName": "Pass Green",
+        "canonical": "#1F7A4D",
+        "tonalRamp": [
+          "#183426",
+          "#245B40",
+          "#2E8A5C",
+          "#33BD79",
+          "#5ACE95",
+          "#8FD6B3",
+          "#BFE3D1",
+          "#EEF6F2"
+        ]
+      },
+      "pass-tint": {
+        "role": "tertiary",
+        "displayName": "Pass Tint",
+        "canonical": "#E3F1E9",
+        "tonalRamp": [
+          "#1E2E25",
+          "#304F3E",
+          "#427658",
+          "#519E72",
+          "#73B48F",
+          "#9FC6B0",
+          "#C7DBD0",
+          "#F0F4F2"
+        ]
+      },
+      "pass-on-rail": {
+        "role": "tertiary",
+        "displayName": "Pass on Rail",
+        "canonical": "#7FD1A6",
+        "tonalRamp": [
+          "#1B3126",
+          "#2A563F",
+          "#37805A",
+          "#41AE75",
+          "#66C292",
+          "#96CFB1",
+          "#C3DFD0",
+          "#EFF5F2"
+        ]
+      },
+      "fail": {
+        "role": "tertiary",
+        "displayName": "Vermilion",
+        "canonical": "#C8321E",
+        "tonalRamp": [
+          "#381915",
+          "#62261E",
+          "#953022",
+          "#CE3622",
+          "#DC5D4C",
+          "#DF9186",
+          "#E7C0BB",
+          "#F7EFED"
+        ]
+      },
+      "fail-tint": {
+        "role": "tertiary",
+        "displayName": "Vermilion Tint",
+        "canonical": "#FBE7E3",
+        "tonalRamp": [
+          "#381A15",
+          "#62291D",
+          "#963522",
+          "#CF3E21",
+          "#DD634B",
+          "#DF9586",
+          "#E7C2BB",
+          "#F7EFED"
+        ]
+      },
+      "fail-on-rail": {
+        "role": "tertiary",
+        "displayName": "Vermilion on Rail",
+        "canonical": "#F49A88",
+        "tonalRamp": [
+          "#3A1913",
+          "#662619",
+          "#9C311B",
+          "#D83818",
+          "#E55E43",
+          "#E49181",
+          "#EAC1B8",
+          "#F8EFED"
+        ]
+      },
+      "warn": {
+        "role": "tertiary",
+        "displayName": "Ledger Amber",
+        "canonical": "#9A5B00",
+        "tonalRamp": [
+          "#3E2B0F",
+          "#6E4812",
+          "#A96A0E",
+          "#EC8D04",
+          "#F6A632",
+          "#EEBD77",
+          "#EFD7B3",
+          "#F9F3EC"
+        ]
+      },
+      "warn-tint": {
+        "role": "tertiary",
+        "displayName": "Amber Tint",
+        "canonical": "#FBF0DC",
+        "tonalRamp": [
+          "#392C14",
+          "#644A1B",
+          "#9A6E1E",
+          "#D4931C",
+          "#E2AA46",
+          "#E2C083",
+          "#E9D8B9",
+          "#F7F4ED"
+        ]
+      },
+      "warn-on-rail": {
+        "role": "tertiary",
+        "displayName": "Amber on Rail",
+        "canonical": "#F2C46B",
+        "tonalRamp": [
+          "#3A2D13",
+          "#674C19",
+          "#9D711B",
+          "#D99717",
+          "#E6AE42",
+          "#E5C280",
+          "#EAD9B8",
+          "#F8F4ED"
+        ]
+      }
+    },
+    "typographyMeta": {
+      "display": {
+        "displayName": "Verdict Display",
+        "purpose": "The verdict word only; condensed to 78% width."
+      },
+      "headline": {
+        "displayName": "Statement Headline",
+        "purpose": "Empty-state intro title and sign-in statement; condensed 84-88%."
+      },
+      "title": {
+        "displayName": "Page Title",
+        "purpose": "Form column page title."
+      },
+      "block-title": {
+        "displayName": "Block Title",
+        "purpose": "Result block headings after the violet figure number."
+      },
+      "figure": {
+        "displayName": "Figure",
+        "purpose": "Headline metrics and approval-rate figures in tabular numerals."
+      },
+      "body": {
+        "displayName": "Body",
+        "purpose": "Text and table cells; tabular figures throughout."
+      },
+      "label": {
+        "displayName": "Label",
+        "purpose": "Field labels, chip and secondary button text."
+      },
+      "caption": {
+        "displayName": "Caption",
+        "purpose": "Captions, hints, metadata in Muted Slate."
+      }
+    },
+    "shadows": [
+      {
+        "name": "focus-halo",
+        "value": "0 0 0 3px rgba(91, 63, 208, 0.18)",
+        "purpose": "Focused input or select. State signal, not elevation."
+      },
+      {
+        "name": "focus-halo-error",
+        "value": "0 0 0 3px rgba(200, 50, 30, 0.16)",
+        "purpose": "Focused invalid input."
+      }
+    ],
+    "motion": [
+      {
+        "name": "ease-out",
+        "value": "cubic-bezier(0.16, 1, 0.3, 1)",
+        "purpose": "Every authored motion: publish, bar growth, stage tone change."
+      },
+      {
+        "name": "publish",
+        "value": "700ms ease-out, stagger 120/220/320/420ms, translateY(10px) + clip-path inset(0 0 40% 0) to none",
+        "purpose": "The one authored moment: a decision publishes block by block."
+      },
+      {
+        "name": "bar-grow",
+        "value": "800-900ms ease-out on width",
+        "purpose": "SHAP bars and probability fill."
+      },
+      {
+        "name": "hover",
+        "value": "150ms",
+        "purpose": "Border and background hover transitions."
+      },
+      {
+        "name": "scan",
+        "value": "1.1s ease-out infinite scaleX 0 to 1",
+        "purpose": "1px running line under the active pipeline stage."
+      }
+    ],
+    "breakpoints": [
+      {
+        "name": "sm",
+        "value": "639px",
+        "purpose": "16px gutters, single-column fields, two-up metrics, no result grid."
+      },
+      {
+        "name": "md",
+        "value": "899px",
+        "purpose": "Form and result stack; sign-in panel stacks."
+      },
+      {
+        "name": "lg",
+        "value": "1279px",
+        "purpose": "Rail becomes a top band with a five-column stage strip."
+      },
+      {
+        "name": "xl",
+        "value": "1280px",
+        "purpose": "Sticky 264px rail, three-zone grid."
+      }
+    ]
+  },
+  "components": [
+    {
+      "name": "Primary Button",
+      "kind": "button",
+      "refersTo": "button-primary",
+      "description": "Full-width violet run action at the foot of the form; one per surface.",
+      "html": "<button class=\"ds-btn-primary\">Run decision pipeline <svg width=\"18\" height=\"18\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"1.75\" stroke-linecap=\"round\" stroke-linejoin=\"round\"><path d=\"M5 12h14\"/><path d=\"m13 6 6 6-6 6\"/></svg></button>",
+      "css": ".ds-btn-primary { font-family: var(--font, 'Archivo', ui-sans-serif, system-ui, sans-serif); width: 100%; max-width: 420px; height: 50px; display: flex; align-items: center; justify-content: space-between; padding: 0 18px; background: var(--violet, #5B3FD0); color: #fff; border: 0; border-radius: 3px; font-size: 15.5px; font-weight: 600; cursor: pointer; transition: background-color 150ms; } .ds-btn-primary svg { transition: transform 200ms cubic-bezier(0.16,1,0.3,1); } .ds-btn-primary:hover { background: var(--violet-hover, #4C33B8); } .ds-btn-primary:hover svg { transform: translateX(3px); } .ds-btn-primary:focus-visible { outline: 2px solid var(--violet, #5B3FD0); outline-offset: 2px; }"
+    },
+    {
+      "name": "Secondary Button",
+      "kind": "button",
+      "refersTo": "button-secondary",
+      "description": "Quiet utility action such as Copy text.",
+      "html": "<button class=\"ds-btn-secondary\">Copy text</button>",
+      "css": ".ds-btn-secondary { font-family: var(--font, 'Archivo', ui-sans-serif, system-ui, sans-serif); display: inline-flex; align-items: center; gap: 6px; background: #fff; color: var(--ink, #17151C); border: 1px solid var(--field, #C9C7C0); border-radius: 3px; padding: 7px 12px; font-size: 13.5px; font-weight: 500; cursor: pointer; transition: border-color 150ms; } .ds-btn-secondary:hover { border-color: var(--ink-2, #3A3642); } .ds-btn-secondary:focus-visible { outline: 2px solid var(--violet, #5B3FD0); outline-offset: 2px; }"
+    },
+    {
+      "name": "Sample Chip",
+      "kind": "chip",
+      "refersTo": "chip-sample",
+      "description": "Pill shortcut that fills the form with a sample applicant; the only pill shape.",
+      "html": "<button class=\"ds-chip\">Strong applicant</button>",
+      "css": ".ds-chip { font-family: var(--font, 'Archivo', ui-sans-serif, system-ui, sans-serif); background: #fff; color: var(--ink, #17151C); border: 1px solid var(--field, #C9C7C0); border-radius: 99px; padding: 5px 12px; font-size: 13px; font-weight: 500; cursor: pointer; transition: border-color 150ms, background-color 150ms; } .ds-chip:hover { border-color: var(--violet, #5B3FD0); background: var(--violet-tint, #ECE8FB); } .ds-chip:focus-visible { outline: 2px solid var(--violet, #5B3FD0); outline-offset: 2px; }"
+    },
+    {
+      "name": "Text Field",
+      "kind": "input",
+      "refersTo": "input",
+      "description": "42px white field with label, optional $ prefix, violet focus halo.",
+      "html": "<label class=\"ds-field\"><span class=\"ds-label\">Applicant income</span><span class=\"ds-wrap\"><span class=\"ds-pre\">$</span><input class=\"ds-input\" placeholder=\"e.g. 5000\"></span></label>",
+      "css": ".ds-field { font-family: var(--font, 'Archivo', ui-sans-serif, system-ui, sans-serif); display: block; max-width: 260px; } .ds-label { display: block; font-size: 13px; font-weight: 500; color: var(--ink-2, #3A3642); margin-bottom: 6px; } .ds-wrap { position: relative; display: flex; align-items: center; } .ds-pre { position: absolute; left: 12px; color: var(--muted, #5F5B68); font-size: 15px; } .ds-input { width: 100%; height: 42px; background: #fff; border: 1px solid var(--field, #C9C7C0); border-radius: 3px; padding: 0 12px 0 26px; font: inherit; font-size: 15px; color: var(--ink, #17151C); transition: border-color 150ms, box-shadow 150ms; } .ds-input::placeholder { color: #6B6775; font-style: italic; } .ds-input:hover { border-color: #A9A6B2; } .ds-input:focus { outline: none; border-color: var(--violet, #5B3FD0); box-shadow: 0 0 0 3px rgba(91,63,208,0.18); }"
+    },
+    {
+      "name": "Segmented Control",
+      "kind": "input",
+      "refersTo": "segmented-selected",
+      "description": "Single-strip radio group; selected option fills Violet Ink.",
+      "html": "<div class=\"ds-seg\"><label><input type=\"radio\" name=\"ds-e\" checked><span>Salaried</span></label><label><input type=\"radio\" name=\"ds-e\"><span>Self-employed</span></label></div>",
+      "css": ".ds-seg { font-family: var(--font, 'Archivo', ui-sans-serif, system-ui, sans-serif); display: flex; max-width: 360px; border: 1px solid var(--field, #C9C7C0); border-radius: 3px; background: #fff; min-height: 42px; } .ds-seg label { flex: 1; position: relative; display: flex; } .ds-seg label + label { border-left: 1px solid var(--field, #C9C7C0); } .ds-seg input { position: absolute; opacity: 0; inset: 0; margin: 0; cursor: pointer; } .ds-seg span { flex: 1; display: flex; align-items: center; justify-content: center; padding: 8px 6px; font-size: 14px; color: var(--ink-2, #3A3642); transition: background-color 150ms, color 150ms; } .ds-seg label:hover span { background: var(--violet-tint, #ECE8FB); } .ds-seg input:checked + span { background: var(--rail, #2A1F4D); color: #fff; font-weight: 500; } .ds-seg input:focus-visible + span { outline: 2px solid var(--violet, #5B3FD0); outline-offset: 2px; }"
+    },
+    {
+      "name": "Pipeline Index",
+      "kind": "nav",
+      "refersTo": "rail",
+      "description": "Rail table of contents; the deciding stage extends onto the page ground.",
+      "html": "<ol class=\"ds-pipe\"><li><span class=\"n\">01</span><span>Business rules<small>Income, cap, repayment</small></span><b class=\"pass\">Passed</b></li><li class=\"focus\"><span class=\"n\">02</span><span>Model + SHAP<small>XGBoost score, top factors</small></span><b class=\"pass\">84.2%</b></li><li><span class=\"n\">03</span><span>Fairness gate<small>Model-level audit</small></span><b class=\"pass\">Cleared</b></li></ol>",
+      "css": ".ds-pipe { font-family: var(--font, 'Archivo', ui-sans-serif, system-ui, sans-serif); list-style: none; margin: 0; padding: 0 24px; width: 264px; background: var(--rail, #2A1F4D); color: var(--rail-text, #E9E4FA); font-variant-numeric: tabular-nums; } .ds-pipe li { display: grid; grid-template-columns: 30px minmax(0,1fr) auto; gap: 4px; align-items: baseline; padding: 12px 0; border-bottom: 1px solid var(--rail-line, #4A3D78); font-size: 14px; transition: background-color 400ms; } .ds-pipe .n { color: var(--rail-muted, #A99BD8); font-size: 13px; font-weight: 500; } .ds-pipe small { display: block; font-size: 12px; color: var(--rail-muted, #A99BD8); margin-top: 2px; } .ds-pipe b { font-size: 13.5px; font-weight: 600; } .ds-pipe b.pass { color: var(--pass-on-rail, #7FD1A6); } .ds-pipe li.focus { background: var(--ground, #F4F4F2); color: var(--ink, #17151C); margin: 0 -24px 0 -12px; padding-left: 12px; padding-right: 24px; border-bottom-color: transparent; } .ds-pipe li.focus .n { color: var(--violet, #5B3FD0); } .ds-pipe li.focus small { color: var(--muted, #5F5B68); } .ds-pipe li.focus b.pass { color: var(--pass, #1F7A4D); }"
+    },
+    {
+      "name": "Block Head and Figure",
+      "kind": "card",
+      "refersTo": "block-title",
+      "description": "Ruled block opening: 2px ink rule, violet figure number, muted meta, caption.",
+      "html": "<section class=\"ds-block\"><div class=\"ds-head\"><h3><span>Fig. 1</span>What moved this decision</h3><em>Top 4 factors</em></div><div class=\"ds-row\"><span>Credit history</span><i class=\"ax\"><i class=\"pos\" style=\"width:45%\"></i></i><b class=\"pos\">+1.42</b></div><div class=\"ds-row\"><span>Income-to-loan ratio</span><i class=\"ax\"><i class=\"neg\" style=\"width:8%\"></i></i><b class=\"neg\">−0.19</b></div><p class=\"ds-cap\">TreeSHAP contributions in log-odds for this applicant.</p></section>",
+      "css": ".ds-block { font-family: var(--font, 'Archivo', ui-sans-serif, system-ui, sans-serif); max-width: 560px; color: var(--ink, #17151C); font-variant-numeric: tabular-nums; } .ds-head { border-top: 2px solid var(--ink, #17151C); padding-top: 10px; display: flex; justify-content: space-between; align-items: baseline; gap: 16px; } .ds-head h3 { margin: 0; font-size: 16px; font-weight: 700; letter-spacing: -0.005em; } .ds-head h3 span { color: var(--violet, #5B3FD0); margin-right: 10px; } .ds-head em { font-style: normal; font-size: 12.5px; color: var(--muted, #5F5B68); } .ds-row { display: grid; grid-template-columns: 160px minmax(0,1fr) 56px; gap: 16px; align-items: center; padding: 10px 0; border-bottom: 1px solid var(--hair, #DDDCD6); font-size: 14.5px; } .ds-row .ax { position: relative; height: 16px; display: block; } .ds-row .ax::before { content: ''; position: absolute; left: 50%; top: -10px; bottom: -10px; width: 1px; background: var(--ink, #17151C); } .ds-row .ax i { position: absolute; top: 2px; height: 12px; display: block; } .ds-row i.pos { left: 50%; background: var(--pass, #1F7A4D); } .ds-row i.neg { right: 50%; background: var(--fail, #C8321E); } .ds-row b { text-align: right; font-size: 14px; font-weight: 600; } .ds-row b.pos { color: var(--pass, #1F7A4D); } .ds-row b.neg { color: var(--fail, #C8321E); } .ds-cap { font-size: 12.5px; color: var(--muted, #5F5B68); margin: 10px 0 0; }"
+    },
+    {
+      "name": "Verdict",
+      "kind": "custom",
+      "refersTo": "display",
+      "description": "Condensed display verdict in its state colour beside a light probability figure and cut-off scale.",
+      "html": "<div class=\"ds-verdict\"><div class=\"line\"><h2>Approved</h2><p><b>84.2%</b><span>model approval probability</span></p></div><div class=\"scale\"><i class=\"tr\"></i><i class=\"fl\" style=\"width:84.2%\"></i><i class=\"cut\"></i></div></div>",
+      "css": ".ds-verdict { font-family: var(--font, 'Archivo', ui-sans-serif, system-ui, sans-serif); max-width: 620px; font-variant-numeric: tabular-nums; } .ds-verdict .line { display: flex; align-items: flex-end; gap: 12px 36px; flex-wrap: wrap; } .ds-verdict h2 { margin: 0; font-size: 96px; font-weight: 800; font-stretch: 78%; font-variation-settings: 'wdth' 78; letter-spacing: -0.035em; line-height: 0.86; color: var(--pass, #1F7A4D); } .ds-verdict p { margin: 0; padding-bottom: 6px; } .ds-verdict b { display: block; font-size: 44px; font-weight: 300; letter-spacing: -0.02em; line-height: 1; color: var(--ink, #17151C); } .ds-verdict span { font-size: 12.5px; color: var(--muted, #5F5B68); } .ds-verdict .scale { margin-top: 22px; position: relative; height: 26px; } .ds-verdict .scale i { position: absolute; display: block; } .ds-verdict .tr { top: 8px; left: 0; right: 0; height: 6px; background: var(--hair, #DDDCD6); } .ds-verdict .fl { top: 8px; left: 0; height: 6px; background: var(--pass, #1F7A4D); } .ds-verdict .cut { top: 2px; left: 50%; height: 18px; width: 1px; background: var(--ink, #17151C); }"
+    }
+  ],
+  "narrative": {
+    "northStar": "The Statistical Release",
+    "overview": "Every decision is published the way a central bank publishes an annual report: a numbered table of contents, ruled sections, captioned figures and tables, and numbers set in tabular figures so they can be audited down a column. The page is a document, not a dashboard. Structure comes from 2px ink rules and hairline rows on a cool off-white ground, never from boxed cards.\n\nA violet-ink rail holds the brand and the five-stage pipeline index; its right-hand \"page number\" column fills with each stage's result after a run, and the stage that decided the outcome extends out of the rail onto the page ground. The working area splits into a paper-white form column and a result column that carries a faint eight-column grid. The verdict word is the one moment of display scale; everything around it is restrained, dense and captioned.\n\nDensity is reading density: 15px body, 12.5px captions, generous rule-to-rule spacing (44px between blocks) rather than generous padding inside boxes. Colour carries state only. The one authored motion is the release \"publishing\" block by block.",
+    "keyCharacteristics": [
+      "Violet-ink rail plus one violet action colour on a cool off-white ground.",
+      "Single family (Archivo) using its width axis: condensed for display, normal for text.",
+      "Tabular numerals everywhere.",
+      "Sections headed by a 2px ink rule; rows divided by 1px hairlines.",
+      "Figures and tables numbered inline in their titles (\"Fig. 1\", \"Table 1\", \"Doc. 1\") with a muted caption beneath.",
+      "Flat: no cards, no badges, no elevation shadows.",
+      "Green, vermilion and amber appear only as decision or rule state."
+    ],
+    "rules": [
+      {
+        "name": "The State-Only Colour Rule",
+        "body": "Green, vermilion and amber mean pass, fail and review. They never decorate, and nothing else is coloured those hues.",
+        "section": "colors"
+      },
+      {
+        "name": "The One Violet Rule",
+        "body": "Release Violet marks what you can act on or follow (button, focus, link, figure number). Violet Ink is the shell. No third accent.",
+        "section": "colors"
+      },
+      {
+        "name": "The Tabular Rule",
+        "body": "Every number is set in tabular figures so columns align and can be audited.",
+        "section": "typography"
+      },
+      {
+        "name": "The Width-Axis Rule",
+        "body": "Hierarchy at the top end comes from condensing Archivo, not from adding a second family. Sentence case throughout; no uppercase tracking.",
+        "section": "typography"
+      },
+      {
+        "name": "The Ruled-Not-Boxed Rule",
+        "body": "A section is a 2px ink rule followed by a heading, not a card. Containers do not get backgrounds, borders on all sides, or shadows. The decision letter is the single bordered surface, because it represents a separate document.",
+        "section": "elevation"
+      }
+    ],
+    "dos": [
+      "Do head every section or block with a 2px ink rule (Release Ink) and divide rows with 1px Hairline.",
+      "Do number result figures and tables inline in the title (\"Fig. 1\", \"Table 1\", \"Doc. 1\") in Release Violet, and caption them in 12.5px Muted Slate.",
+      "Do set all numbers in tabular figures and right-align numeric columns.",
+      "Do reserve Pass Green, Vermilion and Ledger Amber for decision and rule state, using the on-rail variants on Violet Ink.",
+      "Do use the Archivo width axis for display hierarchy (verdict 78%, statements 84–88%).",
+      "Do keep the 3px radius on interactive controls and the single violet filled button per surface."
+    ],
+    "donts": [
+      "Don't use cards, badges, or soft drop shadows; this world refuses the white-card fintech dashboard.",
+      "Don't introduce a second typeface or uppercase tracked labels.",
+      "Don't colour anything green, red or amber unless it reports a state.",
+      "Don't add a second accent hue beside Release Violet and Violet Ink.",
+      "Don't box a block with a full border or background; the decision letter is the only bordered surface."
+    ]
+  }
+}

@@ -1,105 +1,133 @@
-export default function DecisionCard({ result }) {
-  const approved = result.decision === "APPROVED"
-  const review = result.status === "HUMAN_REVIEW"
-  const rejected = result.status === "REJECTED_BY_RULES"
-  const hasProbability = typeof result.probability === "number"
-  const maxImpact = Math.max(...(result.explanation || []).map(f => Math.abs(f.impact)), 1e-6)
+import { verdictOf } from "../pipeline"
 
-  const config = rejected
-    ? { bg: "var(--warning-light)", border: "var(--warning)", text: "var(--warning)", label: "REJECTED", accent: "card-accent-warning" }
-    : review
-      ? { bg: "#FFFBEB", border: "var(--warning)", text: "var(--warning)", label: "UNDER REVIEW", accent: "card-accent-warning" }
-      : approved
-        ? { bg: "var(--success-light)", border: "var(--success)", text: "var(--success)", label: "APPROVED", accent: "card-accent-green" }
-        : { bg: "var(--danger-light)", border: "var(--danger)", text: "var(--danger)", label: "DENIED", accent: "card-accent-red" }
+const THRESHOLD = 0.5
+
+export function Verdict({ result, applicant }) {
+  const v = verdictOf(result)
+  const hasProb = typeof result.probability === "number"
+  const pct = hasProb ? result.probability * 100 : null
+  const fill = v.tone === "pass" ? "var(--pass)" : v.tone === "fail" ? "var(--fail)" : "var(--warn)"
+  const time = result._at ? new Date(result._at).toLocaleString("en-GB", { day: "numeric", month: "short", hour: "2-digit", minute: "2-digit" }) : null
+  const version = result.bias_report?.model_version
 
   return (
-    <div className={`card ${config.accent} p-6`}>
-      <div className="flex items-start justify-between gap-4 flex-wrap">
-        <div>
-          <p className="text-xs font-semibold uppercase tracking-widest mb-2"
-            style={{ color: "var(--text-muted)" }}>Loan Decision</p>
-          <div className="flex items-center gap-3">
-            <div className="w-3 h-3 rounded-full"
-              style={{ background: config.text }} />
-            <span className="text-3xl font-bold" style={{ color: config.text, fontFamily: "'Playfair Display', serif" }}>
-              {config.label}
-            </span>
-          </div>
-          {result.message && (
-            <p className="mt-2 text-sm" style={{ color: "var(--text-secondary)" }}>
-              {result.message}
-            </p>
-          )}
-        </div>
-
-        {hasProbability && (
-          <div className="text-right">
-            <p className="text-xs font-semibold uppercase tracking-widest mb-2"
-              style={{ color: "var(--text-muted)" }}>Approval Probability</p>
-            <p className="text-3xl font-bold" style={{ color: config.text, fontFamily: "'Playfair Display', serif" }}>
-              {(result.probability * 100).toFixed(1)}%
-            </p>
-          </div>
+    <section className="block verdict" aria-labelledby="verdict-word">
+      <div className="masthead">
+        <span className="masthead-name">{applicant || "Application"}</span>
+        <span className="masthead-meta">
+          {result._runId ? `Run ${result._runId}` : null}
+          {time ? ` · ${time}` : null}
+          {version ? ` · ${version}` : null}
+        </span>
+      </div>
+      <div className="verdict-line">
+        <h2 id="verdict-word" className="verdict-word" data-tone={v.tone}>{v.word}</h2>
+        {hasProb && (
+          <p className="verdict-prob">
+            <b>{pct.toFixed(1)}%</b>
+            <span>model approval probability</span>
+          </p>
         )}
       </div>
-
-      {hasProbability && (
-        <div className="mt-5">
-          <div className="progress-bar">
-            <div className="progress-fill"
-              style={{ width: `${result.probability * 100}%`, background: config.text }} />
-          </div>
+      {hasProb && (
+        <div className="prob-scale" role="img"
+          aria-label={`Approval probability ${pct.toFixed(1)} percent against a 50 percent cut-off`}>
+          <span className="track" />
+          <span className="fill" style={{ width: `${pct}%`, background: fill }} />
+          <span className="cut" style={{ left: `${THRESHOLD * 100}%` }} />
+          <span className="cut-label" style={{ left: `${THRESHOLD * 100}%` }}>50% cut-off</span>
         </div>
       )}
-
-      {result.explanation?.length > 0 && (
-        <div className="mt-5 pt-5" style={{ borderTop: "1px solid var(--border)" }}>
-          <p className="text-xs font-semibold uppercase tracking-widest mb-1"
-            style={{ color: "var(--text-muted)" }}>
-            Key Factors
-          </p>
-          <p className="text-xs mb-3" style={{ color: "var(--text-muted)" }}>
-            What moved this decision most (SHAP contributions)
-          </p>
-          <ul className="space-y-2">
-            {result.explanation.map((f) => {
-              const positive = f.direction === "positive"
-              const width = Math.min(Math.abs(f.impact) / maxImpact * 100, 100)
-              return (
-                <li key={f.feature} className="flex items-center gap-3 text-sm">
-                  <span className="w-36 sm:w-48 shrink-0" style={{ color: "var(--text-secondary)" }}>{f.label}</span>
-                  <div className="flex-1 progress-bar">
-                    <div className="progress-fill"
-                      style={{ width: `${width}%`, background: positive ? "var(--success)" : "var(--danger)" }} />
-                  </div>
-                  <span className="w-20 text-right text-xs font-medium"
-                    style={{ color: positive ? "var(--success)" : "var(--danger)" }}>
-                    {positive ? "▲ helps" : "▼ hurts"}
-                  </span>
-                </li>
-              )
-            })}
-          </ul>
-        </div>
+      {result.message && <p className="verdict-msg">{result.message}</p>}
+      {!result.message && v.tone === "pass" && (
+        <p className="verdict-msg">Passed the business rules, scored above the cut-off, and the deployed model is cleared by its fairness audit.</p>
       )}
+      {!result.message && v.tone === "fail" && v.by === "model" && (
+        <p className="verdict-msg">Passed the business rules but scored below the cut-off. The factors below show what pulled it down.</p>
+      )}
+    </section>
+  )
+}
 
-      {result.marketing?.eligible_products?.length > 0 && (
-        <div className="mt-5 pt-5" style={{ borderTop: "1px solid var(--border)" }}>
-          <p className="text-xs font-semibold uppercase tracking-widest mb-3"
-            style={{ color: "var(--text-muted)" }}>
-            Eligible Products ({result.marketing.product_count})
-          </p>
-          <div className="flex flex-wrap gap-2">
-            {result.marketing.eligible_products.map((p, i) => (
-              <span key={i} className="text-xs px-3 py-1 rounded-full font-medium"
-                style={{ background: "var(--accent-light)", color: "var(--accent)", border: "1px solid #C7DEFF" }}>
-                {p}
+const RULES = [
+  { key: "income", label: "Combined monthly income", limit: "at least $500", match: "minimum combined monthly income" },
+  { key: "positive", label: "Loan amount", limit: "greater than zero", match: "greater than zero" },
+  { key: "cap", label: "Loan amount cap", limit: "at most $10,000,000", match: "maximum loan" },
+  { key: "dti", label: "Repayment-to-income (before interest)", limit: "at most 60%", match: "debt-to-income" },
+]
+
+// Shown when stage 01 stopped the application: which rule failed, and what never ran.
+export function RulesTable({ message }) {
+  const msg = (message || "").toLowerCase()
+  const failed = RULES.findIndex((r) => msg.includes(r.match))
+  return (
+    <section className="block" aria-labelledby="rules-h">
+      <div className="block-head">
+        <h3 id="rules-h" className="block-title"><span className="fig">Table 1</span>Business rules</h3>
+        <span className="block-meta">Checked in order before the model</span>
+      </div>
+      <table className="table">
+        <thead>
+          <tr><th scope="col">Rule</th><th scope="col">Requirement</th><th scope="col" className="num">Result</th></tr>
+        </thead>
+        <tbody>
+          {RULES.map((r, i) => {
+            const state = failed === -1 ? "—" : i < failed ? "Passed" : i === failed ? "Failed" : "Not checked"
+            const color = state === "Passed" ? "var(--pass)" : state === "Failed" ? "var(--fail)" : "var(--muted)"
+            return (
+              <tr key={r.key}>
+                <td>{r.label}</td>
+                <td style={{ color: "var(--muted)" }}>{r.limit}</td>
+                <td className="num" style={{ color, fontWeight: state === "Failed" ? 600 : 400 }}>{state}</td>
+              </tr>
+            )
+          })}
+        </tbody>
+      </table>
+      <p className="caption">
+        Clearly ineligible applications stop here. The model never scored this one, so there are no factors,
+        no fairness check and no letter. The application is still stored.
+      </p>
+    </section>
+  )
+}
+
+export function Factors({ explanation }) {
+  if (!explanation?.length) return null
+  const max = Math.max(...explanation.map((f) => Math.abs(f.impact)), 1e-6)
+
+  return (
+    <section className="block" aria-labelledby="fig1">
+      <div className="block-head">
+        <h3 id="fig1" className="block-title"><span className="fig">Fig. 1</span>What moved this decision</h3>
+        <span className="block-meta">Top {explanation.length} factors</span>
+      </div>
+      <ul className="shap">
+        {explanation.map((f) => {
+          const pos = f.direction === "positive"
+          const w = (Math.abs(f.impact) / max) * 50
+          return (
+            <li key={f.feature} className="shap-row">
+              <span>{f.label}</span>
+              <span className="shap-axis" aria-hidden="true">
+                <span className={`shap-bar ${pos ? "pos" : "neg"}`} style={{ width: `${w}%` }} />
               </span>
-            ))}
-          </div>
-        </div>
-      )}
-    </div>
+              <span className={`shap-val ${pos ? "pos" : "neg"}`}>
+                <span className="sr-only">{pos ? "helps approval" : "hurts approval"}, </span>
+                {pos ? "+" : "−"}{Math.abs(f.impact).toFixed(2)}
+              </span>
+            </li>
+          )
+        })}
+      </ul>
+      <div className="shap-legend" aria-hidden="true">
+        <span />
+        <div><span>← hurts approval</span><span>helps approval →</span></div>
+        <span />
+      </div>
+      <p className="caption">
+        TreeSHAP contributions in log-odds for this applicant, computed by XGBoost. Bars are scaled to the largest factor.
+      </p>
+    </section>
   )
 }
