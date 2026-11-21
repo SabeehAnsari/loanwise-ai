@@ -42,7 +42,10 @@ def save_application(user_id: str, user_email: str,
         "email_attempts": email.get("attempts"),
         "email_body": email.get("body"),
         "eligible_products": marketing.get("eligible_products", []),
-        "product_count": marketing.get("product_count", 0)
+        "product_count": marketing.get("product_count", 0),
+        # Added later; see docs/supabase_schema.sql for the migration
+        "explanation": result.get("explanation") or [],
+        "message": result.get("message"),
     }
 
     # Act as the signed-in user so row-level security applies
@@ -54,13 +57,27 @@ def save_application(user_id: str, user_email: str,
     }
 
     with httpx.Client() as client:
-        response = client.post(
-            f"{SUPABASE_URL}/rest/v1/applications",
-            headers=headers,
-            json=record
-        )
+        response = _insert(client, headers, record)
+        if response.status_code == 400 and _missing_new_columns(response):
+            # Database not migrated yet: save without the newer columns
+            # rather than losing the application.
+            legacy = {k: v for k, v in record.items() if k not in NEW_COLUMNS}
+            response = _insert(client, headers, legacy)
         response.raise_for_status()
-        return response.json()[0] if response.json() else {}
+        rows = response.json()
+        return rows[0] if rows else {}
+
+
+NEW_COLUMNS = ("explanation", "message")
+
+
+def _insert(client: httpx.Client, headers: dict, record: dict) -> httpx.Response:
+    return client.post(f"{SUPABASE_URL}/rest/v1/applications", headers=headers, json=record)
+
+
+def _missing_new_columns(response: httpx.Response) -> bool:
+    text = response.text
+    return any(f"'{col}'" in text for col in NEW_COLUMNS)
 
 
 def get_user_applications(user_id: str, user_token: str) -> list:

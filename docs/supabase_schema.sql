@@ -30,8 +30,14 @@ create table if not exists public.applications (
   email_attempts     int,
   email_body         text,
   eligible_products  jsonb not null default '[]'::jsonb,
-  product_count      int   not null default 0
+  product_count      int   not null default 0,
+  explanation        jsonb not null default '[]'::jsonb,  -- SHAP factors shown in the UI
+  message            text                                  -- rule-rejection / review reason
 );
+
+-- Migration for databases created before explanation/message existed:
+alter table public.applications add column if not exists explanation jsonb not null default '[]'::jsonb;
+alter table public.applications add column if not exists message text;
 
 -- Row Level Security: users can only create and read their own applications.
 alter table public.applications enable row level security;

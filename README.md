@@ -16,11 +16,11 @@
 ## Screenshots
 
 <p align="center">
-  <img src="docs/screenshots/application-and-decision.png" width="48%" alt="Pipeline strip with each stage's result, the grouped application form, and an approved verdict with its SHAP factors (Fig. 1) and the fairness audit (Table 1)" />
-  <img src="docs/screenshots/fairness-and-email.png" width="48%" alt="Live repayment-to-income check on the form, group approval rates, and the guardrail-checked decision letter with personalised offers" />
+  <img src="docs/screenshots/landing.png" width="48%" alt="Landing page: headline, real model figures, and a five-stage switcher over a sample decision sheet with its SHAP factors" />
+  <img src="docs/screenshots/app-first-run.png" width="48%" alt="The app on first sign-in: sidebar with navigation and the five-stage pipeline, the grouped application form, and the first-run walkthrough with sample applicants" />
 </p>
 
-The interface presents each decision like a statistical release: the five pipeline stages are numbered and fill in with their results, the verdict leads, and the evidence follows as numbered exhibits (Fig. 1 SHAP factors, Table 1 fairness audit, Doc. 1 decision letter, Table 2 eligible products).
+The app has a public landing page, sign-in, and a signed-in workspace with three pages: **New decision** (form plus the result, with the sidebar pipeline lighting the stage that decided the outcome), **History** (every saved run, filterable, each opening as its own decision page) and **Model & fairness** (the model card, baselines, inputs, business rules and the fairness audit). The visual system ("Glass & Light") is documented in [`DESIGN.md`](DESIGN.md).
 
 ## Overview
 
@@ -29,7 +29,7 @@ A user signs in, submits a loan application, and the backend runs it through a m
 ## Features
 
 - **Full stack web app**: responsive React 19 + Vite + Tailwind CSS UI with email/password authentication (Supabase Auth, JWT-based sessions).
-- **Explainable interface**: a pipeline rail shows which stage passed, failed or was skipped (and the one that decided the outcome); SHAP factors are drawn as a diverging bar chart; the fairness audit shows each gap with its 95% CI against the limit; rule rejections show which business rule failed. One-click sample applicants, a live repayment-to-income check, and a model card (loaded from `/model`) before the first run. Design records live in [`PRODUCT.md`](PRODUCT.md) and [`DESIGN.md`](DESIGN.md).
+- **Explainable interface**: a sidebar pipeline shows which stage passed, failed or was skipped and lights the one that decided the outcome; SHAP factors are drawn as a diverging bar chart; the fairness audit shows each gap with its 95% CI against the limit; rule rejections show which business rule failed. One-click sample applicants (with a first-run walkthrough), a live repayment-to-income check, a decision history with per-decision pages, and a public landing page and model card built from `GET /model`. Design records live in [`PRODUCT.md`](PRODUCT.md) and [`DESIGN.md`](DESIGN.md).
 - **Typed REST API**: FastAPI with range-checked Pydantic validation and auto-generated OpenAPI docs at `/docs`.
 - **Secured API**: protected endpoints verify the user's Supabase JWT server-side, CORS is restricted to configured origins, `/predict` is rate-limited per IP, and LLM output is HTML-escaped before it is emailed.
 - **Rigorous model evaluation**: seven candidates, including majority-class and credit-history-rule baselines, compared with repeated stratified cross-validation. Preprocessing is fitted inside each fold to avoid leakage.
@@ -40,7 +40,7 @@ A user signs in, submits a loan application, and the backend runs it through a m
 - **LLM email generation with guardrails**: GPT-generated decision emails are validated (no invented rates or payment amounts, the correct decision stated without contradiction, length, required signature) and regenerated up to 3 times before escalating to human review.
 - **Product recommendations**: eligibility is decided by deterministic rules; the LLM only writes the recommendation text.
 - **Persistence**: every application, including rule rejections and human-review cases, is stored in Supabase (PostgreSQL) under row-level security.
-- **Tested**: 69 pytest tests (rules, guardrails, feature parity between training and serving, scoring invariants, end-to-end API with all external services stubbed) run in GitHub Actions together with frontend lint and build.
+- **Tested**: 73 pytest tests (rules, guardrails, feature parity between training and serving, scoring invariants, persistence, end-to-end API with all external services stubbed) run in GitHub Actions together with frontend lint and build.
 
 ## Architecture
 
@@ -134,12 +134,15 @@ Every point estimate fell after the protected attributes were removed. The inter
 │   ├── loan_model.json        # Deployed XGBoost model (portable JSON, no pickle)
 │   └── model_report.json      # CV metrics + fairness audit for the deployed model
 ├── tests/                     # pytest suite (no network access needed)
-├── frontend/                  # React + Vite + Tailwind UI
+├── frontend/                  # React + Vite + Tailwind UI (React Router)
 │   ├── src/index.css          # Design tokens and component styles
+│   ├── src/pages/             # Landing, AuthPage, NewDecision, History,
+│   │                          # DecisionDetail, ModelPage, NotFound
+│   ├── src/components/        # AppShell (sidebar + pipeline), LoanForm, ResultView,
+│   │                          # DecisionCard, BiasReport, EmailPreview, Icons
+│   ├── src/lib/               # API client, auth context, record mapping, samples
 │   ├── src/pipeline.js        # Maps an API response to the five pipeline stages
-│   ├── src/useModelReport.js  # Loads the public model card from /model
-│   └── src/components/        # PipelineRail, LoanForm, ResultPanel, DecisionCard,
-│                              # BiasReport, EmailPreview, Login, Icons
+│   └── src/useModelReport.js  # Public model card from /model (with a published fallback)
 ├── PRODUCT.md, DESIGN.md      # Product context and the UI design system
 ├── notebooks/                 # 01–02 EDA/preprocessing, 03 original training (superseded),
 │                              # 04–06 agent development, 07 evaluation + final model
@@ -171,6 +174,8 @@ cp frontend/.env.example frontend/.env.local
 
 Run [`docs/supabase_schema.sql`](docs/supabase_schema.sql) in the Supabase SQL editor to create the `applications` table and Row Level Security policies.
 
+Already have the table from an earlier version? Run the two `alter table … add column if not exists` lines at the end of that file, so each application also stores its SHAP factors and rejection message for the decision pages. Until you do, applications still save, just without those two fields.
+
 ### 3. Run the backend
 
 ```bash
@@ -192,7 +197,7 @@ npm install
 npm run dev
 ```
 
-Open the URL Vite prints (default http://localhost:5173), create an account, and submit an application.
+Open the URL Vite prints (default http://localhost:5173). The landing page is public; **Try the demo** creates an account and runs a sample applicant. The app uses client-side routes (`/app/new`, `/app/history`, `/app/decisions/:id`, `/app/model`), so a static host must rewrite unknown paths to `index.html`.
 
 ### 5. Run the tests
 
@@ -285,9 +290,9 @@ This is a learning project, and these limitations are deliberate to state:
 - [x] Persist human-review and rule-rejected cases
 - [x] Per-applicant explanations (TreeSHAP) and a stronger evaluation protocol (repeated CV with baselines)
 - [x] Remove protected attributes from the model and audit on out-of-fold predictions
-- [x] UI redesign: pipeline rail, numbered exhibits, rule-rejection and human-review states, sample applicants
+- [x] UI redesign: landing page, sign-in, app shell with sidebar pipeline, rule-rejection and human-review states, sample applicants
+- [x] Application history page with per-decision pages
 - [ ] Vitest tests for the UI
-- [ ] Application history page (the `/applications` endpoint already exists)
 - [ ] Dockerfile and docker-compose for one-command setup
 - [ ] Deployment (frontend + API) with a live demo link
 

@@ -104,3 +104,16 @@ def test_database_failure_does_not_fail_the_request(client, application, monkeyp
 
 def test_cannot_read_another_users_applications(client):
     assert client.get("/applications/someone-else").status_code == 403
+
+
+def test_saved_application_id_is_returned(client, application, monkeypatch):
+    monkeypatch.setattr(main, "save_application", lambda **kw: {"id": "app-42"})
+    body = client.post("/predict", json=application).json()
+    assert body["application_id"] == "app-42"
+
+
+def test_application_id_is_none_when_save_fails(client, application, monkeypatch):
+    def boom(**kw):
+        raise RuntimeError("db down")
+    monkeypatch.setattr(main, "save_application", boom)
+    assert client.post("/predict", json=application).json()["application_id"] is None

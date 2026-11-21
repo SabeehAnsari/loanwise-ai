@@ -1,287 +1,342 @@
 ---
 name: LoanWise AI
-description: Explained, audited loan decisions, published like an official statistical release.
+description: Explained, audited loan decisions that float as frosted layers over a porcelain ground.
 colors:
-  ink: "#17151C"
-  ink-2: "#3A3642"
-  muted: "#5F5B68"
-  ground: "#F4F4F2"
-  paper: "#FBFBFA"
+  ink: "#0E1116"
+  ink-hover: "#262B33"
+  ink-2: "#3B4350"
+  muted: "#5B6472"
+  faint: "#7A8391"
+  ground: "#F3F5F8"
+  ground-2: "#EBEEF3"
   white: "#FFFFFF"
-  hair: "#DDDCD6"
-  hair-2: "#E8E7E2"
-  grid: "#EAE9E4"
-  field: "#C9C7C0"
-  rail: "#2A1F4D"
-  rail-2: "#362A60"
-  rail-line: "#4A3D78"
-  rail-text: "#E9E4FA"
-  rail-muted: "#A99BD8"
-  violet: "#5B3FD0"
-  violet-hover: "#4C33B8"
-  violet-tint: "#ECE8FB"
-  pass: "#1F7A4D"
-  pass-tint: "#E3F1E9"
-  pass-on-rail: "#7FD1A6"
-  fail: "#C8321E"
-  fail-tint: "#FBE7E3"
-  fail-on-rail: "#F49A88"
-  warn: "#9A5B00"
-  warn-tint: "#FBF0DC"
-  warn-on-rail: "#F2C46B"
+  line: "rgba(14, 17, 22, 0.08)"
+  line-2: "rgba(14, 17, 22, 0.14)"
+  field-line: "rgba(14, 17, 22, 0.16)"
+  hover: "rgba(14, 17, 22, 0.04)"
+  glass: "rgba(255, 255, 255, 0.55)"
+  glass-hi: "rgba(255, 255, 255, 0.68)"
+  glass-edge: "rgba(255, 255, 255, 0.92)"
+  pass: "#177A4C"
+  pass-tint: "#E4F2EA"
+  fail: "#C23B26"
+  fail-tint: "#FBE9E5"
+  warn: "#8F5600"
+  warn-tint: "#FBF0DD"
 typography:
   display:
-    fontFamily: "Archivo, ui-sans-serif, system-ui, sans-serif"
-    fontSize: "clamp(52px, 15cqi, 116px)"
-    fontWeight: 800
-    lineHeight: 0.86
-    letterSpacing: "-0.035em"
-    fontVariation: "'wdth' 78"
+    fontFamily: "Geist, ui-sans-serif, system-ui, -apple-system, Segoe UI, sans-serif"
+    fontSize: "clamp(52px, 13cqi, 112px)"
+    fontWeight: 650
+    lineHeight: 0.9
+    letterSpacing: "-0.055em"
+    fontFeature: "'tnum' 1, 'ss01' 1"
   headline:
-    fontFamily: "Archivo, ui-sans-serif, system-ui, sans-serif"
-    fontSize: "clamp(30px, 3.2vw, 42px)"
-    fontWeight: 700
-    lineHeight: 1.05
-    letterSpacing: "-0.025em"
-    fontVariation: "'wdth' 88"
+    fontFamily: "Geist, ui-sans-serif, system-ui, -apple-system, Segoe UI, sans-serif"
+    fontSize: "clamp(40px, 4.6vw, 64px)"
+    fontWeight: 600
+    lineHeight: 0.98
+    letterSpacing: "-0.05em"
+  section:
+    fontFamily: "Geist, ui-sans-serif, system-ui, -apple-system, Segoe UI, sans-serif"
+    fontSize: "clamp(32px, 3.6vw, 48px)"
+    fontWeight: 600
+    lineHeight: 1.04
+    letterSpacing: "-0.045em"
   title:
-    fontFamily: "Archivo, ui-sans-serif, system-ui, sans-serif"
+    fontFamily: "Geist, ui-sans-serif, system-ui, -apple-system, Segoe UI, sans-serif"
     fontSize: "30px"
-    fontWeight: 700
+    fontWeight: 600
     lineHeight: 1.15
-    letterSpacing: "-0.02em"
-  block-title:
-    fontFamily: "Archivo, ui-sans-serif, system-ui, sans-serif"
-    fontSize: "16px"
-    fontWeight: 700
-    letterSpacing: "-0.005em"
+    letterSpacing: "-0.03em"
   figure:
-    fontFamily: "Archivo, ui-sans-serif, system-ui, sans-serif"
-    fontSize: "34px"
-    fontWeight: 400
-    lineHeight: 1.1
-    letterSpacing: "-0.02em"
+    fontFamily: "Geist, ui-sans-serif, system-ui, -apple-system, Segoe UI, sans-serif"
+    fontSize: "clamp(28px, 5.4cqi, 44px)"
+    fontWeight: 300
+    lineHeight: 1
+    letterSpacing: "-0.035em"
     fontFeature: "'tnum' 1"
+  block-title:
+    fontFamily: "Geist, ui-sans-serif, system-ui, -apple-system, Segoe UI, sans-serif"
+    fontSize: "15px"
+    fontWeight: 600
+    letterSpacing: "-0.01em"
   body:
-    fontFamily: "Archivo, ui-sans-serif, system-ui, sans-serif"
+    fontFamily: "Geist, ui-sans-serif, system-ui, -apple-system, Segoe UI, sans-serif"
     fontSize: "15px"
     fontWeight: 400
     lineHeight: 1.5
-    fontFeature: "'tnum' 1"
-  label:
-    fontFamily: "Archivo, ui-sans-serif, system-ui, sans-serif"
-    fontSize: "13px"
-    fontWeight: 500
-  caption:
-    fontFamily: "Archivo, ui-sans-serif, system-ui, sans-serif"
-    fontSize: "12.5px"
+    fontFeature: "'tnum' 1, 'ss01' 1"
+  lede:
+    fontFamily: "Geist, ui-sans-serif, system-ui, -apple-system, Segoe UI, sans-serif"
+    fontSize: "18.5px"
     fontWeight: 400
+    lineHeight: 1.55
+  label:
+    fontFamily: "Geist, ui-sans-serif, system-ui, -apple-system, Segoe UI, sans-serif"
+    fontSize: "12.5px"
+    fontWeight: 500
 rounded:
-  base: "3px"
-  pill: "99px"
+  sm: "8px"
+  md: "10px"
+  lg: "16px"
+  xl: "22px"
+  full: "99px"
 spacing:
-  xs: "6px"
-  sm: "10px"
+  xs: "4px"
+  sm: "8px"
   md: "16px"
-  lg: "28px"
-  xl: "44px"
-  gutter: "36px"
+  lg: "24px"
+  xl: "32px"
+  2xl: "48px"
+  3xl: "96px"
 components:
   button-primary:
-    backgroundColor: "{colors.violet}"
+    backgroundColor: "{colors.ink}"
     textColor: "{colors.white}"
-    rounded: "{rounded.base}"
-    height: "50px"
-    padding: "0 18px"
+    typography: "{typography.body}"
+    rounded: "{rounded.md}"
+    padding: "0 16px"
+    height: "40px"
   button-primary-hover:
-    backgroundColor: "{colors.violet-hover}"
-  button-secondary:
-    backgroundColor: "{colors.white}"
+    backgroundColor: "{colors.ink-hover}"
+  button-primary-lg:
+    backgroundColor: "{colors.ink}"
+    textColor: "{colors.white}"
+    rounded: "12px"
+    padding: "0 22px"
+    height: "52px"
+  button-glass:
+    backgroundColor: "rgba(255, 255, 255, 0.7)"
     textColor: "{colors.ink}"
-    rounded: "{rounded.base}"
-    padding: "7px 12px"
-  button-rail:
-    backgroundColor: "{colors.rail}"
-    textColor: "{colors.rail-text}"
-    rounded: "{rounded.base}"
-    padding: "7px 10px"
-  button-rail-hover:
-    backgroundColor: "{colors.rail-2}"
-  chip-sample:
+    rounded: "{rounded.md}"
+    padding: "0 16px"
+    height: "40px"
+  button-glass-hover:
     backgroundColor: "{colors.white}"
-    textColor: "{colors.ink}"
-    rounded: "{rounded.pill}"
-    padding: "5px 12px"
-  chip-sample-hover:
-    backgroundColor: "{colors.violet-tint}"
+  button-quiet:
+    backgroundColor: "transparent"
+    textColor: "{colors.ink-2}"
+    rounded: "{rounded.md}"
+    padding: "0 16px"
+    height: "40px"
   input:
     backgroundColor: "{colors.white}"
     textColor: "{colors.ink}"
-    rounded: "{rounded.base}"
-    height: "42px"
+    rounded: "{rounded.md}"
     padding: "0 12px"
-  segmented-selected:
-    backgroundColor: "{colors.rail}"
-    textColor: "{colors.white}"
     height: "42px"
-  rail:
-    backgroundColor: "{colors.rail}"
-    textColor: "{colors.rail-text}"
+  segment-selected:
+    backgroundColor: "{colors.white}"
+    textColor: "{colors.ink}"
+    rounded: "7px"
+    padding: "7px 6px"
+  chip:
+    backgroundColor: "rgba(255, 255, 255, 0.7)"
+    textColor: "{colors.ink}"
+    rounded: "{rounded.full}"
+    padding: "6px 12px"
+  status-pass:
+    backgroundColor: "{colors.pass-tint}"
+    textColor: "{colors.pass}"
+    rounded: "{rounded.full}"
+    padding: "4px 10px"
+  status-fail:
+    backgroundColor: "{colors.fail-tint}"
+    textColor: "{colors.fail}"
+    rounded: "{rounded.full}"
+    padding: "4px 10px"
+  status-warn:
+    backgroundColor: "{colors.warn-tint}"
+    textColor: "{colors.warn}"
+    rounded: "{rounded.full}"
+    padding: "4px 10px"
+  sheet:
+    backgroundColor: "{colors.glass-hi}"
+    rounded: "{rounded.xl}"
+    padding: "4px 32px"
+  sidebar:
+    backgroundColor: "{colors.glass}"
+    rounded: "{rounded.xl}"
+    padding: "18px 14px 14px"
     width: "264px"
+  nav-item-active:
+    backgroundColor: "{colors.white}"
+    textColor: "{colors.ink}"
+    rounded: "{rounded.md}"
+    padding: "9px 10px"
+  pipeline-stage-lit:
+    backgroundColor: "{colors.white}"
+    textColor: "{colors.ink}"
+    rounded: "{rounded.md}"
+    padding: "8px 10px"
 ---
 
 # Design System: LoanWise AI
 
 ## Overview
 
-**Creative North Star: "The Statistical Release"**
+**Creative North Star: "Glass & Light"**
 
-Every decision is published the way a central bank publishes an annual report: a numbered table of contents, ruled sections, captioned figures and tables, and numbers set in tabular figures so they can be audited down a column. The page is a document, not a dashboard. Structure comes from 2px ink rules and hairline rows on a cool off-white ground, never from boxed cards.
+A calm, light product where the decision pipeline and each decision float as frosted layers over a porcelain ground, and only the element that is working carries light. The ground is a cool near-white (`ground`) washed by soft white and blue-grey light fields painted on the page canvas, so every glass plane always has something to frost. On top of it sit at most three translucent planes per screen: a sidebar or floating nav, a form sheet, and one result sheet. Everything else is type, hairlines and white space laid directly on those planes or on the ground.
 
-A violet-ink rail holds the brand and the five-stage pipeline index; its right-hand "page number" column fills with each stage's result after a run, and the stage that decided the outcome extends out of the rail onto the page ground. The working area splits into a paper-white form column and a result column that carries a faint eight-column grid. The verdict word is the one moment of display scale; everything around it is restrained, dense and captioned.
+Type and actions are graphite. Colour is withheld for meaning: green, red and amber appear only where something passed, failed, needs a person, or pushed a score up or down. The result is an operating instrument rather than a fintech poster: dense enough to show rules, SHAP factors, a fairness audit and the decision letter in one sheet, quiet enough that the verdict word, set larger than anything else on the screen, is read first.
 
-Density is reading density: 15px body, 12.5px captions, generous rule-to-rule spacing (44px between blocks) rather than generous padding inside boxes. Colour carries state only. The one authored motion is the release "publishing" block by block.
+This world replaced the earlier violet "Statistical Release" world in full; nothing from the violet rail or Archivo type carries forward. It refuses the violet/navy AI-fintech look, the dark-neon AI look, and the white-card SaaS dashboard grid.
 
 **Key Characteristics:**
-- Violet-ink rail plus one violet action colour on a cool off-white ground.
-- Single family (Archivo) using its width axis: condensed for display, normal for text.
-- Tabular numerals everywhere.
-- Sections headed by a 2px ink rule; rows divided by 1px hairlines.
-- Figures and tables numbered inline in their titles ("Fig. 1", "Table 1", "Doc. 1") with a muted caption beneath.
-- Flat: no cards, no badges, no elevation shadows.
-- Green, vermilion and amber appear only as decision or rule state.
+- Porcelain ground with radial light fields on `html`; body stays transparent.
+- Frosted white glass (55% and 68% white, 22px blur with 1.4 saturation, near-white hairline edge, inset top highlight, soft neutral shadow), on two or three planes only.
+- Graphite ink for type, primary buttons, selected states and focus rings.
+- Geist as the only family, tabular figures everywhere.
+- Hairline-divided sections inside one sheet, never stacked cards.
+- The verdict word lands from blur at display scale; one authored moment per run.
 
 ## Colors
 
-A near-monochrome document palette: ink on cool paper, a deep violet shell, one saturated violet for action, and three state colours.
+A graphite-on-porcelain neutral system with three state colours and no brand accent.
 
 ### Primary
-- **Release Violet** (violet): the single action and identity accent. Primary button, focus outline, caret, text selection, links, figure numbers ("Fig. 1"), product list icons, the focused stage number. Hover deepens to **Pressed Violet** (violet-hover); **Violet Wash** (violet-tint) is the hover fill for chips and segmented options.
-
-### Secondary
-- **Violet Ink** (rail): the shell. Pipeline rail, sign-in statement panel, the browser theme colour, and the selected state of segmented controls, which ties form choices back to the pipeline. **Rail Raised** (rail-2) is the rail button hover; **Rail Rule** (rail-line) divides rail rows; **Rail Text** (rail-text) and **Rail Muted** (rail-muted) are the two text levels on the rail.
-
-### Tertiary (state only)
-- **Pass Green** (pass), **Vermilion** (fail), **Ledger Amber** (warn): verdict word, probability fill, SHAP bars and values, rule results, status lines, alert rules, the ratio-over-limit warning and CI limit markers. Each has an on-rail variant (pass-on-rail, fail-on-rail, warn-on-rail) for stage values on the violet rail, and a tint defined for future fills.
+- **Graphite Ink** (ink): all headings and body-strong text, the primary button, the selected nav item's icon, the decision-cut marker, avatars, step numbers, text selection and every focus outline and ring. Graphite, not a hue, is the action colour.
+- **Graphite Lift** (ink-hover): hover on the primary button only.
 
 ### Neutral
-- **Release Ink** (ink): body text, 2px section rules, chart axes and CI points.
-- **Ink Two** (ink-2): secondary text, field labels, ratio fill, CI whiskers.
-- **Muted Slate** (muted): captions, hints, metadata, table headers.
-- **Cool Ground** (ground): page background; also the fill of the focused stage that extends out of the rail.
-- **Paper** (paper): form column and sign-in form side.
-- **White** (white): field, chip and letter interiors.
-- **Hairline** (hair) and **Hairline Light** (hair-2): row dividers, tracks, skeleton shimmer.
-- **Column Grid** (grid): the faint vertical grid lines behind the result column.
-- **Field Stroke** (field): input, select, chip and segmented-control borders.
+- **Porcelain Ground** (ground): the page base under the light fields; also the `theme-color`.
+- **Porcelain Shade** (ground-2): the secondary ground tone.
+- **Paper White** (white): the lit surfaces: text fields, the selected segment, the active nav item, the lit pipeline stage, the decision letter.
+- **Slate Two** (ink-2): secondary text, ledes, form labels, letter body, unselected segment text.
+- **Slate Muted** (muted): captions, metadata, table headers, field hints, affixes, nav icons at rest.
+- **Slate Faint** (faint): stage numbers, skipped stages, the grey second clause of the landing headline, row chevrons.
+- **Hairline** (line, 8% graphite): dividers between sections, table rows and list rows.
+- **Hairline Strong** (line-2, 14% graphite): glass-button and chip borders, tracks of scales and ratios, the SHAP zero axis, section rules on the Model page ground.
+- **Field Edge** (field-line, 16% graphite): text field and select borders at rest.
+- **Hover Wash** (hover, 4% graphite): hover fill for quiet buttons, nav items and icon buttons; inline code background.
+- **Frost** (glass) and **Bright Frost** (glass-hi): the two glass fills, for sidebar/nav/strips and for work sheets respectively. **Frost Edge** (glass-edge) is their 1px border.
+
+### State
+- **Pass Green** (pass) with **Pass Tint** (pass-tint): approved verdicts, passed rules, cleared audits, positive SHAP bars and values, success alerts.
+- **Fail Red** (fail) with **Fail Tint** (fail-tint): denied verdicts, the rule that stopped an application, negative SHAP bars and values, the fairness limit line, field errors, an over-limit repayment ratio.
+- **Warn Amber** (warn) with **Warn Tint** (warn-tint): human review and anything that hands the decision to a person.
 
 ### Named Rules
-**The State-Only Colour Rule.** Green, vermilion and amber mean pass, fail and review. They never decorate, and nothing else is coloured those hues.
+**The State-Only Rule.** Green, red and amber encode state and direction only (pass/fail/review, helps/hurts). They never decorate, never mark a primary action, and never tint a plane. Primary actions are graphite.
 
-**The One Violet Rule.** Release Violet marks what you can act on or follow (button, focus, link, figure number). Violet Ink is the shell. No third accent.
+**The No-Accent Rule.** There is no brand hue. A new screen that needs emphasis gets it from scale, weight, white light or graphite, not from a new colour.
 
 ## Typography
 
-**Display Font:** Archivo (variable, wdth 62–125, wght 300–800), with ui-sans-serif, system-ui fallback
-**Body Font:** Archivo
-**Label/Mono Font:** Archivo; no mono. Numbers use tabular figures set on `body`.
+**Display Font:** Geist (with ui-sans-serif, system-ui, -apple-system, Segoe UI, sans-serif)
+**Body Font:** Geist
+**Label/Mono Font:** Geist; `ui-monospace` only for inline code.
 
-**Character:** One grotesque doing every job, with the width axis as the hierarchy device: condensed and heavy for the verdict and statements, normal width for reading. Swiss-report plain, never decorative.
+**Character:** One neo-grotesque family carries the whole system through weight (300 to 650) and tracking, tightening hard as size grows. Body text runs with tabular figures and stylistic set 01 on, so every probability, gap and amount aligns in columns.
 
 ### Hierarchy
-- **Display** (800, clamp(52px, 15cqi, 116px), 0.86, condensed to 78% width): the verdict word only ("Approved", "Declined", "Review").
-- **Headline** (700, clamp(30px, 3.2vw, 42px), 1.05, 88% width): empty-state intro title; the sign-in statement uses the same voice at clamp(34px, 3.6vw, 54px), 84% width.
-- **Title** (700, 30px, 1.15): page title in the form column.
-- **Block title** (700, 16px): result block headings, preceded by the violet figure number. Form section titles use 14px/700.
-- **Figure** (400, 26–34px, light tracking): headline metrics, approval-rate figures, sign-in figures; the verdict probability goes lighter still (300, up to 54px).
-- **Body** (400, 15px, 1.5): text and table cells (14.5px in tables and SHAP rows); lede and verdict message at 15.5px, max 60–62ch.
-- **Label** (500, 13px): field labels, chip and secondary button text.
-- **Caption** (400, 12.5px, Muted Slate): captions (max 70ch), hints, metadata, notes.
+- **Display** (650, clamp(52px, 13cqi, 112px), 0.9, -0.055em): the verdict word only (Approved, Denied, Human review), coloured by state. Sized to its container, so it scales with the result sheet.
+- **Headline** (600, clamp(40px, 4.6vw, 64px), 0.98, -0.05em): the landing hero headline; its second clause drops to Slate Faint.
+- **Section** (600, clamp(32px, 3.6vw, 48px), 1.04, -0.045em): landing band headings; the closing band uses a smaller clamp(28px, 3.2vw, 42px).
+- **Title** (600, 30px, 1.15, -0.03em): app page titles (New decision, History). Auth card titles use 28px.
+- **Figure** (300, clamp(28px, 5.4cqi, 44px), 1, -0.035em): the probability beside the verdict. Light weight keeps the number subordinate to the word. Smaller figures (approval rates, hero facts) sit at 26px, 400 to 500.
+- **Block title** (600, 15px, -0.01em): the heading of each hairline section inside a sheet (What moved this decision, Fairness audit, Decision letter). Form section titles use 14px.
+- **Body** (400, 15px, 1.5): default text; tables and lists run at 14.5px. Measure caps at 64 to 72ch.
+- **Lede** (400, 18.5px, 1.55): landing intro, max 48ch.
+- **Label** (500, 12.5px to 13px): field labels, captions, metadata, table headers. Sentence case, no tracking, never uppercase.
 
 ### Named Rules
-**The Tabular Rule.** Every number is set in tabular figures so columns align and can be audited.
+**The Verdict-First Rule.** The verdict word is the largest type on any screen where it appears. Nothing else in that viewport, not the page title or a figure, may match it.
 
-**The Width-Axis Rule.** Hierarchy at the top end comes from condensing Archivo, not from adding a second family. Sentence case throughout; no uppercase tracking.
+**The One Family Rule.** Geist is the only family. Hierarchy comes from size, weight and negative tracking, not from a second face.
+
+**The Tabular Rule.** Figures are always tabular (`font-variant-numeric: tabular-nums`) so numbers in tables, scales and the pipeline align.
 
 ## Layout
 
-Desktop (1280px and up): a three-zone grid. Sticky 264px violet rail, then a workspace split into a form column (minmax(400px, 500px), paper, 36px gutters, hairline right border) and a result column (36px / 48px padding, content capped at 820px, an inline-size container so the verdict scales with the column). The result column carries a faint eight-column grid (1px Column Grid lines every 12.5%) clipped to its content box.
+The app is a two-column grid: a 264px sticky glass sidebar inset 16px from the viewport edge, then a work area padded 28px 36px 64px. On New decision the work area splits into a form sheet (minmax(400px, 500px)) and a fluid result column with a 24px gap; Decision detail pairs the result sheet with a 300px Application sheet. History and Model use the full work width.
 
-Vertical rhythm: 28px between form sections, 44px between result blocks, 10px from a rule to its heading, 14px from heading to content, 16px × 18px field grid gaps in a two-column field grid.
+The landing page is a 1296px container with 24px gutters (16px on phones), a floating glass nav sticky 16px from the top, a two-column hero (0.92fr / 1.08fr, 56px gap), and bands spaced 96px apart (64px on phones). Evidence bands split 0.8fr / 1.2fr.
 
-Below 1280px the rail becomes a top band: brand and account in one row, the five stages as a five-column strip divided by vertical rail rules, stage descriptions hidden. The workspace narrows to minmax(360px, 440px) for the form. Below 900px the form and result stack; the sign-in panel stacks over the form. Below 640px gutters drop to 16px, fields go single-column, metric grids go to two columns, the result grid background and CI plot column are removed.
+Spacing sits on an 8px grid with a 4px half-step: 8 between chips and controls, 16 between related groups, 24 between sheets and in sheet padding, 32 for large sheet padding, 48 to 96 between landing bands. Results stack as blocks with 26px vertical padding, each divided from the next by a hairline.
+
+Breakpoints: below 1200px the workspace, detail and hero go single-column; below 1024px the sidebar becomes a sticky top bar (brand, icon-only nav, a horizontal stage strip showing short stage names, the lit stage keeping its value); below 760px the landing nav drops its links, form fields go single-column, figure grids go to two columns and sheet padding tightens to 18px.
+
+### Named Rules
+**The Three-Planes Rule.** At most three glass planes per screen: the sidebar (or landing nav), the form sheet, and one result sheet. A fourth surface means content belongs on an existing plane as a hairline section, or on the ground.
+
+**The Sections-Not-Cards Rule.** Inside a sheet, content is split into sections by 1px hairlines, never into nested cards. The Model page lays its sections directly on the ground with stronger hairlines (line-2) and no sheet at all.
 
 ## Elevation & Depth
 
-Flat. There are no elevation shadows anywhere. Depth is expressed by tone (violet rail against cool ground against paper columns against white fields) and by rule weight (2px ink rule over 1px hairline). The only box-shadow in the system is the 3px focus halo on inputs, a state signal rather than elevation.
+Depth comes from translucency and blur first, shadow second. Each glass plane frosts the light fields behind it, carries a 1px near-white edge and an inset 1px white highlight along its top, and casts a soft, wide, neutral shadow. Lit elements on a plane (active nav item, lit stage, selected segment, selected demo tab) are opaque white with a small lift shadow; that white is what "light" means in this system.
 
 ### Shadow Vocabulary
-- **Focus halo** (`box-shadow: 0 0 0 3px rgba(91, 63, 208, 0.18)`): focused input or select. Error variant `0 0 0 3px rgba(200, 50, 30, 0.16)`.
+- **Plane low** (`box-shadow: inset 0 1px 0 rgba(255,255,255,0.95), 0 1px 2px rgba(14,17,22,0.04), 0 8px 24px rgba(14,17,22,0.05)`): sidebar, landing nav, stage strip, closing band.
+- **Plane high** (`box-shadow: inset 0 1px 0 rgba(255,255,255,0.95), 0 2px 6px rgba(14,17,22,0.04), 0 24px 60px rgba(14,17,22,0.10)`): work sheets (form, result, panels, auth card).
+- **Lit chip** (`box-shadow: inset 0 0 0 1px <state at 35%>, 0 4px 14px rgba(14,17,22,0.08)`): the lit pipeline stage and the selected landing demo tab; the inset ring takes the stage's state colour.
+- **Selected control** (`box-shadow: 0 1px 2px rgba(14,17,22,0.08), 0 2px 8px rgba(14,17,22,0.06)`): the checked segment. The active nav item uses the same family (0.06 / 0.05).
+- **Focus ring** (`box-shadow: 0 0 0 3px rgba(14,17,22,0.14)`): focused fields; invalid fields switch to a red 16% ring. Everything else focuses with a 2px graphite outline offset 2px.
 
 ### Named Rules
-**The Ruled-Not-Boxed Rule.** A section is a 2px ink rule followed by a heading, not a card. Containers do not get backgrounds, borders on all sides, or shadows. The decision letter is the single bordered surface, because it represents a separate document.
+**The Only-What-Works Rule.** Only the active or deciding pipeline stage carries light: a white raised chip with a state-coloured inset ring. Every other stage stays flat on the glass with a coloured value at most. While a run is in flight, the light walks the stages in order with a white sweep.
 
 ## Shapes
 
-Square-shouldered. One small radius (3px) on buttons, inputs, selects and segmented controls; the brand mark uses 4px. Sample chips are the only pill (99px). Chart marks are hard rectangles (SHAP bars, probability fill, ratio track); CI points are the only circles. Lines carry the form: 2px rules, 1px hairlines, 1px axes, a dashed vermilion limit line.
+Soft, consistent corners scaled to the surface: 8px on small icon buttons and inline nav links, 10px on buttons, fields, segmented controls, nav items and stages, 12px on large buttons, 16px on the decision letter, the account card and the mobile top bar, 22px on every glass plane, 28px on the landing closing band. Chips, tags, status pills and the avatar are fully round. Borders are always 1px hairlines; tracks and bars are 4 to 6px tall with fully rounded ends.
 
 ## Components
 
 ### Buttons
-Plain and confident; one filled button per surface.
-- **Shape:** gently squared (3px).
-- **Primary:** full-width Release Violet bar, 50px tall, white 15.5px/600 label left-aligned with an arrow icon right-aligned (space-between), 0 18px padding.
-- **Hover / Focus:** background to Pressed Violet; arrow nudges 3px right (200ms ease-out). Disabled while running uses a lightened violet and progress cursor. Focus is the global 2px violet outline at 2px offset.
-- **Secondary:** white with Field Stroke border, 13.5px/500, 7px 12px; hover darkens border to Ink Two (e.g. "Copy text").
-- **Rail:** transparent on the rail with Rail Rule border, Rail Text label; hover fills Rail Raised. Focus outline switches to Rail Text.
-- **Link button:** violet 600 text, 1px underline at 3px offset.
+Quiet and solid; graphite carries intent.
+- **Shape:** gently rounded (10px), 40px tall, 16px side padding, 14px weight 550 label; large variant 52px tall, 12px radius, 16px label.
+- **Primary:** graphite fill, white label; hover lifts to Graphite Lift; disabled turns Slate Muted with a progress cursor.
+- **Glass:** 70% white with a Hairline Strong border; hover goes fully white with a darker border. Used for secondary actions (Read the model card, Try again, Copy text).
+- **Quiet:** transparent, Slate Two label, Hover Wash on hover.
+- **Press:** every button drops 1px on `:active`; a trailing arrow icon nudges 3px right on hover.
 
-### Chips
-- **Style:** sample-application shortcuts only. White pill, Field Stroke border, 13px/500 ink text, 5px 12px.
-- **State:** hover turns border violet and fill Violet Wash.
+### Chips and Status
+- **Sample chips:** fully round, 70% white, Hairline Strong border, 13px label with an optional muted hint line; hover goes white.
+- **Status pills:** fully round, 13px weight 550, state colour on its tint (Passed, Cleared, Human review); neutral skip state uses Slate Muted on Hover Wash.
+- **Tags:** fully round 75% white with a Hairline border; a struck-through muted variant marks excluded inputs.
 
-### Cards / Containers
-There are no cards. Blocks are introduced by a block head: 2px ink top rule, 10px padding, title left (violet figure number + 16px/700 title) and muted meta right, followed by content and a 12.5px muted caption. Form groups use the same 2px rule on a fieldset with a 14px title and optional right-aligned note.
+### Cards / Containers (Sheets)
+- **Corner Style:** 22px.
+- **Background:** Bright Frost with 22px blur and 1.4 saturation.
+- **Shadow Strategy:** Plane high (see Elevation).
+- **Border:** 1px Frost Edge.
+- **Internal Padding:** 24px for form and panel sheets; the result sheet pads 32px sideways and lets each hairline block carry 26px vertical padding.
 
 ### Inputs / Fields
-- **Style:** 42px, white, 1px Field Stroke, 3px radius, 15px ink text; italic placeholder; muted "$" prefix and unit suffix sit inside the field.
-- **Focus:** border to Release Violet plus the focus halo.
-- **Error:** vermilion border and halo; error text 12.5px vermilion with an alert icon. Hint text 12.5px muted below.
-- **Select:** same box with an inline chevron.
-- **Segmented control:** a single bordered strip of equal options split by 1px Field Stroke; hover fills Violet Wash; selected fills Violet Ink with white 500 text.
+- **Style:** white fill, 1px Field Edge border, 10px radius, 42px tall, 12px padding, 15px text; currency prefixes and unit suffixes sit inside the field in Slate Muted.
+- **Focus:** border turns graphite with the 3px graphite focus ring.
+- **Error:** red border and red ring; the message sits below in 12.5px red with an alert icon.
+- **Segmented control:** 5% graphite trough, 3px inset, 10px radius; the checked option becomes a white chip with the selected-control shadow and weight 550. Used for every small enumerated choice instead of selects.
 
 ### Navigation
-The pipeline rail is the navigation and the table of contents. "Pipeline" heading over a 2px Rail Text rule, then numbered rows (01–05, Rail Muted number, stage name, 12px description, right-aligned value) divided by Rail Rule hairlines. Values colour by state with the on-rail variants. While running, a 1px scan line sweeps under the current row. Account and sign-out sit at the rail foot with the educational disclaimer.
+- **App sidebar:** glass plane with brand, three nav items (17px icon plus 14.5px label), the pipeline, then a disclaimer and the account card pinned to the bottom. Active item is a white raised chip in graphite at weight 550; hover is Hover Wash. Below 1024px it becomes a top bar with icon-only nav and a horizontal stage strip.
+- **Landing nav:** a floating glass bar, 58px tall, 16px radius, sticky 16px from the top, with brand, anchor links, a quiet Sign in and a graphite Try the demo.
 
-### Pipeline Index (signature)
-After a run, the stage that decided the outcome extends out of the rail onto the page: its row fills Cool Ground, bleeds 24px into the workspace edge, its number turns violet and its value takes the full-strength state colour. This is the hinge between the rail and the release.
+### Pipeline (signature)
+Five numbered stages (Business rules, Model + SHAP, Fairness gate, Email guardrails, Products), each a three-column row of number, name and a state-coloured value. Only the deciding stage, or the running stage during a request, is lit (see The Only-What-Works Rule). The landing demo strip reuses the same light as a tablist: selecting a stage swaps the sheet below to that stage's evidence.
 
-### Verdict and Figures (signature)
-- **Masthead:** applicant name left, run id, timestamp and model version right, between a 2px ink rule and a hairline.
-- **Verdict:** the condensed display word in its state colour beside a light-weight probability figure; beneath, a 6px probability track with a state-coloured fill and a 1px ink cut-off tick labelled "50% cut-off".
-- **Fig. 1 diverging bars:** centred 1px ink axis, green bars right, vermilion bars left, signed values right-aligned in tabular figures, hairline rows, a "← hurts / helps →" legend and a caption.
-- **Tables:** muted 12.5px headers over a 1px ink rule, hairline rows, right-aligned numeric columns; CI plots as whisker-and-point with a dashed vermilion limit.
-- **Figure strips:** four-up metric figures over a hairline, each with a muted label and n.
-
-### Notice and Alert
-Inline, ruled not boxed: a 2px top rule in the state colour, icon and text, no fill.
-
-### Motion
-One authored moment: a decision publishes block by block (700ms ease-out cubic-bezier(0.16, 1, 0.3, 1), staggered 120–420ms, rising 10px and unclipping). Bars and fills grow on the same ease (800–900ms). Hover transitions 150ms. Everything collapses under reduced motion.
+### Verdict and decision sheet (signature)
+A masthead line (applicant in graphite, timestamp and model version in muted), then the verdict word at display scale in its state colour with the light-weight probability beside it, a 6px probability scale with a graphite 50% cut marker, and a one-paragraph reason. Below it, hairline sections: SHAP factors as diverging bars (green right, red left of a centre axis, values right-aligned in state colour), the fairness audit table with confidence-interval plots against a dashed red limit, the decision letter on a white 16px paper inset, and eligible products. When a run publishes, the sheet's sections land from blur in sequence (800ms, ease-out-expo, 14px rise, 10px blur, 60 to 90ms stagger). Reduced motion removes it.
 
 ## Do's and Don'ts
 
 ### Do:
-- **Do** head every section or block with a 2px ink rule (Release Ink) and divide rows with 1px Hairline.
-- **Do** number result figures and tables inline in the title ("Fig. 1", "Table 1", "Doc. 1") in Release Violet, and caption them in 12.5px Muted Slate.
-- **Do** set all numbers in tabular figures and right-align numeric columns.
-- **Do** reserve Pass Green, Vermilion and Ledger Amber for decision and rule state, using the on-rail variants on Violet Ink.
-- **Do** use the Archivo width axis for display hierarchy (verdict 78%, statements 84–88%).
-- **Do** keep the 3px radius on interactive controls and the single violet filled button per surface.
+- **Do** keep every screen to three glass planes at most: sidebar or nav, form sheet, one result sheet.
+- **Do** split results into hairline-divided sections inside one sheet, and lay the Model page directly on the ground with Hairline Strong rules.
+- **Do** light only the active or deciding pipeline stage: a white raised chip with an inset ring in its state colour.
+- **Do** make the verdict word the largest type on any screen it appears on.
+- **Do** use graphite (#0E1116) for primary actions, selected states and focus.
+- **Do** reserve pass green #177A4C, fail red #C23B26 and warn amber #8F5600 for state and direction.
+- **Do** set everything in Geist with tabular figures, and space on the 8px grid.
+- **Do** use the shared 1.75-stroke SVG icon set for every directional or status glyph.
 
 ### Don't:
-- **Don't** use cards, badges, or soft drop shadows; this world refuses the white-card fintech dashboard.
-- **Don't** introduce a second typeface or uppercase tracked labels.
-- **Don't** colour anything green, red or amber unless it reports a state.
-- **Don't** add a second accent hue beside Release Violet and Violet Ink.
-- **Don't** box a block with a full border or background; the decision letter is the only bordered surface.
+- **Don't** put eyebrows or kickers above headings; headings stand alone.
+- **Don't** use the hero-metric template (one giant number with a small label as the page's centrepiece).
+- **Don't** nest cards inside sheets or stack results as separate cards.
+- **Don't** use Unicode arrows or symbols in place of icons.
+- **Don't** introduce a brand hue; the violet rail of the replaced world is gone.
+- **Don't** add a second type family or uppercase tracked labels.
+- **Don't** tint glass planes with state colour; state lives in text, bars, rings and pills.

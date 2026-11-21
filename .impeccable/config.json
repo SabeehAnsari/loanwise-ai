@@ -101,6 +101,186 @@
         ],
         "createdAt": "2026-11-16T12:53:06.988Z",
         "reason": "assistant decided: unchosen decision-round sketch in another direction's fonts, not shipping UI"
+      },
+      {
+        "rule": "design-system-font",
+        "value": "*",
+        "files": [
+          ".impeccable/mocks/decision/world2/assigned.html"
+        ],
+        "createdAt": "2026-11-21T13:04:01.288Z",
+        "reason": "assistant decided: direction-round sketch, drawn as a skeleton thumbnail; not shipping UI"
+      },
+      {
+        "rule": "low-contrast",
+        "value": "*",
+        "files": [
+          ".impeccable/mocks/decision/world2/assigned.html"
+        ],
+        "createdAt": "2026-11-21T13:04:01.413Z",
+        "reason": "assistant decided: direction-round sketch, drawn as a skeleton thumbnail; not shipping UI"
+      },
+      {
+        "rule": "design-system-font",
+        "value": "*",
+        "files": [
+          ".impeccable/mocks/decision/world2/model-pick.html"
+        ],
+        "createdAt": "2026-11-21T13:04:01.537Z",
+        "reason": "assistant decided: direction-round sketch, drawn as a skeleton thumbnail; not shipping UI"
+      },
+      {
+        "rule": "low-contrast",
+        "value": "*",
+        "files": [
+          ".impeccable/mocks/decision/world2/model-pick.html"
+        ],
+        "createdAt": "2026-11-21T13:04:01.655Z",
+        "reason": "assistant decided: direction-round sketch, drawn as a skeleton thumbnail; not shipping UI"
+      },
+      {
+        "rule": "design-system-font",
+        "value": "*",
+        "files": [
+          ".impeccable/mocks/decision/world2/ch-steps.html"
+        ],
+        "createdAt": "2026-11-21T13:04:01.783Z",
+        "reason": "assistant decided: direction-round sketch, drawn as a skeleton thumbnail; not shipping UI"
+      },
+      {
+        "rule": "low-contrast",
+        "value": "*",
+        "files": [
+          ".impeccable/mocks/decision/world2/ch-steps.html"
+        ],
+        "createdAt": "2026-11-21T13:04:01.908Z",
+        "reason": "assistant decided: direction-round sketch, drawn as a skeleton thumbnail; not shipping UI"
+      },
+      {
+        "rule": "design-system-font",
+        "value": "*",
+        "files": [
+          ".impeccable/mocks/decision/world2/canon.html"
+        ],
+        "createdAt": "2026-11-21T13:04:02.034Z",
+        "reason": "assistant decided: direction-round sketch, drawn as a skeleton thumbnail; not shipping UI"
+      },
+      {
+        "rule": "low-contrast",
+        "value": "*",
+        "files": [
+          ".impeccable/mocks/decision/world2/canon.html"
+        ],
+        "createdAt": "2026-11-21T13:04:02.150Z",
+        "reason": "assistant decided: direction-round sketch, drawn as a skeleton thumbnail; not shipping UI"
+      },
+      {
+        "rule": "cramped-padding",
+        "value": "*",
+        "files": [
+          ".impeccable/mocks/decision/landing/evidence-first.html"
+        ],
+        "createdAt": "2026-11-21T13:21:42.309Z",
+        "reason": "assistant decided: unchosen landing-structure sketch, not shipping UI"
+      },
+      {
+        "rule": "skipped-heading",
+        "value": "*",
+        "files": [
+          ".impeccable/mocks/decision/landing/evidence-first.html"
+        ],
+        "createdAt": "2026-11-21T13:21:42.457Z",
+        "reason": "assistant decided: unchosen landing-structure sketch, not shipping UI"
+      },
+      {
+        "rule": "cramped-padding",
+        "value": "*",
+        "files": [
+          ".impeccable/mocks/decision/landing/pipeline-walk.html"
+        ],
+        "createdAt": "2026-11-21T13:21:42.618Z",
+        "reason": "assistant decided: unchosen landing-structure sketch, not shipping UI"
+      },
+      {
+        "rule": "skipped-heading",
+        "value": "*",
+        "files": [
+          ".impeccable/mocks/decision/landing/pipeline-walk.html"
+        ],
+        "createdAt": "2026-11-21T13:21:42.771Z",
+        "reason": "assistant decided: unchosen landing-structure sketch, not shipping UI"
+      },
+      {
+        "rule": "cramped-padding",
+        "value": "*",
+        "files": [
+          ".impeccable/mocks/decision/landing/annotated-release.html"
+        ],
+        "createdAt": "2026-11-21T13:21:42.929Z",
+        "reason": "assistant decided: unchosen landing-structure sketch, not shipping UI"
+      },
+      {
+        "rule": "skipped-heading",
+        "value": "*",
+        "files": [
+          ".impeccable/mocks/decision/landing/annotated-release.html"
+        ],
+        "createdAt": "2026-11-21T13:21:43.093Z",
+        "reason": "assistant decided: unchosen landing-structure sketch, not shipping UI"
+      },
+      {
+        "rule": "cramped-padding",
+        "value": "*",
+        "files": [
+          ".impeccable/mocks/decision/landing/five-questions.html"
+        ],
+        "createdAt": "2026-11-21T13:21:43.255Z",
+        "reason": "assistant decided: unchosen landing-structure sketch, not shipping UI"
+      },
+      {
+        "rule": "skipped-heading",
+        "value": "*",
+        "files": [
+          ".impeccable/mocks/decision/landing/five-questions.html"
+        ],
+        "createdAt": "2026-11-21T13:21:43.413Z",
+        "reason": "assistant decided: unchosen landing-structure sketch, not shipping UI"
+      },
+      {
+        "rule": "cramped-padding",
+        "value": "*",
+        "files": [
+          ".impeccable/mocks/decision/landing/report-cover.html"
+        ],
+        "createdAt": "2026-11-21T13:21:43.589Z",
+        "reason": "assistant decided: unchosen landing-structure sketch, not shipping UI"
+      },
+      {
+        "rule": "skipped-heading",
+        "value": "*",
+        "files": [
+          ".impeccable/mocks/decision/landing/report-cover.html"
+        ],
+        "createdAt": "2026-11-21T13:21:43.750Z",
+        "reason": "assistant decided: unchosen landing-structure sketch, not shipping UI"
+      },
+      {
+        "rule": "cramped-padding",
+        "value": "*",
+        "files": [
+          ".impeccable/mocks/decision/landing/signup-hero.html"
+        ],
+        "createdAt": "2026-11-21T13:21:43.909Z",
+        "reason": "assistant decided: unchosen landing-structure sketch, not shipping UI"
+      },
+      {
+        "rule": "skipped-heading",
+        "value": "*",
+        "files": [
+          ".impeccable/mocks/decision/landing/signup-hero.html"
+        ],
+        "createdAt": "2026-11-21T13:21:44.081Z",
+        "reason": "assistant decided: unchosen landing-structure sketch, not shipping UI"
       }
     ]
   }

@@ -30,16 +30,18 @@ The interesting part is not "AI approves loans". It is that every automated deci
 
 - Gender and marital status are collected for fairness monitoring only and are not model inputs. The UI must keep saying so.
 - Loan amount is entered in thousands. Client-side checks: DTI ≤ 60%, income ≥ 500.
-- The redesign changes the frontend only; the API contract stays the same.
-- Not for real lending decisions (educational project). No history page exists yet.
+- Frontend-led product. Small, backward-compatible backend changes are allowed when a UI need requires them (e.g. storing SHAP factors and the rejection message with each application, returning `application_id` from `/predict`).
+- Users can review their past applications (`GET /applications/{user_id}`); runs saved before the factors column existed have no stored SHAP factors.
+- Public, unauthenticated surfaces: the landing page and `GET /model`. `/predict` and history require a Supabase session.
+- Not for real lending decisions (educational project).
 
 ## Brand Commitments
 
-Name: "LoanWise AI". No other visual commitments; the previous navy/blue look is not binding.
+Name: "LoanWise AI". No other visual commitments. The user rejected purple/violet-heavy palettes as looking like generic AI output and asked for a modern, sleek product feel (2026-11-21).
 
 ## Evidence on Hand
 
-Real figures in README and `src/model_report.json` (614 applications, repeated stratified CV, 69 pytest tests). Do not invent customers, testimonials, rates or performance claims beyond these.
+Real figures in README and `src/model_report.json` (614 applications, repeated stratified CV, 73 pytest tests). Do not invent customers, testimonials, rates or performance claims beyond these.
 
 ## Product Principles
 

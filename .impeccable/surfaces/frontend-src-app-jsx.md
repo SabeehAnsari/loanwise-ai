@@ -2,18 +2,18 @@
 version: 1
 slug: "frontend-src-app-jsx"
 primary_target: "frontend/src/App.jsx"
-related_targets: ["frontend/src/components/Login.jsx"]
+related_targets: ["frontend/src/pages/AuthPage.jsx","frontend/src/pages/NewDecision.jsx","frontend/src/pages/History.jsx","frontend/src/pages/DecisionDetail.jsx","frontend/src/pages/ModelPage.jsx"]
 ---
 
-# LoanWise AI app shell (sign-in + application workspace)
+# LoanWise AI app (sign-in, shell, new decision, history, decision detail, model)
 
-Mode: operate. Audience: portfolio reviewers (admissions, recruiters, engineers) running one or two sample applications on a laptop. Job: submit an application and understand the explained, audited, constrained decision. Constraints: frontend only, same /predict API; gender and marital status stay labelled audit-only; educational disclaimer stays.
+Mode: operate. Audience: portfolio reviewers running one or two sample applications, then browsing history and the model card. Jobs: run a decision and understand it; revisit a past decision; check the model and fairness evidence. States: empty/first-run, running, approved, denied, rules-rejected, human review, API down, history empty/loading/error, factors not stored. Constraints: gender/marital labelled audit-only; numbers real; disclaimer present.
 
 ## Direction contract
 
-THESIS: Every decision is published like an official statistical release: numbered pipeline stages, a captioned figure, and audit-able numbers. Refuses the white-card fintech dashboard with stacked soft-shadow cards.
-OWN-WORLD: Violet-ink rail (#2A1F4D) and violet action (#5B3FD0) on a cool off-white ground (#F4F4F2), ink #17151C. Archivo (wdth axis) with tabular numerals; 2px ink rules head each section, hairline rows, faint visible column grid in the result area. No cards, no badges, no shadows; states only in green #1F7A4D, vermilion #C8321E, amber.
-STORY: A reviewer sees the five-stage pipeline before anything else, fills a short grouped form, and watches the verdict publish at display scale with Fig. 1 (SHAP), then fairness, email and products as the release's following tables. They leave believing every number is real and explained.
-FIRST VIEWPORT: 248px violet rail with brand, the 01–05 pipeline index (stage results fill in after a run; failed/current stage extends) and the disclaimer. A 520px form column with three ruled groups (Applicant, Finances, Loan) and segmented controls. The result column opens on the verdict word at ~112px condensed beside the probability, then Fig. 1. The primary action is a full-width violet "Run decision pipeline" at the foot of the form.
-FORM: Statistical Release (central-bank annual report / Swiss style), position 3 on the ordered list; seed:4d0468c1f24e000c. Signature move: the pipeline index as a table of contents whose page-number column becomes each stage's result; the SHAP figure as a centred diverging bar chart captioned "Fig. 1".
+THESIS: The same Glass & Light world as the landing page, held to operate restraint: a frosted sidebar and frosted work sheets over porcelain, with light reserved for the stage that decided the outcome. Refuses the white-card SaaS dashboard grid and the old violet rail.
+OWN-WORLD: Porcelain ground with soft light fields; frosted glass sidebar and sheets (white 62–80%, blur, white hairline edge, neutral soft shadow); graphite primary buttons and selected segments; Geist with tabular figures; neutral greys for structure; green/red/amber for state only; 8px grid, 12/16px radii on sheets, 10px on controls.
+STORY: After sign-in the reviewer lands on New decision with a first-run guide, picks a sample, runs it and watches the sidebar pipeline light stage by stage; the verdict lands at full scale with its reasons, audit and letter; it appears in History, opens as its own page, and the Model page backs every claim.
+FIRST VIEWPORT: Glass sidebar (brand; New decision, History, Model & fairness; the five-stage pipeline with the deciding stage lit; account and sign out). Work area: a glass form sheet (grouped sections, segmented controls, sample chips, graphite Run decision) beside the result sheet (verdict word at display size with probability, then SHAP bars). Below 1024px the sidebar becomes a top bar with tabs and a stage strip.
+FORM: Glass & Light (seed:d57e33caf8000228), applied to an operate surface; extends the landing page's world. Signature: the sidebar pipeline where only the deciding (or running) stage carries light, and the decision sheet that lands from blur when a run publishes.
 FINISH: unreviewed and undocumented is unfinished; this build ends with the finish review, the verdict, DESIGN.md, and every shipping raster carrying its provenance

@@ -1,5 +1,6 @@
-import { useId, useState } from "react"
+import { useState } from "react"
 import { Alert, ArrowRight } from "./Icons"
+import { SAMPLES } from "../lib/samples"
 
 const EMPTY = {
   name: "", gender: 1, married: 0,
@@ -8,28 +9,6 @@ const EMPTY = {
   loan_amount: "", loan_amount_term: 360,
   credit_history: 1, property_area: 2,
 }
-
-// Synthetic sample applicants so a reviewer can run the pipeline in one click.
-const SAMPLES = [
-  {
-    label: "Strong applicant",
-    data: { name: "Priya Raman", gender: 0, married: 1, dependents: 1, education: 1, self_employed: 0,
-      applicant_income: 5400, coapplicant_income: 1800, loan_amount: 128, loan_amount_term: 360,
-      credit_history: 1, property_area: 2 },
-  },
-  {
-    label: "Prior defaults",
-    data: { name: "Daniel Okafor", gender: 1, married: 0, dependents: 2, education: 0, self_employed: 1,
-      applicant_income: 3100, coapplicant_income: 0, loan_amount: 160, loan_amount_term: 360,
-      credit_history: 0, property_area: 0 },
-  },
-  {
-    label: "Fails rules",
-    data: { name: "Mara Lindqvist", gender: 0, married: 0, dependents: 0, education: 1, self_employed: 0,
-      applicant_income: 2200, coapplicant_income: 0, loan_amount: 300, loan_amount_term: 120,
-      credit_history: 1, property_area: 1 },
-  },
-]
 
 const TERMS = [
   [360, "360 mo · 30 yrs"], [180, "180 mo · 15 yrs"], [120, "120 mo · 10 yrs"],
@@ -60,38 +39,35 @@ function validate(form) {
 }
 
 function Field({ label, hint, error, children, className = "", htmlFor }) {
-  const id = useId()
   return (
     <div className={className}>
       <label className="field-label" htmlFor={htmlFor}>{label}</label>
       {children}
       {error
         ? <p className="field-error" id={`${htmlFor}-err`}><Alert size={14} />{error}</p>
-        : hint && <p className="field-hint" id={id}>{hint}</p>}
+        : hint && <p className="field-hint">{hint}</p>}
     </div>
   )
 }
 
-function Segmented({ legend, name, value, options, onChange, hint, className = "" }) {
+function Segmented({ legend, name, value, options, onChange, className = "" }) {
   return (
     <fieldset className={className} style={{ border: 0, padding: 0, margin: 0, minWidth: 0 }}>
       <legend className="field-label" style={{ padding: 0 }}>{legend}</legend>
       <div className="seg">
         {options.map(([v, text]) => (
           <label key={v}>
-            <input type="radio" name={name} value={v} checked={value === v}
-              onChange={() => onChange(name, v)} />
+            <input type="radio" name={name} value={v} checked={value === v} onChange={() => onChange(name, v)} />
             <span>{text}</span>
           </label>
         ))}
       </div>
-      {hint && <p className="field-hint">{hint}</p>}
     </fieldset>
   )
 }
 
-export default function LoanForm({ onSubmit, loading }) {
-  const [form, setForm] = useState(EMPTY)
+export default function LoanForm({ onSubmit, loading, initial }) {
+  const [form, setForm] = useState(initial || EMPTY)
   const [errors, setErrors] = useState({})
 
   const set = (name, value) => {
@@ -102,7 +78,6 @@ export default function LoanForm({ onSubmit, loading }) {
     const { name, value, type } = e.target
     set(name, type === "number" ? (value === "" ? "" : Number(value)) : value)
   }
-
   const fill = (data) => { setForm(data); setErrors({}) }
 
   const handleSubmit = (e) => {
@@ -126,18 +101,11 @@ export default function LoanForm({ onSubmit, loading }) {
   const err = (k) => ({ "aria-invalid": errors[k] ? true : undefined, "aria-describedby": errors[k] ? `f-${k}-err` : undefined })
 
   return (
-    <form onSubmit={handleSubmit} noValidate>
-      <div className="title-row">
-        <div>
-          <h1 className="page-title">New application</h1>
-          <p className="page-sub">Four short sections. The decision, its reasons, the fairness audit and the letter appear on the right.</p>
-        </div>
-      </div>
-
+    <form onSubmit={handleSubmit} noValidate className="sheet form-sheet" aria-label="Loan application">
       <div className="samples">
-        <span className="samples-label">Try a sample:</span>
+        <span className="samples-label">Samples:</span>
         {SAMPLES.map((s) => (
-          <button key={s.label} type="button" className="btn-chip" onClick={() => fill(s.data)}>{s.label}</button>
+          <button key={s.id} type="button" className="chip" onClick={() => fill(s.data)}>{s.label}</button>
         ))}
       </div>
 
@@ -146,7 +114,7 @@ export default function LoanForm({ onSubmit, loading }) {
         <div className="fields">
           <Field label="Full name" error={errors.name} className="span-2" htmlFor="f-name">
             <input id="f-name" name="name" className="input" value={form.name} onChange={onInput}
-              autoComplete="name" placeholder="e.g. Priya Raman" {...err("name")} />
+              autoComplete="off" placeholder="e.g. Priya Raman" {...err("name")} />
           </Field>
           <Segmented legend="Dependents" name="dependents" value={form.dependents} onChange={set}
             options={[[0, "0"], [1, "1"], [2, "2"], [3, "3+"]]} />
@@ -164,7 +132,7 @@ export default function LoanForm({ onSubmit, loading }) {
             <div className="input-wrap">
               <span className="affix pre">$</span>
               <input id="f-applicant_income" name="applicant_income" type="number" inputMode="decimal" min="0"
-                className="input has-prefix" value={form.applicant_income} onChange={onInput} placeholder="e.g. 5000"
+                className="input has-prefix" value={form.applicant_income} onChange={onInput} placeholder="5000"
                 {...err("applicant_income")} />
             </div>
           </Field>
@@ -172,7 +140,7 @@ export default function LoanForm({ onSubmit, loading }) {
             <div className="input-wrap">
               <span className="affix pre">$</span>
               <input id="f-coapplicant_income" name="coapplicant_income" type="number" inputMode="decimal" min="0"
-                className="input has-prefix" value={form.coapplicant_income} onChange={onInput} placeholder="e.g. 1500"
+                className="input has-prefix" value={form.coapplicant_income} onChange={onInput} placeholder="0"
                 {...err("coapplicant_income")} />
             </div>
           </Field>
@@ -191,7 +159,7 @@ export default function LoanForm({ onSubmit, loading }) {
             <div className="input-wrap">
               <span className="affix pre">$</span>
               <input id="f-loan_amount" name="loan_amount" type="number" inputMode="decimal" min="0"
-                className="input has-prefix has-suffix" value={form.loan_amount} onChange={onInput} placeholder="e.g. 128"
+                className="input has-prefix has-suffix" value={form.loan_amount} onChange={onInput} placeholder="128"
                 {...err("loan_amount")} />
               <span className="affix suf">k</span>
             </div>
@@ -206,11 +174,10 @@ export default function LoanForm({ onSubmit, loading }) {
             <div className="span-2 ratio" data-over={rr.ratio > 0.6}>
               <span className="ratio-track" aria-hidden="true">
                 <span className="ratio-fill" style={{ width: `${Math.min(rr.ratio / 0.6, 1) * 100}%` }} />
-                <span className="ratio-limit" />
               </span>
               <span>
                 Repayment {money(rr.monthly)}/mo is {(rr.ratio * 100).toFixed(1)}% of income
-                {rr.ratio > 0.6 ? ", over the 60% rule, so business rules will deny it" : " (rule limit 60%, before interest)"}
+                {rr.ratio > 0.6 ? ", over the 60% rule, so business rules will deny it" : " (limit 60%, before interest)"}
               </span>
             </div>
           )}
@@ -223,10 +190,8 @@ export default function LoanForm({ onSubmit, loading }) {
           <span className="section-note">Not model inputs</span>
         </div>
         <div className="fields">
-          <Segmented legend="Gender" name="gender" value={form.gender} onChange={set}
-            options={[[1, "Male"], [0, "Female"]]} />
-          <Segmented legend="Marital status" name="married" value={form.married} onChange={set}
-            options={[[1, "Married"], [0, "Not married"]]} />
+          <Segmented legend="Gender" name="gender" value={form.gender} onChange={set} options={[[1, "Male"], [0, "Female"]]} />
+          <Segmented legend="Marital status" name="married" value={form.married} onChange={set} options={[[1, "Married"], [0, "Not married"]]} />
           <p className="field-hint span-2" style={{ marginTop: 0 }}>
             Used only to audit approval-rate gaps between groups. Changing them cannot change the score.
           </p>
@@ -234,9 +199,9 @@ export default function LoanForm({ onSubmit, loading }) {
       </fieldset>
 
       <div className="submit-row">
-        <button type="submit" className="btn-primary" disabled={loading}>
-          <span>{loading ? "Running pipeline…" : "Run decision pipeline"}</span>
-          <ArrowRight size={18} />
+        <button type="submit" className="btn btn-primary btn-lg btn-block" disabled={loading}>
+          <span>{loading ? "Running pipeline…" : "Run decision"}</span>
+          <ArrowRight size={18} className="nudge" />
         </button>
         <p className="submit-note">The decision letter is also emailed to your account address.</p>
       </div>

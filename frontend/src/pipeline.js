@@ -1,10 +1,10 @@
 // Turns a /predict response into the five pipeline stages shown in the rail.
 export const STAGES = [
-  { id: "rules", name: "Business rules", desc: "Income, cap, repayment" },
-  { id: "model", name: "Model + SHAP", desc: "XGBoost score, top factors" },
-  { id: "fairness", name: "Fairness gate", desc: "Model-level audit" },
-  { id: "email", name: "Email guardrails", desc: "LLM letter, 3 attempts" },
-  { id: "products", name: "Products", desc: "Rule-based eligibility" },
+  { id: "rules", short: "Rules", name: "Business rules", desc: "Income, cap, repayment" },
+  { id: "model", short: "Model", name: "Model + SHAP", desc: "XGBoost score, top factors" },
+  { id: "fairness", short: "Fairness", name: "Fairness gate", desc: "Model-level audit" },
+  { id: "email", short: "Letter", name: "Email guardrails", desc: "LLM letter, 3 attempts" },
+  { id: "products", short: "Products", name: "Products", desc: "Rule-based eligibility" },
 ]
 
 const skip = { tone: "skip", value: "Skipped" }

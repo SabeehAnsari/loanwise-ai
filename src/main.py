@@ -74,15 +74,19 @@ def decision_label(prediction: int) -> str:
 
 
 def persist(user: dict, application: LoanApplication, result: dict) -> None:
-    """Save every processed application. A failed save never fails the request."""
+    """Save every processed application and attach its id to the result.
+    A failed save never fails the request (application_id is then None)."""
+    result["application_id"] = None
     try:
-        save_application(
+        saved = save_application(
             user_id=user["id"],
             user_email=user["email"],
             form_data=application.model_dump(),
             user_token=user["token"],
             result=result,
         )
+        if isinstance(saved, dict):
+            result["application_id"] = saved.get("id")
     except Exception as e:
         print(f"Database save failed: {e}")
 
