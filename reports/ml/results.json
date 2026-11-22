@@ -1,0 +1,1863 @@
+{
+  "setup": {
+    "state": "GA",
+    "train_year": 2022,
+    "test_year": 2023,
+    "features": [
+      "loan_amount",
+      "income",
+      "dti",
+      "ltv",
+      "property_value",
+      "loan_term",
+      "log_income",
+      "loan_to_income",
+      "loan_type",
+      "conforming_loan_limit",
+      "has_coapplicant"
+    ],
+    "seed": 7
+  },
+  "data": {
+    "manifest": {
+      "hmda_2022_GA_purchase.csv": {
+        "year": 2022,
+        "url": "https://ffiec.cfpb.gov/v2/data-browser-api/view/csv?years=2022&states=GA&actions_taken=1%2C2%2C3&loan_purposes=1",
+        "bytes": 75302976,
+        "sha256": "bce1d75821febd0b92b349d0145179f873ce401cd2860065fe7330bc67aba37f"
+      },
+      "hmda_2023_GA_purchase.csv": {
+        "year": 2023,
+        "url": "https://ffiec.cfpb.gov/v2/data-browser-api/view/csv?years=2023&states=GA&actions_taken=1%2C2%2C3&loan_purposes=1",
+        "bytes": 61320561,
+        "sha256": "d572bc76feb3a012cd07e05ff700faf50c52527c4fbd8f3a422e98c887ea6652"
+      }
+    },
+    "scope": {
+      "2022": {
+        "raw": 195115,
+        "steps": [
+          {
+            "rule": "full_reporter",
+            "label": "Lender reports DTI and credit data (not partially exempt)",
+            "removed": 3969,
+            "remaining": 191146
+          },
+          {
+            "rule": "first_lien",
+            "label": "First-lien loans only",
+            "removed": 3360,
+            "remaining": 187786
+          },
+          {
+            "rule": "principal_residence",
+            "label": "Owner-occupied principal residence",
+            "removed": 19772,
+            "remaining": 168014
+          },
+          {
+            "rule": "consumer",
+            "label": "Not for a business or commercial purpose",
+            "removed": 123,
+            "remaining": 167891
+          },
+          {
+            "rule": "standard_product",
+            "label": "No reverse mortgages or open-end credit lines",
+            "removed": 669,
+            "remaining": 167222
+          },
+          {
+            "rule": "site_built_1_4",
+            "label": "Site-built home with 1-4 units",
+            "removed": 15801,
+            "remaining": 151421
+          }
+        ],
+        "rows": 151421,
+        "approval_rate": 0.8966457756850107,
+        "denials": 15650
+      },
+      "2023": {
+        "raw": 158596,
+        "steps": [
+          {
+            "rule": "full_reporter",
+            "label": "Lender reports DTI and credit data (not partially exempt)",
+            "removed": 3601,
+            "remaining": 154995
+          },
+          {
+            "rule": "first_lien",
+            "label": "First-lien loans only",
+            "removed": 4200,
+            "remaining": 150795
+          },
+          {
+            "rule": "principal_residence",
+            "label": "Owner-occupied principal residence",
+            "removed": 14563,
+            "remaining": 136232
+          },
+          {
+            "rule": "consumer",
+            "label": "Not for a business or commercial purpose",
+            "removed": 107,
+            "remaining": 136125
+          },
+          {
+            "rule": "standard_product",
+            "label": "No reverse mortgages or open-end credit lines",
+            "removed": 582,
+            "remaining": 135543
+          },
+          {
+            "rule": "site_built_1_4",
+            "label": "Site-built home with 1-4 units",
+            "removed": 15373,
+            "remaining": 120170
+          }
+        ],
+        "rows": 120170,
+        "approval_rate": 0.892735291670134,
+        "denials": 12890
+      }
+    }
+  },
+  "leakage": {
+    "selection_leak": {
+      "without": {
+        "roc_auc": 0.7891563606961676,
+        "threshold_2pct": 0.98,
+        "auto_approved_share_2pct": 0.008962303403511692
+      },
+      "with": {
+        "roc_auc": 0.7991481619844159,
+        "threshold_2pct": 0.97,
+        "auto_approved_share_2pct": 0.11782474827327952
+      }
+    },
+    "separation": [
+      {
+        "column": "preapproval",
+        "level": "Requested",
+        "n": 8613,
+        "approval_rate": 1.0,
+        "in_features": false,
+        "reason": "Denied preapprovals are a different action code (7) the extract excludes, so every remaining 'Requested' application was approved."
+      }
+    ],
+    "leaky_auc": 0.9999999999999999,
+    "honest_auc": 0.7980598977090032,
+    "audit": [
+      {
+        "column": "interest_rate",
+        "post_decision": true,
+        "missing_share_denied": 1.0,
+        "missing_share_approved": 0.0007880917132524619,
+        "missingness_auc": 0.9996059541433738,
+        "reason": "Only reported for originated loans; blank for every denial."
+      },
+      {
+        "column": "rate_spread",
+        "post_decision": true,
+        "missing_share_denied": 1.0,
+        "missing_share_approved": 0.008838411737410788,
+        "missingness_auc": 0.9955807941312946,
+        "reason": "Derived from the interest rate; blank for denials."
+      },
+      {
+        "column": "origination_charges",
+        "post_decision": true,
+        "missing_share_denied": 1.0,
+        "missing_share_approved": 0.03551568449816234,
+        "missingness_auc": 0.9822421577509188,
+        "reason": "Closing costs exist only for originated loans."
+      },
+      {
+        "column": "total_loan_costs",
+        "post_decision": true,
+        "missing_share_denied": 1.0,
+        "missing_share_approved": 0.03815247733315656,
+        "missingness_auc": 0.9809237613334217,
+        "reason": "Closing costs exist only for originated loans."
+      },
+      {
+        "column": "discount_points",
+        "post_decision": true,
+        "missing_share_denied": 1.0,
+        "missing_share_approved": 0.4226086572242968,
+        "missingness_auc": 0.7886956713878516,
+        "reason": "Closing costs exist only for originated loans."
+      },
+      {
+        "column": "lender_credits",
+        "post_decision": true,
+        "missing_share_denied": 1.0,
+        "missing_share_approved": 0.6108594618880321,
+        "missingness_auc": 0.694570269055984,
+        "reason": "Closing costs exist only for originated loans."
+      },
+      {
+        "column": "denial_reason-2",
+        "post_decision": true,
+        "missing_share_denied": 0.7998722044728435,
+        "missing_share_approved": 1.0,
+        "missingness_auc": 0.6000638977635783,
+        "reason": "The lender's reason for denying: the outcome itself."
+      },
+      {
+        "column": "property_value",
+        "post_decision": false,
+        "missing_share_denied": 0.04274760383386581,
+        "missing_share_approved": 0.007041268017470594,
+        "missingness_auc": 0.5178531679081976,
+        "reason": ""
+      },
+      {
+        "column": "denial_reason-3",
+        "post_decision": true,
+        "missing_share_denied": 0.9685623003194889,
+        "missing_share_approved": 1.0,
+        "missingness_auc": 0.5157188498402556,
+        "reason": "The lender's reason for denying: the outcome itself."
+      },
+      {
+        "column": "income",
+        "post_decision": false,
+        "missing_share_denied": 0.03968051118210863,
+        "missing_share_approved": 0.01610800539143116,
+        "missingness_auc": 0.5117862528953387,
+        "reason": ""
+      },
+      {
+        "column": "log_income",
+        "post_decision": false,
+        "missing_share_denied": 0.03968051118210863,
+        "missing_share_approved": 0.01610800539143116,
+        "missingness_auc": 0.5117862528953387,
+        "reason": ""
+      },
+      {
+        "column": "loan_to_income",
+        "post_decision": false,
+        "missing_share_denied": 0.03968051118210863,
+        "missing_share_approved": 0.01610800539143116,
+        "missingness_auc": 0.5117862528953387,
+        "reason": ""
+      },
+      {
+        "column": "dti",
+        "post_decision": false,
+        "missing_share_denied": 0.027156549520766772,
+        "missing_share_approved": 0.007615764780402295,
+        "missingness_auc": 0.5097703923701823,
+        "reason": ""
+      },
+      {
+        "column": "ltv",
+        "post_decision": false,
+        "missing_share_denied": 0.05769968051118211,
+        "missing_share_approved": 0.0403915416399673,
+        "missingness_auc": 0.5086540694356073,
+        "reason": ""
+      },
+      {
+        "column": "denial_reason-4",
+        "post_decision": true,
+        "missing_share_denied": 0.996741214057508,
+        "missing_share_approved": 1.0,
+        "missingness_auc": 0.501629392971246,
+        "reason": "The lender's reason for denying: the outcome itself."
+      },
+      {
+        "column": "loan_term",
+        "post_decision": false,
+        "missing_share_denied": 0.0033865814696485623,
+        "missing_share_approved": 0.00029461372458035957,
+        "missingness_auc": 0.501545983872534,
+        "reason": ""
+      },
+      {
+        "column": "total_points_and_fees",
+        "post_decision": true,
+        "missing_share_denied": 1.0,
+        "missing_share_approved": 0.9978714158399069,
+        "missingness_auc": 0.5010642920800465,
+        "reason": "Closing costs exist only for originated loans."
+      },
+      {
+        "column": "prepayment_penalty_term",
+        "post_decision": true,
+        "missing_share_denied": 0.9995527156549521,
+        "missing_share_approved": 0.9999263465688549,
+        "missingness_auc": 0.5001868154569514,
+        "reason": "Product term set when the loan is priced."
+      },
+      {
+        "column": "intro_rate_period",
+        "post_decision": true,
+        "missing_share_denied": 0.952332268370607,
+        "missing_share_approved": 0.952117904412577,
+        "missingness_auc": 0.5001071819790149,
+        "reason": "Product term set when the loan is priced."
+      },
+      {
+        "column": "hoepa_status",
+        "post_decision": true,
+        "missing_share_denied": 0.0,
+        "missing_share_approved": 0.0,
+        "missingness_auc": 0.5,
+        "reason": "'Not applicable' for anything not originated."
+      },
+      {
+        "column": "purchaser_type",
+        "post_decision": true,
+        "missing_share_denied": 0.0,
+        "missing_share_approved": 0.0,
+        "missingness_auc": 0.5,
+        "reason": "Loan sale after origination; always 0 for denials."
+      },
+      {
+        "column": "denial_reason-1",
+        "post_decision": true,
+        "missing_share_denied": 0.0,
+        "missing_share_approved": 0.0,
+        "missingness_auc": 0.5,
+        "reason": "The lender's reason for denying: the outcome itself."
+      },
+      {
+        "column": "loan_amount",
+        "post_decision": false,
+        "missing_share_denied": 0.0,
+        "missing_share_approved": 0.0,
+        "missingness_auc": 0.5,
+        "reason": ""
+      },
+      {
+        "column": "loan_type",
+        "post_decision": false,
+        "missing_share_denied": 0.0,
+        "missing_share_approved": 0.0,
+        "missingness_auc": 0.5,
+        "reason": ""
+      },
+      {
+        "column": "conforming_loan_limit",
+        "post_decision": false,
+        "missing_share_denied": 0.0,
+        "missing_share_approved": 0.0,
+        "missingness_auc": 0.5,
+        "reason": ""
+      },
+      {
+        "column": "has_coapplicant",
+        "post_decision": false,
+        "missing_share_denied": 0.0,
+        "missing_share_approved": 0.0,
+        "missingness_auc": 0.5,
+        "reason": ""
+      }
+    ]
+  },
+  "comparison": [
+    {
+      "roc_auc": 0.5,
+      "pr_auc_denial": 0.10726470832986602,
+      "brier": 0.0957742825620054,
+      "log_loss": 0.34083965950936584,
+      "ece": 0.003910484014876814,
+      "name": "Majority class (approve everyone)"
+    },
+    {
+      "roc_auc": 0.6139002314947393,
+      "pr_auc_denial": 0.1392217038388909,
+      "brier": 0.0938319211991572,
+      "log_loss": 0.33073952958988656,
+      "ece": 0.0021313758195259792,
+      "roc_auc_ci": [
+        0.6097422099685327,
+        0.6186343618425377
+      ],
+      "name": "One-line rule: approve if DTI <= 43%"
+    },
+    {
+      "roc_auc": 0.7254818535661992,
+      "pr_auc_denial": 0.40495462085814893,
+      "brier": 0.08260520048444886,
+      "log_loss": 0.2980259615939687,
+      "ece": 0.02489894555098817,
+      "roc_auc_ci": [
+        0.7201822256840718,
+        0.7302634400075639
+      ],
+      "name": "Logistic regression"
+    },
+    {
+      "roc_auc": 0.7980598977090032,
+      "pr_auc_denial": 0.5554283243117024,
+      "brier": 0.06616526142083358,
+      "log_loss": 0.2466009546845191,
+      "ece": 0.004165389180083303,
+      "roc_auc_ci": [
+        0.793628772055624,
+        0.8022731725449873
+      ],
+      "name": "XGBoost (unconstrained)",
+      "trees": 722
+    },
+    {
+      "roc_auc": 0.7891563606961676,
+      "pr_auc_denial": 0.5369590154831003,
+      "brier": 0.06783807526880806,
+      "log_loss": 0.2521210617522909,
+      "ece": 0.003058343833872787,
+      "roc_auc_ci": [
+        0.7846073079576437,
+        0.7933376054646963
+      ],
+      "name": "XGBoost (monotonic)",
+      "trees": 487
+    }
+  ],
+  "variants": {
+    "base": {
+      "roc_auc": 0.7891563606961676,
+      "pr_auc_denial": 0.5369590154831003,
+      "brier": 0.06783807526880806,
+      "log_loss": 0.2521210617522909,
+      "ece": 0.003058343833872787
+    },
+    "geography": {
+      "roc_auc": 0.795339455592523,
+      "pr_auc_denial": 0.5374993378597788,
+      "brier": 0.0678975168979171,
+      "log_loss": 0.2513284257975813,
+      "ece": 0.002444980894047577
+    },
+    "reweighed": {
+      "roc_auc": 0.786346380692708,
+      "pr_auc_denial": 0.5341477553207048,
+      "brier": 0.06797860838453695,
+      "log_loss": 0.25297254882225817,
+      "ece": 0.003459586750664511
+    }
+  },
+  "calibration": [
+    {
+      "predicted": 0.03869236260652542,
+      "observed": 0.052666227781435156,
+      "n": 3038
+    },
+    {
+      "predicted": 0.1432030200958252,
+      "observed": 0.2120689655172414,
+      "n": 580
+    },
+    {
+      "predicted": 0.2499508261680603,
+      "observed": 0.2553763440860215,
+      "n": 372
+    },
+    {
+      "predicted": 0.35388249158859253,
+      "observed": 0.4171597633136095,
+      "n": 338
+    },
+    {
+      "predicted": 0.45281675457954407,
+      "observed": 0.4149305555555556,
+      "n": 576
+    },
+    {
+      "predicted": 0.555834174156189,
+      "observed": 0.550561797752809,
+      "n": 1157
+    },
+    {
+      "predicted": 0.654555082321167,
+      "observed": 0.673065735892961,
+      "n": 1719
+    },
+    {
+      "predicted": 0.7568795084953308,
+      "observed": 0.7812622500980008,
+      "n": 2551
+    },
+    {
+      "predicted": 0.8680905699729919,
+      "observed": 0.872303853617965,
+      "n": 18035
+    },
+    {
+      "predicted": 0.9483986496925354,
+      "observed": 0.9477038037558276,
+      "n": 91804
+    }
+  ],
+  "fairness_threshold": 0.915,
+  "automation": {
+    "curve": [
+      {
+        "threshold": 0.5,
+        "auto_approved_share": 0.9591911458766748,
+        "wrong_auto_approval": 0.07585931671091217,
+        "denials_caught_for_review": 0.321644685802948
+      },
+      {
+        "threshold": 0.51,
+        "auto_approved_share": 0.9585171007739036,
+        "wrong_auto_approval": 0.07558275817163695,
+        "denials_caught_for_review": 0.32459270752521335
+      },
+      {
+        "threshold": 0.52,
+        "auto_approved_share": 0.957759840226346,
+        "wrong_auto_approval": 0.07525153352911529,
+        "denials_caught_for_review": 0.32808378588052756
+      },
+      {
+        "threshold": 0.53,
+        "auto_approved_share": 0.9569360073229591,
+        "wrong_auto_approval": 0.0748554284968912,
+        "denials_caught_for_review": 0.3321955003878976
+      },
+      {
+        "threshold": 0.54,
+        "auto_approved_share": 0.9562369975867521,
+        "wrong_auto_approval": 0.07462296908041877,
+        "denials_caught_for_review": 0.334755624515128
+      },
+      {
+        "threshold": 0.55,
+        "auto_approved_share": 0.9554214862278438,
+        "wrong_auto_approval": 0.07423375401740218,
+        "denials_caught_for_review": 0.3387897595034911
+      },
+      {
+        "threshold": 0.56,
+        "auto_approved_share": 0.954356328534576,
+        "wrong_auto_approval": 0.07370623882809435,
+        "denials_caught_for_review": 0.3442203258339798
+      },
+      {
+        "threshold": 0.57,
+        "auto_approved_share": 0.9532745277523509,
+        "wrong_auto_approval": 0.07323992841866356,
+        "denials_caught_for_review": 0.3491078355314197
+      },
+      {
+        "threshold": 0.58,
+        "auto_approved_share": 0.9520013314471166,
+        "wrong_auto_approval": 0.0727697068233073,
+        "denials_caught_for_review": 0.35415050426687356
+      },
+      {
+        "threshold": 0.59,
+        "auto_approved_share": 0.9506033119747025,
+        "wrong_auto_approval": 0.07237775093229681,
+        "denials_caught_for_review": 0.3585725368502715
+      },
+      {
+        "threshold": 0.6,
+        "auto_approved_share": 0.9495631189148706,
+        "wrong_auto_approval": 0.07207144046481873,
+        "denials_caught_for_review": 0.3619860356865787
+      },
+      {
+        "threshold": 0.61,
+        "auto_approved_share": 0.948298244154115,
+        "wrong_auto_approval": 0.07163228235211527,
+        "denials_caught_for_review": 0.3667183863460047
+      },
+      {
+        "threshold": 0.62,
+        "auto_approved_share": 0.9470333693933594,
+        "wrong_auto_approval": 0.07117437722419928,
+        "denials_caught_for_review": 0.3716058960434445
+      },
+      {
+        "threshold": 0.63,
+        "auto_approved_share": 0.945835066988433,
+        "wrong_auto_approval": 0.07073666429118164,
+        "denials_caught_for_review": 0.3762606671838635
+      },
+      {
+        "threshold": 0.64,
+        "auto_approved_share": 0.9445951568611134,
+        "wrong_auto_approval": 0.07031855662837405,
+        "denials_caught_for_review": 0.38076027928626843
+      },
+      {
+        "threshold": 0.65,
+        "auto_approved_share": 0.9432969959224432,
+        "wrong_auto_approval": 0.06993895338579348,
+        "denials_caught_for_review": 0.38494957331264545
+      },
+      {
+        "threshold": 0.66,
+        "auto_approved_share": 0.9421236581509528,
+        "wrong_auto_approval": 0.069610917281279,
+        "denials_caught_for_review": 0.3885958107059736
+      },
+      {
+        "threshold": 0.67,
+        "auto_approved_share": 0.9407506033119747,
+        "wrong_auto_approval": 0.06931446262715613,
+        "denials_caught_for_review": 0.3920868890612878
+      },
+      {
+        "threshold": 0.68,
+        "auto_approved_share": 0.9390446866938503,
+        "wrong_auto_approval": 0.06892640347379153,
+        "denials_caught_for_review": 0.39658650116369276
+      },
+      {
+        "threshold": 0.69,
+        "auto_approved_share": 0.9371140883748024,
+        "wrong_auto_approval": 0.0685267242680685,
+        "denials_caught_for_review": 0.4013188518231187
+      },
+      {
+        "threshold": 0.7,
+        "auto_approved_share": 0.9352583839560622,
+        "wrong_auto_approval": 0.06817332502891715,
+        "denials_caught_for_review": 0.40558572536850274
+      },
+      {
+        "threshold": 0.71,
+        "auto_approved_share": 0.9336356827827245,
+        "wrong_auto_approval": 0.0679263781808459,
+        "denials_caught_for_review": 0.408766485647789
+      },
+      {
+        "threshold": 0.72,
+        "auto_approved_share": 0.9319297661646001,
+        "wrong_auto_approval": 0.06763996785427273,
+        "denials_caught_for_review": 0.41233514352211015
+      },
+      {
+        "threshold": 0.73,
+        "auto_approved_share": 0.9300907048348174,
+        "wrong_auto_approval": 0.06727267847077456,
+        "denials_caught_for_review": 0.41667959658650117
+      },
+      {
+        "threshold": 0.74,
+        "auto_approved_share": 0.9283764666722144,
+        "wrong_auto_approval": 0.06697561019334364,
+        "denials_caught_for_review": 0.4203258339798293
+      },
+      {
+        "threshold": 0.75,
+        "auto_approved_share": 0.9265207622534742,
+        "wrong_auto_approval": 0.06671456798994069,
+        "denials_caught_for_review": 0.4237393328161365
+      },
+      {
+        "threshold": 0.76,
+        "auto_approved_share": 0.9250811350586668,
+        "wrong_auto_approval": 0.06637761206113324,
+        "denials_caught_for_review": 0.42754072924747866
+      },
+      {
+        "threshold": 0.77,
+        "auto_approved_share": 0.9231755013730548,
+        "wrong_auto_approval": 0.06607294164307986,
+        "denials_caught_for_review": 0.4313421256788208
+      },
+      {
+        "threshold": 0.78,
+        "auto_approved_share": 0.9203877839727054,
+        "wrong_auto_approval": 0.0656401725088831,
+        "denials_caught_for_review": 0.4367726920093095
+      },
+      {
+        "threshold": 0.79,
+        "auto_approved_share": 0.9170508446367646,
+        "wrong_auto_approval": 0.06512585978475893,
+        "denials_caught_for_review": 0.44321179208688904
+      },
+      {
+        "threshold": 0.8,
+        "auto_approved_share": 0.9140301239910127,
+        "wrong_auto_approval": 0.06467648103132762,
+        "denials_caught_for_review": 0.44887509697439876
+      },
+      {
+        "threshold": 0.81,
+        "auto_approved_share": 0.9102854289756179,
+        "wrong_auto_approval": 0.06418378447558715,
+        "denials_caught_for_review": 0.4553141970519783
+      },
+      {
+        "threshold": 0.82,
+        "auto_approved_share": 0.9052841807439461,
+        "wrong_auto_approval": 0.06374783983527599,
+        "denials_caught_for_review": 0.46198603568657876
+      },
+      {
+        "threshold": 0.83,
+        "auto_approved_share": 0.8999667138220854,
+        "wrong_auto_approval": 0.06298717510101803,
+        "denials_caught_for_review": 0.47152831652443755
+      },
+      {
+        "threshold": 0.84,
+        "auto_approved_share": 0.8937505200965299,
+        "wrong_auto_approval": 0.06195415355393752,
+        "denials_caught_for_review": 0.48378588052754073
+      },
+      {
+        "threshold": 0.85,
+        "auto_approved_share": 0.88539568943996,
+        "wrong_auto_approval": 0.06086580574822831,
+        "denials_caught_for_review": 0.49759503491078355
+      },
+      {
+        "threshold": 0.86,
+        "auto_approved_share": 0.8738537072480652,
+        "wrong_auto_approval": 0.05968898496347996,
+        "denials_caught_for_review": 0.5137315748642358
+      },
+      {
+        "threshold": 0.87,
+        "auto_approved_share": 0.8499043022384954,
+        "wrong_auto_approval": 0.05785593295017277,
+        "denials_caught_for_review": 0.5415826221877424
+      },
+      {
+        "threshold": 0.88,
+        "auto_approved_share": 0.8159107930431888,
+        "wrong_auto_approval": 0.055605417754569175,
+        "denials_caught_for_review": 0.5770364623739332
+      },
+      {
+        "threshold": 0.89,
+        "auto_approved_share": 0.787134892235999,
+        "wrong_auto_approval": 0.053800613172639844,
+        "denials_caught_for_review": 0.6051978277734678
+      },
+      {
+        "threshold": 0.9,
+        "auto_approved_share": 0.7639510693184655,
+        "wrong_auto_approval": 0.052296196244172366,
+        "denials_caught_for_review": 0.6275407292474786
+      },
+      {
+        "threshold": 0.91,
+        "auto_approved_share": 0.7311558625280852,
+        "wrong_auto_approval": 0.05071531816578079,
+        "denials_caught_for_review": 0.6543056633048875
+      },
+      {
+        "threshold": 0.92,
+        "auto_approved_share": 0.6908546226179579,
+        "wrong_auto_approval": 0.048662972777643976,
+        "denials_caught_for_review": 0.6865787432117921
+      },
+      {
+        "threshold": 0.93,
+        "auto_approved_share": 0.6140634101689274,
+        "wrong_auto_approval": 0.04505908499566347,
+        "denials_caught_for_review": 0.7420480993017843
+      },
+      {
+        "threshold": 0.94,
+        "auto_approved_share": 0.5335108596155447,
+        "wrong_auto_approval": 0.04239455952083848,
+        "denials_caught_for_review": 0.7891388673390225
+      },
+      {
+        "threshold": 0.95,
+        "auto_approved_share": 0.40724806524090873,
+        "wrong_auto_approval": 0.037577392263838605,
+        "denials_caught_for_review": 0.8573312645461598
+      },
+      {
+        "threshold": 0.96,
+        "auto_approved_share": 0.2437796455022052,
+        "wrong_auto_approval": 0.031916709336064164,
+        "denials_caught_for_review": 0.9274631497284717
+      },
+      {
+        "threshold": 0.97,
+        "auto_approved_share": 0.08655238412249314,
+        "wrong_auto_approval": 0.024324584174598596,
+        "denials_caught_for_review": 0.9803723816912335
+      },
+      {
+        "threshold": 0.98,
+        "auto_approved_share": 0.008962303403511692,
+        "wrong_auto_approval": 0.01949860724233987,
+        "denials_caught_for_review": 0.9983708301008534
+      },
+      {
+        "threshold": 0.99,
+        "auto_approved_share": 0.00017475243405176,
+        "wrong_auto_approval": 0.0,
+        "denials_caught_for_review": 1.0
+      }
+    ],
+    "at_2pct": {
+      "threshold": 0.98,
+      "auto_approved_share": 0.008962303403511692,
+      "wrong_auto_approval": 0.01949860724233987,
+      "denials_caught_for_review": 0.9983708301008534
+    },
+    "at_5pct": {
+      "threshold": 0.915,
+      "auto_approved_share": 0.7147208121827411,
+      "wrong_auto_approval": 0.04956454918032782,
+      "denials_caught_for_review": 0.6697439875872769
+    }
+  },
+  "fairness": {
+    "derived_sex": {
+      "reference": "Male",
+      "groups": {
+        "base": [
+          {
+            "group": "Male",
+            "n": 42797,
+            "lender_approval": 0.8888006168656681,
+            "model_mean_p": 0.8888688683509827,
+            "model_auto_approval": 0.7085076056732948,
+            "false_referral": 0.24520216625479782
+          },
+          {
+            "group": "Joint",
+            "n": 36765,
+            "lender_approval": 0.9201686386508908,
+            "model_mean_p": 0.914210319519043,
+            "model_auto_approval": 0.8004895960832313,
+            "false_referral": 0.16275495122672184
+          },
+          {
+            "group": "Female",
+            "n": 32404,
+            "lender_approval": 0.8728860634489569,
+            "model_mean_p": 0.8689189553260803,
+            "model_auto_approval": 0.6253240340698679,
+            "false_referral": 0.32409404277885806
+          },
+          {
+            "group": "Sex Not Available",
+            "n": 8204,
+            "lender_approval": 0.8687225743539737,
+            "model_mean_p": 0.8882971405982971,
+            "model_auto_approval": 0.7158703071672355,
+            "false_referral": 0.2313736495018942
+          }
+        ],
+        "geography": [
+          {
+            "group": "Male",
+            "n": 42797,
+            "lender_approval": 0.8888006168656681,
+            "model_mean_p": 0.888708770275116,
+            "model_auto_approval": 0.6908428160852397,
+            "false_referral": 0.2623954992376045
+          },
+          {
+            "group": "Joint",
+            "n": 36765,
+            "lender_approval": 0.9201686386508908,
+            "model_mean_p": 0.91417396068573,
+            "model_auto_approval": 0.7908608731130151,
+            "false_referral": 0.1722731303576707
+          },
+          {
+            "group": "Female",
+            "n": 32404,
+            "lender_approval": 0.8728860634489569,
+            "model_mean_p": 0.8669829368591309,
+            "model_auto_approval": 0.5937538575484508,
+            "false_referral": 0.3556301926816334
+          },
+          {
+            "group": "Sex Not Available",
+            "n": 8204,
+            "lender_approval": 0.8687225743539737,
+            "model_mean_p": 0.8872950077056885,
+            "model_auto_approval": 0.6905168210628961,
+            "false_referral": 0.2591553248211029
+          }
+        ],
+        "reweighed": [
+          {
+            "group": "Male",
+            "n": 42797,
+            "lender_approval": 0.8888006168656681,
+            "model_mean_p": 0.891501247882843,
+            "model_auto_approval": 0.72516765193822,
+            "false_referral": 0.22856091277143908
+          },
+          {
+            "group": "Joint",
+            "n": 36765,
+            "lender_approval": 0.9201686386508908,
+            "model_mean_p": 0.9094036817550659,
+            "model_auto_approval": 0.7841153270773834,
+            "false_referral": 0.17933786579958616
+          },
+          {
+            "group": "Female",
+            "n": 32404,
+            "lender_approval": 0.8728860634489569,
+            "model_mean_p": 0.8729939460754395,
+            "model_auto_approval": 0.6391494877175657,
+            "false_referral": 0.31051794237228214
+          },
+          {
+            "group": "Sex Not Available",
+            "n": 8204,
+            "lender_approval": 0.8687225743539737,
+            "model_mean_p": 0.8892061710357666,
+            "model_auto_approval": 0.7222086786933203,
+            "false_referral": 0.22618212431598148
+          }
+        ]
+      },
+      "gaps": [
+        {
+          "group": "Female",
+          "n": 32404,
+          "lender_gap": [
+            -0.01591455341671122,
+            -0.02086817773614402,
+            -0.010663125653815565
+          ],
+          "base__mean_p_gap": [
+            -0.019949898809995315,
+            -0.02239003864310722,
+            -0.01752039213777829
+          ],
+          "base__auto_gap": [
+            -0.08318357160342693,
+            -0.08964025615966258,
+            -0.07683890054836316
+          ],
+          "base__false_referral_gap": [
+            0.07889187652406024,
+            0.07299640517461013,
+            0.08639353640600349
+          ],
+          "geography__mean_p_gap": [
+            -0.021725905112661703,
+            -0.02423308512578319,
+            -0.01923804327334165
+          ],
+          "geography__auto_gap": [
+            -0.0970889585367889,
+            -0.10400103549843197,
+            -0.09099295934862393
+          ],
+          "geography__false_referral_gap": [
+            0.09323469344402885,
+            0.08564902150778524,
+            0.09989618986560363
+          ],
+          "reweighed__mean_p_gap": [
+            -0.01850734808485366,
+            -0.021007462289054958,
+            -0.01611407918126067
+          ],
+          "reweighed__auto_gap": [
+            -0.08601816422065423,
+            -0.09268726331181647,
+            -0.07972256485582625
+          ],
+          "reweighed__false_referral_gap": [
+            0.08195702960084306,
+            0.07617115214549229,
+            0.08925791456852183
+          ]
+        },
+        {
+          "group": "Joint",
+          "n": 36765,
+          "lender_gap": [
+            0.03136802178522269,
+            0.027400909291452183,
+            0.03526433942043898
+          ],
+          "base__mean_p_gap": [
+            0.025341439039244795,
+            0.02345038482949994,
+            0.02773086038492831
+          ],
+          "base__auto_gap": [
+            0.09198199040993649,
+            0.08665273808309333,
+            0.09774718469588742
+          ],
+          "base__false_referral_gap": [
+            -0.08244721502807598,
+            -0.08779831499147896,
+            -0.07692154365385068
+          ],
+          "geography__mean_p_gap": [
+            0.025465127417016897,
+            0.023682689183136145,
+            0.027773173805810014
+          ],
+          "geography__auto_gap": [
+            0.10001805702777544,
+            0.0940726702211711,
+            0.10613079950934382
+          ],
+          "geography__false_referral_gap": [
+            -0.09012236887993383,
+            -0.09618208312060703,
+            -0.08434448744310746
+          ],
+          "reweighed__mean_p_gap": [
+            0.017902430223424304,
+            0.01602112856959003,
+            0.02018553027847461
+          ],
+          "reweighed__auto_gap": [
+            0.058947675139163436,
+            0.053260350756692006,
+            0.06519438061660257
+          ],
+          "reweighed__false_referral_gap": [
+            -0.049223046971852924,
+            -0.054434311274238444,
+            -0.04429124242436158
+          ]
+        }
+      ]
+    },
+    "derived_race": {
+      "reference": "White",
+      "groups": {
+        "base": [
+          {
+            "group": "White",
+            "n": 58830,
+            "lender_approval": 0.9290328063912969,
+            "model_mean_p": 0.9108211398124695,
+            "model_auto_approval": 0.778769335373109,
+            "false_referral": 0.19037599487695545
+          },
+          {
+            "group": "Black or African American",
+            "n": 28206,
+            "lender_approval": 0.831347940154577,
+            "model_mean_p": 0.8490806221961975,
+            "model_auto_approval": 0.5466567397007729,
+            "false_referral": 0.39600835856539723
+          },
+          {
+            "group": "Race Not Available",
+            "n": 19879,
+            "lender_approval": 0.868353538910408,
+            "model_mean_p": 0.8851465582847595,
+            "model_auto_approval": 0.7019970823482067,
+            "false_referral": 0.24429382458579538
+          },
+          {
+            "group": "Asian",
+            "n": 9893,
+            "lender_approval": 0.9006368139088244,
+            "model_mean_p": 0.9049621820449829,
+            "model_auto_approval": 0.8242191448498939,
+            "false_referral": 0.13164983164983166
+          },
+          {
+            "group": "Joint",
+            "n": 2377,
+            "lender_approval": 0.9204880100967606,
+            "model_mean_p": 0.9161983728408813,
+            "model_auto_approval": 0.8102650399663441,
+            "false_referral": 0.14990859232175502
+          },
+          {
+            "group": "2 or more minority races",
+            "n": 414,
+            "lender_approval": 0.8043478260869565,
+            "model_mean_p": 0.8403923511505127,
+            "model_auto_approval": 0.5797101449275363,
+            "false_referral": 0.3213213213213213
+          },
+          {
+            "group": "American Indian or Alaska Native",
+            "n": 371,
+            "lender_approval": 0.8382749326145552,
+            "model_mean_p": 0.8556454181671143,
+            "model_auto_approval": 0.6495956873315364,
+            "false_referral": 0.2829581993569132
+          }
+        ],
+        "geography": [
+          {
+            "group": "White",
+            "n": 58830,
+            "lender_approval": 0.9290328063912969,
+            "model_mean_p": 0.9137538075447083,
+            "model_auto_approval": 0.7845826959034506,
+            "false_referral": 0.18419174823895343
+          },
+          {
+            "group": "Black or African American",
+            "n": 28206,
+            "lender_approval": 0.831347940154577,
+            "model_mean_p": 0.842252254486084,
+            "model_auto_approval": 0.4781252215840601,
+            "false_referral": 0.46893257708217834
+          },
+          {
+            "group": "Race Not Available",
+            "n": 19879,
+            "lender_approval": 0.868353538910408,
+            "model_mean_p": 0.8838635683059692,
+            "model_auto_approval": 0.6782534332712913,
+            "false_referral": 0.2693778241223497
+          },
+          {
+            "group": "Asian",
+            "n": 9893,
+            "lender_approval": 0.9006368139088244,
+            "model_mean_p": 0.9015001654624939,
+            "model_auto_approval": 0.7993530779338927,
+            "false_referral": 0.1574635241301908
+          },
+          {
+            "group": "Joint",
+            "n": 2377,
+            "lender_approval": 0.9204880100967606,
+            "model_mean_p": 0.9167893528938293,
+            "model_auto_approval": 0.806899453092133,
+            "false_referral": 0.15356489945155394
+          },
+          {
+            "group": "2 or more minority races",
+            "n": 414,
+            "lender_approval": 0.8043478260869565,
+            "model_mean_p": 0.8377085328102112,
+            "model_auto_approval": 0.5362318840579711,
+            "false_referral": 0.3783783783783784
+          },
+          {
+            "group": "American Indian or Alaska Native",
+            "n": 371,
+            "lender_approval": 0.8382749326145552,
+            "model_mean_p": 0.8559988141059875,
+            "model_auto_approval": 0.6307277628032345,
+            "false_referral": 0.3022508038585209
+          }
+        ],
+        "reweighed": [
+          {
+            "group": "White",
+            "n": 58830,
+            "lender_approval": 0.9290328063912969,
+            "model_mean_p": 0.9087027907371521,
+            "model_auto_approval": 0.7733979262281149,
+            "false_referral": 0.19593815753361998
+          },
+          {
+            "group": "Black or African American",
+            "n": 28206,
+            "lender_approval": 0.831347940154577,
+            "model_mean_p": 0.856349527835846,
+            "model_auto_approval": 0.5728922924200525,
+            "false_referral": 0.3684592093479466
+          },
+          {
+            "group": "Race Not Available",
+            "n": 19879,
+            "lender_approval": 0.868353538910408,
+            "model_mean_p": 0.8867419362068176,
+            "model_auto_approval": 0.7118064288948136,
+            "false_referral": 0.23490904877766192
+          },
+          {
+            "group": "Asian",
+            "n": 9893,
+            "lender_approval": 0.9006368139088244,
+            "model_mean_p": 0.9018365740776062,
+            "model_auto_approval": 0.8242191448498939,
+            "false_referral": 0.13221099887766555
+          },
+          {
+            "group": "Joint",
+            "n": 2377,
+            "lender_approval": 0.9204880100967606,
+            "model_mean_p": 0.9120911955833435,
+            "model_auto_approval": 0.7968026924694994,
+            "false_referral": 0.16179159049360145
+          },
+          {
+            "group": "2 or more minority races",
+            "n": 414,
+            "lender_approval": 0.8043478260869565,
+            "model_mean_p": 0.8462895154953003,
+            "model_auto_approval": 0.6207729468599034,
+            "false_referral": 0.2822822822822823
+          },
+          {
+            "group": "American Indian or Alaska Native",
+            "n": 371,
+            "lender_approval": 0.8382749326145552,
+            "model_mean_p": 0.8586767315864563,
+            "model_auto_approval": 0.6630727762803235,
+            "false_referral": 0.27009646302250806
+          }
+        ]
+      },
+      "gaps": [
+        {
+          "group": "Black or African American",
+          "n": 28206,
+          "lender_gap": [
+            -0.0976848662367199,
+            -0.10284391174958417,
+            -0.09215892072973873
+          ],
+          "base__mean_p_gap": [
+            -0.061740574051557195,
+            -0.06460091222575712,
+            -0.0590035493210021
+          ],
+          "base__auto_gap": [
+            -0.2321125956723361,
+            -0.2390209881529071,
+            -0.22516176508714222
+          ],
+          "base__false_referral_gap": [
+            0.2056323636884418,
+            0.19836506892164002,
+            0.212409937809275
+          ],
+          "geography__mean_p_gap": [
+            -0.07150159467741224,
+            -0.07427946349460351,
+            -0.06890454555785659
+          ],
+          "geography__auto_gap": [
+            -0.3064574743193905,
+            -0.31303324347574263,
+            -0.2995456073645981
+          ],
+          "geography__false_referral_gap": [
+            0.28474082884322494,
+            0.2775815598056748,
+            0.2924000011680665
+          ],
+          "reweighed__mean_p_gap": [
+            -0.052353107128537135,
+            -0.05506155439330647,
+            -0.04972983975324075
+          ],
+          "reweighed__auto_gap": [
+            -0.2005056338080624,
+            -0.20726219196403176,
+            -0.1942676769977766
+          ],
+          "reweighed__false_referral_gap": [
+            0.17252105181432664,
+            0.16561949453314243,
+            0.17946906435714507
+          ]
+        },
+        {
+          "group": "Asian",
+          "n": 9893,
+          "lender_gap": [
+            -0.028395992482472487,
+            -0.0347203924418612,
+            -0.02260542208395083
+          ],
+          "base__mean_p_gap": [
+            -0.005858979106574513,
+            -0.009467193601710788,
+            -0.0027419431052549768
+          ],
+          "base__auto_gap": [
+            0.0454498094767849,
+            0.03661390364920973,
+            0.05460219328112863
+          ],
+          "base__false_referral_gap": [
+            -0.05872616322712379,
+            -0.06739508159590189,
+            -0.05063046041997343
+          ],
+          "geography__mean_p_gap": [
+            -0.012253706068983017,
+            -0.015769046086510006,
+            -0.008921642082403142
+          ],
+          "geography__auto_gap": [
+            0.014770382030442009,
+            0.006321532244411749,
+            0.02405503123606169
+          ],
+          "geography__false_referral_gap": [
+            -0.026728224108762633,
+            -0.035616586791075266,
+            -0.018083069485655384
+          ],
+          "reweighed__mean_p_gap": [
+            -0.006866099791713709,
+            -0.010385086379398925,
+            -0.0037642530281059967
+          ],
+          "reweighed__auto_gap": [
+            0.05082121862177902,
+            0.042810068154203185,
+            0.05971196262012722
+          ],
+          "reweighed__false_referral_gap": [
+            -0.06372715865595444,
+            -0.07258198863167913,
+            -0.05588529636108387
+          ]
+        }
+      ]
+    },
+    "derived_ethnicity": {
+      "reference": "Not Hispanic or Latino",
+      "groups": {
+        "base": [
+          {
+            "group": "Not Hispanic or Latino",
+            "n": 87462,
+            "lender_approval": 0.8988474994854908,
+            "model_mean_p": 0.8937000036239624,
+            "model_auto_approval": 0.7200727172943678,
+            "false_referral": 0.23542580932392038
+          },
+          {
+            "group": "Ethnicity Not Available",
+            "n": 18949,
+            "lender_approval": 0.8699139796295319,
+            "model_mean_p": 0.885608971118927,
+            "model_auto_approval": 0.7099583091456013,
+            "false_referral": 0.2371390439213783
+          },
+          {
+            "group": "Hispanic or Latino",
+            "n": 11099,
+            "lender_approval": 0.8803495810433373,
+            "model_mean_p": 0.8776196837425232,
+            "model_auto_approval": 0.66798810703667,
+            "false_referral": 0.2842083717122096
+          },
+          {
+            "group": "Joint",
+            "n": 2548,
+            "lender_approval": 0.9085557299843015,
+            "model_mean_p": 0.905912458896637,
+            "model_auto_approval": 0.7723704866562009,
+            "false_referral": 0.18444924406047516
+          }
+        ],
+        "geography": [
+          {
+            "group": "Not Hispanic or Latino",
+            "n": 87462,
+            "lender_approval": 0.8988474994854908,
+            "model_mean_p": 0.8929749727249146,
+            "model_auto_approval": 0.7011730808808396,
+            "false_referral": 0.2539082872225402
+          },
+          {
+            "group": "Ethnicity Not Available",
+            "n": 18949,
+            "lender_approval": 0.8699139796295319,
+            "model_mean_p": 0.8843849897384644,
+            "model_auto_approval": 0.6847854768061639,
+            "false_referral": 0.26255763164280516
+          },
+          {
+            "group": "Hispanic or Latino",
+            "n": 11099,
+            "lender_approval": 0.8803495810433373,
+            "model_mean_p": 0.8781880140304565,
+            "model_auto_approval": 0.6501486620416254,
+            "false_referral": 0.30344898168048307
+          },
+          {
+            "group": "Joint",
+            "n": 2548,
+            "lender_approval": 0.9085557299843015,
+            "model_mean_p": 0.9064234495162964,
+            "model_auto_approval": 0.7700156985871272,
+            "false_referral": 0.18488120950323975
+          }
+        ],
+        "reweighed": [
+          {
+            "group": "Not Hispanic or Latino",
+            "n": 87462,
+            "lender_approval": 0.8988474994854908,
+            "model_mean_p": 0.8939656615257263,
+            "model_auto_approval": 0.7237200155496101,
+            "false_referral": 0.23234751637728168
+          },
+          {
+            "group": "Ethnicity Not Available",
+            "n": 18949,
+            "lender_approval": 0.8699139796295319,
+            "model_mean_p": 0.886972188949585,
+            "model_auto_approval": 0.717610427990923,
+            "false_referral": 0.22985925746178112
+          },
+          {
+            "group": "Hispanic or Latino",
+            "n": 11099,
+            "lender_approval": 0.8803495810433373,
+            "model_mean_p": 0.8806172609329224,
+            "model_auto_approval": 0.682043427335796,
+            "false_referral": 0.2698802579060485
+          },
+          {
+            "group": "Joint",
+            "n": 2548,
+            "lender_approval": 0.9085557299843015,
+            "model_mean_p": 0.9030811786651611,
+            "model_auto_approval": 0.7680533751962323,
+            "false_referral": 0.18876889848812095
+          }
+        ]
+      },
+      "gaps": [
+        {
+          "group": "Hispanic or Latino",
+          "n": 11099,
+          "lender_gap": [
+            -0.018497918442153538,
+            -0.025140703428478125,
+            -0.012236469826611907
+          ],
+          "base__mean_p_gap": [
+            -0.01608032443666574,
+            -0.0196970447876336,
+            -0.012435680637068432
+          ],
+          "base__auto_gap": [
+            -0.05208461025769784,
+            -0.06151385299130204,
+            -0.041822409872943916
+          ],
+          "base__false_referral_gap": [
+            0.04878256238828921,
+            0.039817705146382984,
+            0.0570672488910377
+          ],
+          "geography__mean_p_gap": [
+            -0.014786977937457202,
+            -0.018214711855338656,
+            -0.011127126098133567
+          ],
+          "geography__auto_gap": [
+            -0.05102441883921427,
+            -0.061301505536486535,
+            -0.04155990852729616
+          ],
+          "geography__false_referral_gap": [
+            0.04954069445794285,
+            0.04007384307667138,
+            0.05801223431580327
+          ],
+          "reweighed__mean_p_gap": [
+            -0.013348399456678317,
+            -0.016909339585728017,
+            -0.00985492778477082
+          ],
+          "reweighed__auto_gap": [
+            -0.041676588213814036,
+            -0.05126919892384282,
+            -0.031012806068101792
+          ],
+          "reweighed__false_referral_gap": [
+            0.037532741528766844,
+            0.02874668029921062,
+            0.045262937701527554
+          ]
+        }
+      ]
+    },
+    "applicant_age": {
+      "reference": "35-44",
+      "groups": {
+        "base": [
+          {
+            "group": "25-34",
+            "n": 36763,
+            "lender_approval": 0.9091477844571988,
+            "model_mean_p": 0.898016631603241,
+            "model_auto_approval": 0.7259472839539755,
+            "false_referral": 0.2346587679143105
+          },
+          {
+            "group": "35-44",
+            "n": 32323,
+            "lender_approval": 0.8850972991368375,
+            "model_mean_p": 0.8875226378440857,
+            "model_auto_approval": 0.7064938279243882,
+            "false_referral": 0.24397916739487574
+          },
+          {
+            "group": "45-54",
+            "n": 21928,
+            "lender_approval": 0.8742703392922291,
+            "model_mean_p": 0.8846518993377686,
+            "model_auto_approval": 0.6975556366289676,
+            "false_referral": 0.24985655417036148
+          },
+          {
+            "group": "55-64",
+            "n": 14161,
+            "lender_approval": 0.8857425323070405,
+            "model_mean_p": 0.891657292842865,
+            "model_auto_approval": 0.732151684203093,
+            "false_referral": 0.2192457944670334
+          },
+          {
+            "group": "<25",
+            "n": 6665,
+            "lender_approval": 0.8982745686421605,
+            "model_mean_p": 0.8825647234916687,
+            "model_auto_approval": 0.650562640660165,
+            "false_referral": 0.3066644396191749
+          },
+          {
+            "group": "65-74",
+            "n": 6425,
+            "lender_approval": 0.9042801556420234,
+            "model_mean_p": 0.8980098366737366,
+            "model_auto_approval": 0.7603112840466926,
+            "false_referral": 0.19500860585197935
+          },
+          {
+            "group": ">74",
+            "n": 1875,
+            "lender_approval": 0.92,
+            "model_mean_p": 0.9087725281715393,
+            "model_auto_approval": 0.7882666666666667,
+            "false_referral": 0.17739130434782607
+          }
+        ],
+        "geography": [
+          {
+            "group": "25-34",
+            "n": 36763,
+            "lender_approval": 0.9091477844571988,
+            "model_mean_p": 0.8978105783462524,
+            "model_auto_approval": 0.7088376900688192,
+            "false_referral": 0.25135385812165273
+          },
+          {
+            "group": "35-44",
+            "n": 32323,
+            "lender_approval": 0.8850972991368375,
+            "model_mean_p": 0.8869770765304565,
+            "model_auto_approval": 0.6867555610555951,
+            "false_referral": 0.26372819742039216
+          },
+          {
+            "group": "45-54",
+            "n": 21928,
+            "lender_approval": 0.8742703392922291,
+            "model_mean_p": 0.8831335306167603,
+            "model_auto_approval": 0.6719719080627509,
+            "false_referral": 0.27619842470398
+          },
+          {
+            "group": "55-64",
+            "n": 14161,
+            "lender_approval": 0.8857425323070405,
+            "model_mean_p": 0.8900105357170105,
+            "model_auto_approval": 0.707788997952122,
+            "false_referral": 0.24220680857849
+          },
+          {
+            "group": "<25",
+            "n": 6665,
+            "lender_approval": 0.8982745686421605,
+            "model_mean_p": 0.8834286332130432,
+            "model_auto_approval": 0.640960240060015,
+            "false_referral": 0.3165191247703357
+          },
+          {
+            "group": "65-74",
+            "n": 6425,
+            "lender_approval": 0.9042801556420234,
+            "model_mean_p": 0.8974577188491821,
+            "model_auto_approval": 0.7470817120622568,
+            "false_referral": 0.20757314974182445
+          },
+          {
+            "group": ">74",
+            "n": 1875,
+            "lender_approval": 0.92,
+            "model_mean_p": 0.9091268181800842,
+            "model_auto_approval": 0.7781333333333333,
+            "false_referral": 0.18782608695652173
+          }
+        ],
+        "reweighed": [
+          {
+            "group": "25-34",
+            "n": 36763,
+            "lender_approval": 0.9091477844571988,
+            "model_mean_p": 0.8992261290550232,
+            "model_auto_approval": 0.7314147376438267,
+            "false_referral": 0.22981180624121114
+          },
+          {
+            "group": "35-44",
+            "n": 32323,
+            "lender_approval": 0.8850972991368375,
+            "model_mean_p": 0.8889752626419067,
+            "model_auto_approval": 0.7153110787983789,
+            "false_referral": 0.23510084239225418
+          },
+          {
+            "group": "45-54",
+            "n": 21928,
+            "lender_approval": 0.8742703392922291,
+            "model_mean_p": 0.8857196569442749,
+            "model_auto_approval": 0.7065851878876322,
+            "false_referral": 0.24130196651191904
+          },
+          {
+            "group": "55-64",
+            "n": 14161,
+            "lender_approval": 0.8857425323070405,
+            "model_mean_p": 0.8907780051231384,
+            "model_auto_approval": 0.7344820281053598,
+            "false_referral": 0.2175715538547397
+          },
+          {
+            "group": "<25",
+            "n": 6665,
+            "lender_approval": 0.8982745686421605,
+            "model_mean_p": 0.8828087449073792,
+            "model_auto_approval": 0.6399099774943736,
+            "false_referral": 0.31818941038917653
+          },
+          {
+            "group": "65-74",
+            "n": 6425,
+            "lender_approval": 0.9042801556420234,
+            "model_mean_p": 0.8946517705917358,
+            "model_auto_approval": 0.7557976653696498,
+            "false_referral": 0.20068846815834768
+          },
+          {
+            "group": ">74",
+            "n": 1875,
+            "lender_approval": 0.92,
+            "model_mean_p": 0.9048789143562317,
+            "model_auto_approval": 0.7850666666666667,
+            "false_referral": 0.1808695652173913
+          }
+        ]
+      },
+      "gaps": [
+        {
+          "group": "<25",
+          "n": 6665,
+          "lender_gap": [
+            0.013177269505322942,
+            0.004626360972571509,
+            0.020816070505885607
+          ],
+          "base__mean_p_gap": [
+            -0.004957871575472117,
+            -0.009937283750833224,
+            -0.0005004055041186255
+          ],
+          "base__auto_gap": [
+            -0.05593118726422319,
+            -0.0672342713652301,
+            -0.04468013667556977
+          ],
+          "base__false_referral_gap": [
+            0.06268527222429915,
+            0.050656841177019116,
+            0.07644996368359205
+          ],
+          "geography__mean_p_gap": [
+            -0.003548411405991714,
+            -0.008359703069547303,
+            0.0009592544587888208
+          ],
+          "geography__auto_gap": [
+            -0.04579532099558015,
+            -0.059392338223156746,
+            -0.03375235592612538
+          ],
+          "geography__false_referral_gap": [
+            0.05279092734994356,
+            0.04118570431561134,
+            0.06452265091848518
+          ],
+          "reweighed__mean_p_gap": [
+            -0.006166510922221091,
+            -0.011059668111358986,
+            -0.0017164864310238602
+          ],
+          "reweighed__auto_gap": [
+            -0.07540110130400524,
+            -0.08870009867810524,
+            -0.06419043558340319
+          ],
+          "reweighed__false_referral_gap": [
+            0.08308856799692235,
+            0.07141171239726225,
+            0.09659183617004471
+          ]
+        },
+        {
+          "group": "65-74",
+          "n": 6425,
+          "lender_gap": [
+            0.019182856505185808,
+            0.010937577065926641,
+            0.027007764886792573
+          ],
+          "base__mean_p_gap": [
+            0.010487201922173006,
+            0.0057916752548655605,
+            0.014793500898130998
+          ],
+          "base__auto_gap": [
+            0.053817456122304375,
+            0.04093526395956386,
+            0.06498099918249778
+          ],
+          "base__false_referral_gap": [
+            -0.04897056154289639,
+            -0.06028319927969417,
+            -0.037949727884939756
+          ],
+          "geography__mean_p_gap": [
+            0.010480670871507725,
+            0.005912289327891965,
+            0.014582849623460483
+          ],
+          "geography__auto_gap": [
+            0.06032615100666172,
+            0.04865179918504981,
+            0.07271480668558157
+          ],
+          "geography__false_referral_gap": [
+            -0.056155047678567716,
+            -0.06726594272507559,
+            -0.045152877580439565
+          ],
+          "reweighed__mean_p_gap": [
+            0.005676504058086174,
+            0.0009930528111856047,
+            0.009745093960012607
+          ],
+          "reweighed__auto_gap": [
+            0.04048658657127091,
+            0.028687667561774037,
+            0.05170931409624958
+          ],
+          "reweighed__false_referral_gap": [
+            -0.0344123742339065,
+            -0.04579475264124062,
+            -0.023679916632519803
+          ]
+        },
+        {
+          "group": ">74",
+          "n": 1875,
+          "lender_gap": [
+            0.034902700863162495,
+            0.021307478059998476,
+            0.04715380173044996
+          ],
+          "base__mean_p_gap": [
+            0.021249936639506917,
+            0.014285903483013639,
+            0.02963136851053924
+          ],
+          "base__auto_gap": [
+            0.08177283874227848,
+            0.06332001196258591,
+            0.10326822551537092
+          ],
+          "base__false_referral_gap": [
+            -0.06658786304704967,
+            -0.08394857957438145,
+            -0.04730961474067399
+          ],
+          "geography__mean_p_gap": [
+            0.022149682248406077,
+            0.015288034135710206,
+            0.02986463156661012
+          ],
+          "geography__auto_gap": [
+            0.09137777227773825,
+            0.07236543802658583,
+            0.11188641070857687
+          ],
+          "geography__false_referral_gap": [
+            -0.07590211046387044,
+            -0.09319081154658436,
+            -0.0587108992254895
+          ],
+          "reweighed__mean_p_gap": [
+            0.015903632234964937,
+            0.008841446863931277,
+            0.024465356791107954
+          ],
+          "reweighed__auto_gap": [
+            0.06975558786828784,
+            0.05365516360898842,
+            0.09187339665253841
+          ],
+          "reweighed__false_referral_gap": [
+            -0.05423127717486287,
+            -0.07088191260376663,
+            -0.03510767210683171
+          ]
+        }
+      ]
+    }
+  },
+  "explanations": {
+    "shap_importance": {
+      "dti": 0.6240000128746033,
+      "property_value": 0.2892000079154968,
+      "ltv": 0.27160000801086426,
+      "loan_type": 0.22779999673366547,
+      "loan_amount": 0.2071000039577484,
+      "has_coapplicant": 0.09350000321865082,
+      "loan_to_income": 0.08709999918937683,
+      "income": 0.04659999907016754,
+      "loan_term": 0.04019999876618385,
+      "log_income": 0.011800000444054604,
+      "conforming_loan_limit": 0.004900000058114529
+    },
+    "denial_reasons": {
+      "Debt-to-income ratio": 0.3877,
+      "Credit history": 0.1286,
+      "Collateral": 0.1249,
+      "Incomplete application": 0.1147,
+      "Other": 0.0769,
+      "Unverifiable information": 0.0717,
+      "Insufficient cash": 0.0584,
+      "Employment history": 0.0364,
+      "Mortgage insurance denied": 0.0007
+    }
+  },
+  "v1": {
+    "rows": 614,
+    "female": 112,
+    "accuracy": 0.8146,
+    "roc_auc": 0.768,
+    "rule_roc_auc": 0.7054
+  },
+  "runtime_seconds": 230.0
+}

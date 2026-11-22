@@ -1,0 +1,17 @@
+{
+  "files": {
+    "hmda_2022_GA_purchase.csv": {
+      "year": 2022,
+      "url": "https://ffiec.cfpb.gov/v2/data-browser-api/view/csv?years=2022&states=GA&actions_taken=1%2C2%2C3&loan_purposes=1",
+      "bytes": 75302976,
+      "sha256": "bce1d75821febd0b92b349d0145179f873ce401cd2860065fe7330bc67aba37f"
+    },
+    "hmda_2023_GA_purchase.csv": {
+      "year": 2023,
+      "url": "https://ffiec.cfpb.gov/v2/data-browser-api/view/csv?years=2023&states=GA&actions_taken=1%2C2%2C3&loan_purposes=1",
+      "bytes": 61320561,
+      "sha256": "d572bc76feb3a012cd07e05ff700faf50c52527c4fbd8f3a422e98c887ea6652"
+    }
+  },
+  "source": "FFIEC HMDA Data Browser (public LAR, snapshot via data-browser-api)"
+}

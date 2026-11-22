@@ -72,7 +72,27 @@ flowchart LR
 | Email | Resend |
 | Quality | pytest, Vitest, React Testing Library, ESLint, GitHub Actions |
 
-## Model evaluation
+## ML v2: 271,000 real mortgage decisions
+
+The app's current model (v1, below) was trained on 614 rows. **v2** replaces the data with public [HMDA](https://ffiec.cfpb.gov/data-browser/) records: every Georgia home-purchase decision in 2022 (151,421 applications, used to train) and 2023 (120,170, used once to test). It's a reproducible, tested pipeline in [`ml/`](ml/). Read the one-page write-up first: **[case study](docs/case-study.md)**. Full auto-generated results: [`reports/ml/REPORT.md`](reports/ml/REPORT.md).
+
+| Model, trained on 2022, tested on 2023 | ROC-AUC | Denial PR-AUC |
+|---|---|---|
+| Approve if DTI ≤ 43% (one-line rule) | 0.614 | 0.139 |
+| Logistic regression | 0.725 | 0.405 |
+| **XGBoost, monotonic constraints (chosen)** | **0.789** | **0.537** |
+
+- **Leakage, caught twice.** Post-decision columns (e.g. interest rate, closing costs, denial reasons) push AUC to a fake 1.000, and a missingness audit flags them. A subtler *selection* leak (`preapproval`: all 8,613 requests in the extract were approved) is caught by a separation audit. It had inflated AUC (0.789 → 0.799) and the share of applications safe to automate (0.9% → 11.8%).
+- **Automation, not denial.** The model auto-approves or refers to a person. With at most 5% of auto-approvals being ones the lender denied, it automates 71.5% of applications.
+- **Fairness at the threshold.** Financial features explain about two-thirds of the lenders' Black–White approval gap (−6.2 vs −9.8 points). But at the operating threshold, lender-approved Black applicants are 20.6 points more likely to be referred for review. Census-tract features widen this to 28.5 points, so they are excluded; reweighing narrows it to 17.3 points.
+
+```bash
+pip install -r requirements-dev.txt
+python -m ml.run          # downloads ~136 MB once (checksummed), then about 4 minutes
+python -m pytest tests/ml_pipeline
+```
+
+## Model evaluation (v1, the model the app currently serves)
 
 Data: the public *Loan Prediction* dataset (614 labelled applications, 68.7% approved). Protocol, from [`notebooks/07_model_evaluation.ipynb`](notebooks/07_model_evaluation.ipynb): repeated stratified 5-fold cross-validation (10 repeats, 50 fits per model, the same splits for every model), with imputation and feature engineering fitted inside each training fold.
 
@@ -97,7 +117,7 @@ Choosing the best of seven candidates on the same CV makes the final estimate sl
 
 <p align="center"><img src="docs/screenshots/shap_importance.png" width="60%" alt="Global feature importance (mean absolute SHAP value)" /></p>
 
-## Fairness audit
+## Fairness audit (v1)
 
 The audit runs offline, on **out-of-fold** predictions: each applicant is scored by a model that never saw them. Gaps are averaged over 10 repetitions, and the confidence intervals come from 1,000 bootstrap resamples. The results are stored in `src/model_report.json` and served at `GET /model`.
 
@@ -133,6 +153,11 @@ Every point estimate fell after the protected attributes were removed. The inter
 │   ├── auth.py                # Supabase JWT verification (FastAPI dependency)
 │   ├── loan_model.json        # Deployed XGBoost model (portable JSON, no pickle)
 │   └── model_report.json      # CV metrics + fairness audit for the deployed model
+├── ml/                        # v2 pipeline on HMDA: download (checksummed), prepare, models,
+│                              # evaluate, run (one command), report
+├── reports/ml/                # Generated results: REPORT.md, results.json, figures, model
+├── data/hmda/manifest.json    # Source URLs and SHA-256 of the HMDA extracts (raw files not committed)
+├── docs/case-study.md         # One-page write-up of the v2 findings
 ├── tests/                     # pytest suite (no network access needed)
 ├── frontend/                  # React + Vite + Tailwind UI (React Router)
 │   ├── src/index.css          # Design tokens and component styles
@@ -319,11 +344,13 @@ This is a learning project, and these limitations are deliberate to state:
 - [x] Application history page with per-decision pages
 - [x] Vitest tests for the UI
 - [x] Dockerfile and docker-compose for one-command setup
+- [x] ML v2 on 271k HMDA decisions: temporal holdout, leakage and separation audits, monotonic XGBoost, fairness at the operating threshold ([case study](docs/case-study.md))
+- [ ] Serve the v2 HMDA model in the app (new form fields, rules and tests)
 - [ ] Deployment (frontend + API) with a live demo link
 
 ## Data
 
-Uses the *Loan Prediction* dataset (Analytics Vidhya / Kaggle). Credit goes to the original dataset authors; check the dataset's terms before redistributing.
+v2 uses public Home Mortgage Disclosure Act (HMDA) Loan/Application Register data from the FFIEC [HMDA Data Browser](https://ffiec.cfpb.gov/data-browser/) (Georgia, 2022–2023, home purchase); the exact extracts are pinned in [`data/hmda/manifest.json`](data/hmda/manifest.json). v1 uses the *Loan Prediction* dataset (Analytics Vidhya / Kaggle). Credit goes to the original dataset authors; check the dataset's terms before redistributing.
 
 ## Author
 
