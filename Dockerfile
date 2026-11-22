@@ -1,3 +1,4 @@
+# syntax=docker/dockerfile:1
 # LoanWise AI API: FastAPI + XGBoost, served by uvicorn.
 FROM python:3.12-slim
 
@@ -13,7 +14,10 @@ RUN apt-get update \
 
 WORKDIR /app
 COPY requirements.txt .
-RUN pip install -r requirements.txt
+# Use the CPU-only XGBoost build (same version and `xgboost` module): the default
+# Linux wheel is 131 MB and pulls a 336 MB NVIDIA library the API never uses.
+# The cache mount keeps downloaded wheels between rebuilds.
+RUN --mount=type=cache,target=/root/.cache/pip     sed 's/^xgboost==/xgboost-cpu==/' requirements.txt > /tmp/requirements.txt     && pip install -r /tmp/requirements.txt
 
 # Source plus the model artefacts it loads (loan_model.json, model_report.json).
 COPY src/ ./src/
