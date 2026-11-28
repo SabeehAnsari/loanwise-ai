@@ -28,7 +28,7 @@ A user signs in, submits a mortgage application, and the backend runs it through
 
 ## Features
 
-- **Full stack web app**: responsive React 19 + Vite + Tailwind CSS UI with email/password authentication (Supabase Auth, JWT-based sessions).
+- **Full stack web app**: responsive React 19 + Vite + Tailwind CSS UI with email/password authentication with password reset (Supabase Auth, JWT-based sessions).
 - **Explainable interface**: a sidebar pipeline shows which stage passed, failed or was skipped and lights the one that decided the outcome; SHAP factors are drawn as a diverging bar chart; the fairness audit shows each gap with its 95% CI against the limit; rule rejections show which business rule failed. One-click sample applicants (with a first-run walkthrough), live loan-to-value and debt-to-income estimates, a decision history with per-decision pages, and a public landing page and model card built from `GET /model`. Design records live in [`PRODUCT.md`](PRODUCT.md) and [`DESIGN.md`](DESIGN.md).
 - **Typed REST API**: FastAPI with range-checked Pydantic validation and auto-generated OpenAPI docs at `/docs`.
 - **Secured API**: protected endpoints verify the user's Supabase JWT server-side, CORS is restricted to configured origins, `/predict` is rate-limited per IP, and LLM output is HTML-escaped before it is emailed.
@@ -40,7 +40,7 @@ A user signs in, submits a mortgage application, and the backend runs it through
 - **LLM email generation with guardrails**: GPT-generated decision emails are validated (no invented rates or payment amounts, the correct decision stated without contradiction, length, required signature) and regenerated up to 3 times before escalating to human review.
 - **Product recommendations**: eligibility is decided by deterministic rules; the LLM only writes the recommendation text.
 - **Persistence**: every application, including rule rejections and human-review cases, is stored in Supabase (PostgreSQL) under row-level security.
-- **Tested**: 134 pytest tests (ML pipeline, training/serving parity, rules, guardrails including referral letters, monotonic and protected-attribute scoring invariants, persistence, end-to-end API with all external services stubbed) and 83 Vitest + React Testing Library UI tests (form validation, pipeline stages, routing and auth guards, running a decision, history filters, decision pages) run in GitHub Actions together with frontend lint and build.
+- **Tested**: 134 pytest tests (ML pipeline, training/serving parity, rules, guardrails including referral letters, monotonic and protected-attribute scoring invariants, persistence, end-to-end API with all external services stubbed) and 91 Vitest + React Testing Library UI tests (form validation, pipeline stages, routing and auth guards, password reset, running a decision, history filters, decision pages) run in GitHub Actions together with frontend lint and build.
 
 ## Architecture
 
@@ -224,6 +224,8 @@ cp frontend/.env.example frontend/.env.local
 Run [`docs/supabase_schema.sql`](docs/supabase_schema.sql) in the Supabase SQL editor to create the `applications` table and Row Level Security policies.
 
 Already have the table from an earlier version? Run the four `alter table … add column if not exists` lines at the end of that file. They add `explanation`, `message`, `model_version` and `inputs`, which v2 needs: History only shows rows with a `model_version`, so until you migrate, new applications still save but won't appear there.
+
+Then point Supabase's auth emails at the app. In **Authentication → URL Configuration**, set **Site URL** to `http://localhost:5173` (or your deployed URL) and add these **Redirect URLs**: `http://localhost:5173/**` and `http://localhost:8080/**` (Docker), plus your deployed URL with `/**` when you have one. Password-reset emails link to `/reset-password`; if that address isn't allow-listed, Supabase falls back to the Site URL and the app still sends the user to the reset page.
 
 #### 3. Run the backend
 

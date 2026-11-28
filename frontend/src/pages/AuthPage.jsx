@@ -79,7 +79,9 @@ export default function AuthPage({ mode }) {
               <input id="a-pass" className="input" type="password" value={password} minLength={6}
                 autoComplete={signup ? "new-password" : "current-password"}
                 onChange={(e) => setPassword(e.target.value)} required />
-              {signup && <p className="field-hint">At least 6 characters.</p>}
+              {signup
+                ? <p className="field-hint">At least 6 characters.</p>
+                : <p className="field-hint"><Link className="link" to="/forgot-password">Forgot password?</Link></p>}
             </div>
 
             {error && <div className="alert" data-tone="fail" role="alert"><Alert size={16} />{error}</div>}

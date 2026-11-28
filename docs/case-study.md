@@ -52,7 +52,7 @@ From financial features alone, the model reproduces about two-thirds of the lend
 
 ## Shipping it
 
-The v2 model now runs in the LoanWise app. The API turns a form submission into features with the **same code** the model was trained with, and parity tests prove the two match, including HMDA's banded debt-to-income encoding. The design follows the findings: geography is excluded, a low score means review by a loan officer rather than denial, the referral letter has its own guardrail so it can never read as an approval or a refusal, and the fairness gap at the threshold is shown next to every decision instead of only in a report. 134 backend and 83 UI tests run in CI, and the API ships as a Docker image.
+The v2 model now runs in the LoanWise app. The API turns a form submission into features with the **same code** the model was trained with, and parity tests prove the two match, including HMDA's banded debt-to-income encoding. The design follows the findings: geography is excluded, a low score means review by a loan officer rather than denial, the referral letter has its own guardrail so it can never read as an approval or a refusal, and the fairness gap at the threshold is shown next to every decision instead of only in a report. 134 backend and 91 UI tests run in CI, and the API ships as a Docker image.
 
 ## What I would do next
 
