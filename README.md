@@ -259,6 +259,16 @@ cd frontend
 npm test           # UI (Vitest + React Testing Library, jsdom); `npm run test:watch` while editing
 ```
 
+### Deploying to Render
+
+[`render.yaml`](render.yaml) is a Render Blueprint that creates both services on the free plan: **loanwise-api** (the API, built from the Dockerfile) and **loanwise** (the React app as a static site).
+
+1. In Render, choose **New → Blueprint**, connect this repository and select the `hmda-v2` branch.
+2. Enter the values it asks for. `SUPABASE_*`, `OPENAI_API_KEY` and `RESEND_API_KEY` are the same as in `.env`; `VITE_SUPABASE_*` are the Supabase URL and anon key again. Set `VITE_API_URL` to `https://loanwise-api.onrender.com` and `ALLOWED_ORIGINS` to `https://loanwise.onrender.com`. If Render gives either service a different address, update both variables to match and redeploy.
+3. In Supabase (**Authentication → URL Configuration**), set the Site URL to the frontend's address and add `https://<frontend address>/**` to Redirect URLs, so sign-up and password-reset emails land on the live app.
+
+Free instances sleep after 15 minutes without traffic and take up to a minute to wake. The frontend pings `/health` as soon as it loads, so the API is usually awake by the time someone submits an application.
+
 ### Retraining the model
 
 Run `notebooks/07_model_evaluation.ipynb` from start to finish. It rewrites `src/loan_model.json` and `src/model_report.json`, and the API serves the new model on its next start.

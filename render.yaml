@@ -1,0 +1,55 @@
+# Render Blueprint: deploys the API (Docker) and the React app (static site) together.
+# Render dashboard → New → Blueprint → pick this repo and the hmda-v2 branch.
+# Values marked `sync: false` are secrets or URLs you enter when the Blueprint is created.
+services:
+  # FastAPI + XGBoost, built from the root Dockerfile. Free instances sleep after
+  # 15 minutes idle; the frontend pings /health on load to wake it early.
+  - type: web
+    name: loanwise-api
+    runtime: docker
+    plan: free
+    branch: hmda-v2
+    dockerfilePath: ./Dockerfile
+    dockerContext: .
+    healthCheckPath: /health
+    envVars:
+      - key: SUPABASE_URL
+        sync: false
+      - key: SUPABASE_ANON_KEY
+        sync: false
+      - key: OPENAI_API_KEY
+        sync: false
+      - key: RESEND_API_KEY
+        sync: false
+      # The frontend's address, e.g. https://loanwise.onrender.com
+      - key: ALLOWED_ORIGINS
+        sync: false
+
+  # React + Vite, served from Render's CDN.
+  - type: web
+    name: loanwise
+    runtime: static
+    branch: hmda-v2
+    rootDir: frontend
+    buildCommand: npm ci && npm run build
+    staticPublishPath: dist
+    pullRequestPreviewsEnabled: false
+    headers:
+      - path: /assets/*
+        name: Cache-Control
+        value: public, max-age=31536000, immutable
+    # Client-side routes (/app/new, /reset-password, ...) load the single-page app.
+    routes:
+      - type: rewrite
+        source: /*
+        destination: /index.html
+    envVars:
+      - key: NODE_VERSION
+        value: "22"
+      - key: VITE_SUPABASE_URL
+        sync: false
+      - key: VITE_SUPABASE_ANON_KEY
+        sync: false
+      # The API's address, e.g. https://loanwise-api.onrender.com
+      - key: VITE_API_URL
+        sync: false

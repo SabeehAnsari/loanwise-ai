@@ -41,7 +41,7 @@ app.add_exception_handler(RateLimitExceeded, _rate_limit_exceeded_handler)
 
 # Only the configured frontend origin(s) may call the API (comma-separated)
 ALLOWED_ORIGINS = [
-    o.strip()
+    o.strip().rstrip("/")
     for o in os.getenv("ALLOWED_ORIGINS", "http://localhost:5173").split(",")
     if o.strip()
 ]

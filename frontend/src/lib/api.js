@@ -1,6 +1,13 @@
 import { supabase } from "../supabaseClient"
 
-export const API_URL = import.meta.env.VITE_API_URL || "http://127.0.0.1:8000"
+export const API_URL = (import.meta.env.VITE_API_URL || "http://127.0.0.1:8000").replace(/\/+$/, "")
+const LOCAL_API = /\/\/(localhost|127\.0\.0\.1)(:|\/|$)/.test(API_URL)
+
+// Free hosting puts the API to sleep when idle and takes up to a minute to wake it.
+// Ping it as soon as the page loads so it is usually awake by the time someone submits.
+export function wakeApi() {
+  if (!LOCAL_API) fetch(`${API_URL}/health`).catch(() => {})
+}
 
 export class ApiError extends Error {
   constructor(message, status) {
@@ -31,7 +38,9 @@ async function request(path, options = {}) {
   try {
     response = await fetch(`${API_URL}${path}`, { ...options, headers: await authHeaders() })
   } catch {
-    throw new ApiError(`Couldn't reach the API. Make sure the backend is running on ${API_URL}.`, 0)
+    throw new ApiError(LOCAL_API
+      ? `Couldn't reach the API. Make sure the backend is running on ${API_URL}.`
+      : "Couldn't reach the API. It sleeps when idle and can take up to a minute to wake, so try again shortly.", 0)
   }
   if (!response.ok) throw new ApiError(errorMessage(response.status), response.status)
   return response.json()
