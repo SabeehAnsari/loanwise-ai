@@ -2,7 +2,7 @@ name: CI
 
 on:
   push:
-    branches: [main, redesign-with-impeccable]
+    branches: [main, hmda-v2]
   pull_request:
 
 jobs:
