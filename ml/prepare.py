@@ -57,6 +57,15 @@ APPLICANT_FEATURES = NUMERIC + ["log_income", "loan_to_income"] + CATEGORICAL
 
 LOAN_TYPES = {"1": "Conventional", "2": "FHA", "3": "VA", "4": "USDA"}
 
+# Every value each categorical feature may take. Fixing the list keeps the model's encoding
+# identical across years and states; anything else is treated as missing at prediction time
+# (found when Washington 2023 contained conforming_loan_limit "Unknown", never seen in Georgia).
+CATEGORY_LEVELS = {
+    "loan_type": ["Conventional", "FHA", "VA", "USDA", "Other"],
+    "conforming_loan_limit": ["C", "NC", "Unknown"],
+    "has_coapplicant": ["No", "Yes"],
+}
+
 SCOPE = [
     ("full_reporter", "Lender reports DTI and credit data (not partially exempt)",
      lambda d: (d["debt_to_income_ratio"] != "Exempt") & (d["applicant_credit_score_type"] != "1111")),
@@ -99,8 +108,8 @@ class ScopeLog:
         self.steps.append({"rule": key, "label": label, "removed": before - after, "remaining": after})
 
 
-def load_raw(year: int) -> pd.DataFrame:
-    return pd.read_csv(config.raw_path(year), dtype=str, keep_default_na=False, low_memory=False)
+def load_raw(year: int, state: str = config.STATE) -> pd.DataFrame:
+    return pd.read_csv(config.raw_path(year, state), dtype=str, keep_default_na=False, low_memory=False)
 
 
 def apply_scope(raw: pd.DataFrame):

@@ -2,15 +2,52 @@
   "files": {
     "hmda_2022_GA_purchase.csv": {
       "year": 2022,
+      "state": "GA",
       "url": "https://ffiec.cfpb.gov/v2/data-browser-api/view/csv?years=2022&states=GA&actions_taken=1%2C2%2C3&loan_purposes=1",
       "bytes": 75302976,
       "sha256": "bce1d75821febd0b92b349d0145179f873ce401cd2860065fe7330bc67aba37f"
     },
     "hmda_2023_GA_purchase.csv": {
       "year": 2023,
+      "state": "GA",
       "url": "https://ffiec.cfpb.gov/v2/data-browser-api/view/csv?years=2023&states=GA&actions_taken=1%2C2%2C3&loan_purposes=1",
       "bytes": 61320561,
       "sha256": "d572bc76feb3a012cd07e05ff700faf50c52527c4fbd8f3a422e98c887ea6652"
+    },
+    "hmda_2021_GA_purchase.csv": {
+      "year": 2021,
+      "state": "GA",
+      "url": "https://ffiec.cfpb.gov/v2/data-browser-api/view/csv?years=2021&states=GA&actions_taken=1%2C2%2C3&loan_purposes=1",
+      "bytes": 89797812,
+      "sha256": "3446ca05ec64052182cc4f89303a0a2f5014f43bc31b178acd91dde5e45aa351"
+    },
+    "hmda_2023_NC_purchase.csv": {
+      "year": 2023,
+      "state": "NC",
+      "url": "https://ffiec.cfpb.gov/v2/data-browser-api/view/csv?years=2023&states=NC&actions_taken=1%2C2%2C3&loan_purposes=1",
+      "bytes": 67416965,
+      "sha256": "42d27239a3a2e78dca39a8dfb2fc3ca752bdf1fb82ed0ea82c42a4c55bb2a08c"
+    },
+    "hmda_2023_OH_purchase.csv": {
+      "year": 2023,
+      "state": "OH",
+      "url": "https://ffiec.cfpb.gov/v2/data-browser-api/view/csv?years=2023&states=OH&actions_taken=1%2C2%2C3&loan_purposes=1",
+      "bytes": 54919330,
+      "sha256": "29252fc1fb71cbabae3eb335c32ca9c95eeaada1adec2790e4c5358289051813"
+    },
+    "hmda_2023_AZ_purchase.csv": {
+      "year": 2023,
+      "state": "AZ",
+      "url": "https://ffiec.cfpb.gov/v2/data-browser-api/view/csv?years=2023&states=AZ&actions_taken=1%2C2%2C3&loan_purposes=1",
+      "bytes": 41513305,
+      "sha256": "41a8f6560eb4f082752df20d813208eeb0bcad93f4752a878172af0f44d8a4b8"
+    },
+    "hmda_2023_WA_purchase.csv": {
+      "year": 2023,
+      "state": "WA",
+      "url": "https://ffiec.cfpb.gov/v2/data-browser-api/view/csv?years=2023&states=WA&actions_taken=1%2C2%2C3&loan_purposes=1",
+      "bytes": 35124801,
+      "sha256": "21e2a261d629a7b7214dca21ae89c79b3eabcac9fc68320a1f3c82551a3a617f"
     }
   },
   "source": "FFIEC HMDA Data Browser (public LAR, snapshot via data-browser-api)"

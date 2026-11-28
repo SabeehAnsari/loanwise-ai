@@ -8,7 +8,7 @@ from sklearn.pipeline import make_pipeline
 from sklearn.preprocessing import OneHotEncoder, StandardScaler
 from xgboost import XGBClassifier
 
-from .prepare import CATEGORICAL
+from .prepare import CATEGORICAL, CATEGORY_LEVELS
 
 QM_DTI_LIMIT = 43.0  # historic Qualified Mortgage debt-to-income ceiling
 
@@ -66,7 +66,9 @@ MONOTONE = {"dti": -1, "ltv": -1, "loan_to_income": -1, "log_income": 1, "income
 def as_xgb_frame(df, features):
     x = df[features].copy()
     for c in features:
-        if c in CATEGORICAL or not pd.api.types.is_numeric_dtype(x[c]):
+        if c in CATEGORY_LEVELS:
+            x[c] = pd.Categorical(x[c], categories=CATEGORY_LEVELS[c])   # unknown values -> missing
+        elif c in CATEGORICAL or not pd.api.types.is_numeric_dtype(x[c]):
             x[c] = x[c].astype("category")
     return x
 
@@ -128,3 +130,15 @@ def reweigh(group_col: str):
         observed = pgy.loc[list(zip(df[group_col], df["approved"]))].to_numpy()
         return expected / observed
     return weights
+
+
+def out_of_fold(make_model, df, features, folds: int = 3, seed: int = 7, **fit_kw) -> np.ndarray:
+    """Cross-fitted predictions on the training data: each row is scored by a model that
+    did not see it. Used to choose operating thresholds without touching the test year."""
+    rng = np.random.default_rng(seed)
+    fold = rng.integers(0, folds, len(df))
+    p = np.empty(len(df))
+    for k in range(folds):
+        m = make_model().fit(df[fold != k], features, **fit_kw)
+        p[fold == k] = m.predict(df[fold == k])
+    return p

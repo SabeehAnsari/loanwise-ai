@@ -60,3 +60,11 @@ def test_reweighing_balances_group_and_label(frame):
     w = reweigh("group")(frame)
     weighted = frame.assign(w=w).groupby("group").apply(lambda d: np.average(d["approved"], weights=d["w"]))
     assert weighted["a"] == pytest.approx(weighted["b"], abs=1e-9)
+
+
+def test_unseen_category_is_treated_as_missing_not_a_crash(frame):
+    m = Boosted().fit(frame, APPLICANT_FEATURES, n_estimators=30)
+    probe = frame.head(3).copy()
+    probe["conforming_loan_limit"] = ["Unknown", "U", "C"]   # never in training data
+    p = m.predict(probe)
+    assert np.isfinite(p).all()

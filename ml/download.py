@@ -21,24 +21,26 @@ def sha256(path) -> str:
     return h.hexdigest()
 
 
-def url_for(year: int) -> str:
-    return f"{config.API_CSV}?{urllib.parse.urlencode({'years': year, **config.QUERY})}"
+def url_for(year: int, state: str = config.STATE) -> str:
+    return f"{config.API_CSV}?{urllib.parse.urlencode({'years': year, 'states': state, **config.QUERY})}"
 
 
-def ensure(years=(config.TRAIN_YEAR, config.TEST_YEAR)) -> dict:
+def ensure(extracts=tuple(config.EXTRACTS)) -> dict:
     manifest = json.loads(config.MANIFEST.read_text()) if config.MANIFEST.exists() else {"files": {}}
     config.RAW_DIR.mkdir(parents=True, exist_ok=True)
-    for year in years:
-        path = config.raw_path(year)
-        url = url_for(year)
+    for year, state in extracts:
+        path = config.raw_path(year, state)
+        url = url_for(year, state)
         if not path.exists():
-            print(f"Downloading {year} from {url}", file=sys.stderr)
-            urllib.request.urlretrieve(url, path)  # follows the API's redirect to the file host
+            print(f"Downloading {state} {year} from {url}", file=sys.stderr)
+            part = path.with_suffix(".part")
+            urllib.request.urlretrieve(url, part)  # follows the API's redirect to the file host
+            part.replace(path)                     # only a complete download gets the real name
         digest = sha256(path)
         entry = manifest["files"].get(path.name)
         if entry and entry["sha256"] != digest:
             raise RuntimeError(f"{path.name} does not match the manifest checksum; delete it and re-download.")
-        manifest["files"][path.name] = {"year": year, "url": url, "bytes": path.stat().st_size, "sha256": digest}
+        manifest["files"][path.name] = {"year": year, "state": state, "url": url, "bytes": path.stat().st_size, "sha256": digest}
     manifest["source"] = "FFIEC HMDA Data Browser (public LAR, snapshot via data-browser-api)"
     config.MANIFEST.write_text(json.dumps(manifest, indent=2) + "\n")
     return manifest

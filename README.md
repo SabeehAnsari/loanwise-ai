@@ -72,9 +72,9 @@ flowchart LR
 | Email | Resend |
 | Quality | pytest, Vitest, React Testing Library, ESLint, GitHub Actions |
 
-## ML v2: 271,000 real mortgage decisions
+## ML v2: 850,000 real mortgage decisions
 
-The app's current model (v1, below) was trained on 614 rows. **v2** replaces the data with public [HMDA](https://ffiec.cfpb.gov/data-browser/) records: every Georgia home-purchase decision in 2022 (151,421 applications, used to train) and 2023 (120,170, used once to test). It's a reproducible, tested pipeline in [`ml/`](ml/). Read the one-page write-up first: **[case study](docs/case-study.md)**. Full auto-generated results: [`reports/ml/REPORT.md`](reports/ml/REPORT.md).
+The app's current model (v1, below) was trained on 614 rows. **v2** replaces the data with public [HMDA](https://ffiec.cfpb.gov/data-browser/) records: every Georgia home-purchase decision in 2022 (151,421 applications, used to train) and 2023 (120,170, used once to test). Georgia 2021 and 2023 data from North Carolina, Ohio, Arizona and Washington test drift and generalisation (852,883 applications in all). It's a reproducible, tested pipeline in [`ml/`](ml/). Read the one-page write-up first: **[case study](docs/case-study.md)**. Full auto-generated results: [`reports/ml/REPORT.md`](reports/ml/REPORT.md).
 
 | Model, trained on 2022, tested on 2023 | ROC-AUC | Denial PR-AUC |
 |---|---|---|
@@ -82,13 +82,14 @@ The app's current model (v1, below) was trained on 614 rows. **v2** replaces the
 | Logistic regression | 0.725 | 0.405 |
 | **XGBoost, monotonic constraints (chosen)** | **0.789** | **0.537** |
 
-- **Leakage, caught twice.** Post-decision columns (e.g. interest rate, closing costs, denial reasons) push AUC to a fake 1.000, and a missingness audit flags them. A subtler *selection* leak (`preapproval`: all 8,613 requests in the extract were approved) is caught by a separation audit. It had inflated AUC (0.789 → 0.799) and the share of applications safe to automate (0.9% → 11.8%).
-- **Automation, not denial.** The model auto-approves or refers to a person. With at most 5% of auto-approvals being ones the lender denied, it automates 71.5% of applications.
-- **Fairness at the threshold.** Financial features explain about two-thirds of the lenders' Black–White approval gap (−6.2 vs −9.8 points). But at the operating threshold, lender-approved Black applicants are 20.6 points more likely to be referred for review. Census-tract features widen this to 28.5 points, so they are excluded; reweighing narrows it to 17.3 points.
+- **Leakage, caught twice.** Post-decision columns (e.g. interest rate, closing costs, denial reasons) push AUC to a fake 1.000, and a missingness audit flags them. A subtler *selection* leak (`preapproval`: all 8,613 requests in the extract were approved) is caught by a separation audit. It had inflated AUC (0.789 → 0.799) and the share of applications safe to automate (0.9% → 12.2%).
+- **Automation, not denial.** The model auto-approves or refers to a person. The threshold is chosen on 2022 for a 5% wrong-auto-approval budget; on 2023 it automated 69.2% of applications at 4.9% wrong.
+- **Fairness at the threshold.** Financial features explain about two-thirds of the lenders' Black–White approval gap (−6.2 vs −9.8 points). But at the operating threshold, lender-approved Black applicants are 21.7 points more likely to be referred for review. Census-tract features widen this to 30.7 points, so they are excluded; reweighing narrows it to 17.7 points.
+- **Robustness.** A model left unretrained since 2021 drifts just past its error budget, while the yearly retrained one stays within it. The Georgia model comes within 0.004–0.020 AUC of models trained in-state in four other states, and the referral gap replicates in all of them (Black–White +12.8 to +24.0 points).
 
 ```bash
 pip install -r requirements-dev.txt
-python -m ml.run          # downloads ~136 MB once (checksummed), then about 4 minutes
+python -m ml.run          # downloads ~430 MB once (checksummed), then a few minutes
 python -m pytest tests/ml_pipeline
 ```
 
@@ -344,13 +345,13 @@ This is a learning project, and these limitations are deliberate to state:
 - [x] Application history page with per-decision pages
 - [x] Vitest tests for the UI
 - [x] Dockerfile and docker-compose for one-command setup
-- [x] ML v2 on 271k HMDA decisions: temporal holdout, leakage and separation audits, monotonic XGBoost, fairness at the operating threshold ([case study](docs/case-study.md))
+- [x] ML v2 on HMDA decisions: temporal holdout, leakage and separation audits, monotonic XGBoost, fairness at the operating threshold, drift (2021–2023) and four unseen states ([case study](docs/case-study.md))
 - [ ] Serve the v2 HMDA model in the app (new form fields, rules and tests)
 - [ ] Deployment (frontend + API) with a live demo link
 
 ## Data
 
-v2 uses public Home Mortgage Disclosure Act (HMDA) Loan/Application Register data from the FFIEC [HMDA Data Browser](https://ffiec.cfpb.gov/data-browser/) (Georgia, 2022–2023, home purchase); the exact extracts are pinned in [`data/hmda/manifest.json`](data/hmda/manifest.json). v1 uses the *Loan Prediction* dataset (Analytics Vidhya / Kaggle). Credit goes to the original dataset authors; check the dataset's terms before redistributing.
+v2 uses public Home Mortgage Disclosure Act (HMDA) Loan/Application Register data from the FFIEC [HMDA Data Browser](https://ffiec.cfpb.gov/data-browser/) (home purchase: Georgia 2021–2023; North Carolina, Ohio, Arizona and Washington 2023); the exact extracts are pinned in [`data/hmda/manifest.json`](data/hmda/manifest.json). v1 uses the *Loan Prediction* dataset (Analytics Vidhya / Kaggle). Credit goes to the original dataset authors; check the dataset's terms before redistributing.
 
 ## Author
 

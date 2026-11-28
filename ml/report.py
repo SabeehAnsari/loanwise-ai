@@ -3,6 +3,7 @@ import matplotlib
 
 matplotlib.use("Agg")
 import matplotlib.pyplot as plt  # noqa: E402
+import numpy as np  # noqa: E402
 
 from . import config  # noqa: E402
 
@@ -116,9 +117,52 @@ def fig_explain(r, out):
     plt.close(fig)
 
 
+def fig_drift(r, out):
+    rows = r["robustness"]["drift"]["rows"]
+    fig, (a, b) = plt.subplots(1, 2, figsize=(8.4, 2.8))
+    labels = [f"{x['train_year']}→{x['test_year']}" for x in rows]
+    a.bar(labels, [x["roc_auc"] for x in rows], color=INK, width=0.55)
+    a.set_ylim(0.6, 0.85)
+    a.set_title("ROC-AUC, train year → test year", loc="left", color=INK)
+    b.bar(labels, [x["wrong_auto_approval"] * 100 for x in rows], color=MUTED, width=0.55)
+    b.axhline(5, color=FAIL, lw=1, ls="--")
+    b.set_title("Wrong auto-approvals (%), 5% budget", loc="left", color=INK)
+    fig.tight_layout()
+    fig.savefig(out / "drift.png")
+    plt.close(fig)
+
+
+def fig_states(r, out):
+    st = r["robustness"]["states"]
+    labels = [r["setup"]["state"] + " (home)"] + [x["state"] for x in st]
+    home_gap = next(g for g in r["fairness"]["derived_race"]["gaps"] if g["group"].startswith("Black"))
+    gaps = [home_gap["base__false_referral_gap"]] + [
+        next((f["false_referral_gap"] for f in x["fairness"] if f["group"].startswith("Black")), (np.nan,) * 3) for x in st]
+    fig, (a, b) = plt.subplots(1, 2, figsize=(8.4, 2.8))
+    loc = [None] + [x["holdout_auc_local"] for x in st]
+    tr = [r["variants"]["base"]["roc_auc"]] + [x["holdout_auc_transfer"] for x in st]
+    xs = np.arange(len(labels))
+    a.bar(xs - 0.18, tr, width=0.36, color=INK, label="Georgia model")
+    a.bar(xs[1:] + 0.18, loc[1:], width=0.36, color=MUTED, label="Trained in-state")
+    a.set_xticks(xs, labels)
+    a.set_ylim(0.6, 0.9)
+    a.legend(frameon=False, fontsize=8)
+    a.set_title("ROC-AUC on each state's 2023", loc="left", color=INK)
+    for i, (pt, lo, hi) in enumerate(gaps):
+        b.plot([lo * 100, hi * 100], [i, i], color=INK, lw=2)
+        b.plot(pt * 100, i, "o", color=INK)
+    b.set_yticks(range(len(labels)), labels)
+    b.invert_yaxis()
+    b.axvline(0, color=LINE)
+    b.set_title("Black–White false-referral gap (pp)", loc="left", color=INK)
+    fig.tight_layout()
+    fig.savefig(out / "states.png")
+    plt.close(fig)
+
+
 def write_report(r):
     out = config.REPORT_DIR
-    for f in (fig_leakage, fig_comparison, fig_calibration, fig_automation, fig_fairness, fig_explain):
+    for f in (fig_leakage, fig_comparison, fig_calibration, fig_automation, fig_fairness, fig_explain, fig_drift, fig_states):
         f(r, out)
 
     s = r["data"]["scope"]
@@ -150,8 +194,12 @@ def write_report(r):
           + f" | {c['pr_auc_denial']:.3f} | {c['brier']:.4f} | {c['ece']:.4f} |" for c in r["comparison"]], "",
         "![](comparison.png)", "", "![](calibration.png)", "",
         "## Automation policy", "",
-        *[f"- Wrong auto-approvals <= {lab}: threshold {a['threshold']:.3f} automates {pct(a['auto_approved_share'])} "
-          f"of applications; {pct(a['denials_caught_for_review'])} of lender denials are referred to a person."
+        f"Thresholds are chosen on {r['automation']['threshold_chosen_on']} for a wrong-auto-approval budget, "
+        "then applied unchanged to the test year.", "",
+        "| Budget | Threshold | Automated (train, OOF) | Wrong (train, OOF) | Automated (test) | Wrong (test) | Denials referred (test) |",
+        "|---|---|---|---|---|---|---|",
+        *[f"| {lab} | {a['threshold']:.3f} | {pct(a['in_train']['auto_approved_share'])} | {pct(a['in_train']['wrong_auto_approval'])} | "
+          f"{pct(a['auto_approved_share'])} | {pct(a['wrong_auto_approval'])} | {pct(a['denials_caught_for_review'])} |"
           for lab, a in (("2%", r["automation"]["at_2pct"]), ("5%", r["automation"]["at_5pct"]))], "",
         "![](automation.png)", "",
         "## Fairness (test year, gaps vs reference group, percentage points [95% CI])", "",
@@ -168,6 +216,26 @@ def write_report(r):
     lines += ["", "![](fairness.png)", "",
               "| Variant | ROC-AUC | Brier | ECE |", "|---|---|---|---|",
               *[f"| {k} | {x['roc_auc']:.3f} | {x['brier']:.4f} | {x['ece']:.4f} |" for k, x in v.items()], "",
+              "## Robustness: drift over time (Georgia)", "",
+              "Each model keeps the threshold chosen on its own training year (5% budget).", "",
+              "| Model | Test year | Actual approval | Mean predicted | ROC-AUC | ECE | Automated | Wrong auto-approvals |",
+              "|---|---|---|---|---|---|---|---|",
+              *[f"| {x['model']} | {x['test_year']} | {pct(x['actual_approval'])} | {pct(x['mean_predicted'])} | {x['roc_auc']:.3f} | "
+                f"{x['ece']:.3f} | {pct(x['auto_approved_share'])} | {pct(x['wrong_auto_approval'])} |" for x in r["robustness"]["drift"]["rows"]], "",
+              "| Year | Applications | Approval rate | Median DTI | Median LTV | Median loan | Median income |", "|---|---|---|---|---|---|---|",
+              *[f"| {x['year']} | {x['rows']:,} | {pct(x['approval_rate'])} | {x['median_dti']:.0f}% | {x['median_ltv']:.1f}% | "
+                f"${x['median_loan']:,.0f} | ${x['median_income']:,.0f} |" for x in r["robustness"]["drift"]["profile"]], "",
+              "![](drift.png)", "",
+              f"## Robustness: unseen states ({r['setup']['test_year']}, Georgia model and threshold)", "",
+              "| State | Applications | Actual approval | Mean predicted | ROC-AUC (GA model) | ROC-AUC (in-state, 20% holdout) | GA model on same holdout | Automated | Wrong auto-approvals |",
+              "|---|---|---|---|---|---|---|---|---|",
+              *[f"| {x['state']} | {x['scoped_rows']:,} | {pct(x['transfer']['actual_approval'])} | {pct(x['transfer']['mean_predicted'])} | "
+                f"{x['transfer']['roc_auc']:.3f} | {x['holdout_auc_local']:.3f} | {x['holdout_auc_transfer']:.3f} | "
+                f"{pct(x['transfer']['auto_approved_share'])} | {pct(x['transfer']['wrong_auto_approval'])} |" for x in r["robustness"]["states"]], "",
+              "| State | Group | n | Lender gap | Model mean gap | False-referral gap |", "|---|---|---|---|---|---|",
+              *[f"| {x['state']} | {f['group']} | {f['n']:,} | {ci(f['lender_gap'], 1, 100)} | {ci(f['model_mean_gap'], 1, 100)} | "
+                f"{ci(f['false_referral_gap'], 1, 100)} |" for x in r["robustness"]["states"] for f in x["fairness"]], "",
+              "![](states.png)", "",
               "## Explanations", "", "![](explanations.png)", "",
               f"_Runtime {r['runtime_seconds']} s._", ""]
     (out / "REPORT.md").write_text("\n".join(lines), encoding="utf-8")

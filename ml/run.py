@@ -1,6 +1,6 @@
 """Run every experiment and write reports/ml/{results.json, REPORT.md, *.png}.
 
-    python -m ml.run            # full run (about a minute)
+    python -m ml.run            # full run (about 8 minutes)
 """
 import json
 import sys
@@ -13,7 +13,7 @@ from . import config
 from .download import ensure
 from .evaluate import (automation_curve, bootstrap_ci, gap_ci, group_rates, scores,
                        threshold_for_error)
-from .models import Boosted, DtiRule, Logistic, Majority, reweigh
+from .models import Boosted, DtiRule, Logistic, Majority, out_of_fold, reweigh
 from .prepare import APPLICANT_FEATURES, CATEGORICAL, GEOGRAPHY, POST_DECISION, SELECTION_LEAK, build, load_raw
 
 DENIAL_REASONS = {
@@ -36,12 +36,12 @@ def log(msg):
 
 def load():
     frames, scope = {}, {}
-    for year in (config.TRAIN_YEAR, config.TEST_YEAR):
+    for year in (config.DRIFT_YEAR, config.TRAIN_YEAR, config.TEST_YEAR):
         df, slog = build(load_raw(year))
         frames[year], scope[year] = df, {"raw": slog.start, "steps": slog.steps, "rows": len(df),
                                          "approval_rate": float(df["approved"].mean()),
                                          "denials": int((df["approved"] == 0).sum())}
-    return frames[config.TRAIN_YEAR], frames[config.TEST_YEAR], scope
+    return frames, scope
 
 
 def leakage(train, test):
@@ -154,9 +154,9 @@ def explain(model, test, n=20000):
 def main():
     t0 = time.time()
     manifest = ensure()
-    train, test = None, None
     log("load + scope")
-    train, test, scope = load()
+    frames, scope = load()
+    train, test = frames[config.TRAIN_YEAR], frames[config.TEST_YEAR]
 
     log("leakage experiment")
     leak = leakage(train, test)
@@ -176,11 +176,15 @@ def main():
         "base": scores(y, test["p_base"]), "geography": scores(y, test["p_geo"]), "reweighed": scores(y, test["p_rw"]),
     }
 
-    log("automation policy")
+    log("automation policy (thresholds chosen on out-of-fold %d predictions)" % config.TRAIN_YEAR)
     curve = automation_curve(y, test["p_base"], np.round(np.arange(0.5, 0.995, 0.01), 2))
-    t2 = threshold_for_error(y, test["p_base"], 0.02)
-    t5 = threshold_for_error(y, test["p_base"], 0.05)
+    oof = out_of_fold(lambda: Boosted(monotone=True), train, APPLICANT_FEATURES, seed=config.SEED,
+                      n_estimators=chosen_model.n_estimators)
+    y_train = train["approved"].to_numpy()
+    t2 = threshold_for_error(y_train, oof, 0.02)
+    t5 = threshold_for_error(y_train, oof, 0.05)
     at = lambda t: automation_curve(y, test["p_base"], [t]).iloc[0].to_dict()  # noqa: E731
+    in_train = lambda t: automation_curve(y_train, oof, [t]).iloc[0].to_dict()  # noqa: E731
 
     log("fairness (bootstrap)")
     # Fairness is measured at the realistic operating point (<= 5% wrong auto-approvals);
@@ -190,9 +194,16 @@ def main():
     log("explanations")
     expl = explain(chosen_model, test)
 
+    from .robustness import drift, states
+    log("robustness: drift over time")
+    drift_res = drift(frames, chosen_model, t5, log=log)
+    log("robustness: unseen states")
+    state_res = states(chosen_model, t5, log=log)
+
     v1 = json.loads((config.ROOT / "src" / "model_report.json").read_text())
     results = {
         "setup": {"state": config.STATE, "train_year": config.TRAIN_YEAR, "test_year": config.TEST_YEAR,
+                  "drift_year": config.DRIFT_YEAR, "other_states": config.OTHER_STATES,
                   "features": APPLICANT_FEATURES, "seed": config.SEED},
         "data": {"manifest": manifest["files"], "scope": scope},
         "leakage": leak,
@@ -201,7 +212,10 @@ def main():
         "calibration": calibration_bins(y, test["p_base"].to_numpy()),
         "fairness_threshold": t5,
         "automation": {"curve": curve.to_dict(orient="records"),
-                       "at_2pct": {**at(t2), "threshold": t2}, "at_5pct": {**at(t5), "threshold": t5}},
+                       "threshold_chosen_on": f"{config.TRAIN_YEAR} out-of-fold predictions",
+                       "at_2pct": {**at(t2), "threshold": t2, "in_train": in_train(t2)},
+                       "at_5pct": {**at(t5), "threshold": t5, "in_train": in_train(t5)}},
+        "robustness": {"drift": drift_res, "states": state_res},
         "fairness": fair,
         "explanations": expl,
         "v1": {"rows": v1["training_rows"], "female": v1["fairness_audit"]["group_sizes"]["female"],
