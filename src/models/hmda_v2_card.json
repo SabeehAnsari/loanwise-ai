@@ -1,0 +1,434 @@
+{
+  "model_version": "hmda-v2-ga2022",
+  "model": "XGBoost with monotonic constraints (more debt or leverage never raises approval)",
+  "data": {
+    "source": "HMDA public Loan/Application Register (FFIEC), home purchase, first lien, owner-occupied",
+    "train": {
+      "state": "GA",
+      "year": 2022,
+      "rows": 151421,
+      "approval_rate": 0.8966
+    },
+    "test": {
+      "state": "GA",
+      "year": 2023,
+      "rows": 120170,
+      "approval_rate": 0.8927
+    }
+  },
+  "features": [
+    "loan_amount",
+    "income",
+    "dti",
+    "ltv",
+    "property_value",
+    "loan_term",
+    "log_income",
+    "loan_to_income",
+    "loan_type",
+    "conforming_loan_limit",
+    "has_coapplicant"
+  ],
+  "feature_labels": {
+    "dti": "Debt-to-income ratio",
+    "ltv": "Loan-to-value ratio",
+    "property_value": "Property value",
+    "loan_amount": "Loan amount",
+    "loan_type": "Loan type",
+    "loan_to_income": "Loan relative to income",
+    "has_coapplicant": "Co-applicant",
+    "income": "Household income",
+    "log_income": "Household income",
+    "loan_term": "Loan term",
+    "conforming_loan_limit": "Conforming loan limit"
+  },
+  "category_levels": {
+    "loan_type": [
+      "Conventional",
+      "FHA",
+      "VA",
+      "USDA",
+      "Other"
+    ],
+    "conforming_loan_limit": [
+      "C",
+      "NC",
+      "Unknown"
+    ],
+    "has_coapplicant": [
+      "No",
+      "Yes"
+    ]
+  },
+  "excluded": {
+    "protected": [
+      "derived_sex",
+      "derived_race",
+      "derived_ethnicity",
+      "applicant_age"
+    ],
+    "geography": [
+      "tract_minority_population_percent",
+      "tract_to_msa_income_percentage",
+      "ffiec_msa_md_median_family_income",
+      "tract_population",
+      "tract_owner_occupied_units",
+      "tract_one_to_four_family_homes",
+      "tract_median_age_of_housing_units"
+    ],
+    "selection_leak": [
+      "preapproval"
+    ]
+  },
+  "metrics": {
+    "roc_auc": 0.7892,
+    "roc_auc_ci": [
+      0.7847,
+      0.7934
+    ],
+    "pr_auc_denial": 0.537,
+    "brier": 0.0678,
+    "ece": 0.0033
+  },
+  "comparison": [
+    {
+      "name": "Majority class (approve everyone)",
+      "roc_auc": 0.5,
+      "pr_auc_denial": 0.1073
+    },
+    {
+      "name": "One-line rule: approve if DTI <= 43%",
+      "roc_auc": 0.6139,
+      "pr_auc_denial": 0.1392
+    },
+    {
+      "name": "Logistic regression",
+      "roc_auc": 0.7255,
+      "pr_auc_denial": 0.405
+    },
+    {
+      "name": "XGBoost (unconstrained)",
+      "roc_auc": 0.7986,
+      "pr_auc_denial": 0.5555
+    },
+    {
+      "name": "XGBoost (monotonic)",
+      "roc_auc": 0.7892,
+      "pr_auc_denial": 0.537
+    }
+  ],
+  "policy": {
+    "threshold": 0.92,
+    "error_budget": 0.05,
+    "chosen_on": "2022 out-of-fold predictions",
+    "test_auto_approved_share": 0.6917,
+    "test_wrong_auto_approval": 0.0487,
+    "test_denials_referred": 0.6859
+  },
+  "fairness": {
+    "threshold": 0.92,
+    "gate": {
+      "metric": "Largest gap in average approval probability between a monitored group and its reference",
+      "limit": 0.1,
+      "value": 0.0618,
+      "worst_group": "Black or African American vs White",
+      "passed": true
+    },
+    "warning": "At the auto-approve threshold, some groups the lender approved are referred to a person much more often than their reference group. Referral means review by a loan officer, not denial.",
+    "groups": [
+      {
+        "attribute": "Sex",
+        "group": "Female",
+        "reference": "Male",
+        "n": 32404,
+        "lender_gap": [
+          -0.0159,
+          -0.0209,
+          -0.0107
+        ],
+        "model_gap": [
+          -0.02,
+          -0.0224,
+          -0.0175
+        ],
+        "referral_gap": [
+          0.0803,
+          0.0742,
+          0.0879
+        ]
+      },
+      {
+        "attribute": "Sex",
+        "group": "Joint",
+        "reference": "Male",
+        "n": 36765,
+        "lender_gap": [
+          0.0314,
+          0.0274,
+          0.0353
+        ],
+        "model_gap": [
+          0.0253,
+          0.0234,
+          0.0276
+        ],
+        "referral_gap": [
+          -0.096,
+          -0.1021,
+          -0.0903
+        ]
+      },
+      {
+        "attribute": "Race",
+        "group": "Black or African American",
+        "reference": "White",
+        "n": 28206,
+        "lender_gap": [
+          -0.0977,
+          -0.1028,
+          -0.0922
+        ],
+        "model_gap": [
+          -0.0618,
+          -0.0647,
+          -0.0591
+        ],
+        "referral_gap": [
+          0.2171,
+          0.2097,
+          0.224
+        ]
+      },
+      {
+        "attribute": "Race",
+        "group": "Asian",
+        "reference": "White",
+        "n": 9893,
+        "lender_gap": [
+          -0.0284,
+          -0.0347,
+          -0.0226
+        ],
+        "model_gap": [
+          -0.006,
+          -0.0096,
+          -0.0029
+        ],
+        "referral_gap": [
+          -0.0612,
+          -0.07,
+          -0.0532
+        ]
+      },
+      {
+        "attribute": "Ethnicity",
+        "group": "Hispanic or Latino",
+        "reference": "Not Hispanic or Latino",
+        "n": 11099,
+        "lender_gap": [
+          -0.0185,
+          -0.0251,
+          -0.0122
+        ],
+        "model_gap": [
+          -0.0162,
+          -0.0198,
+          -0.0125
+        ],
+        "referral_gap": [
+          0.0547,
+          0.045,
+          0.0639
+        ]
+      },
+      {
+        "attribute": "Age",
+        "group": "<25",
+        "reference": "35-44",
+        "n": 6665,
+        "lender_gap": [
+          0.0132,
+          0.0046,
+          0.0208
+        ],
+        "model_gap": [
+          -0.005,
+          -0.01,
+          -0.0005
+        ],
+        "referral_gap": [
+          0.0719,
+          0.0599,
+          0.0856
+        ]
+      },
+      {
+        "attribute": "Age",
+        "group": "65-74",
+        "reference": "35-44",
+        "n": 6425,
+        "lender_gap": [
+          0.0192,
+          0.0109,
+          0.027
+        ],
+        "model_gap": [
+          0.0105,
+          0.0058,
+          0.0148
+        ],
+        "referral_gap": [
+          -0.0576,
+          -0.0688,
+          -0.0465
+        ]
+      },
+      {
+        "attribute": "Age",
+        "group": ">74",
+        "reference": "35-44",
+        "n": 1875,
+        "lender_gap": [
+          0.0349,
+          0.0213,
+          0.0472
+        ],
+        "model_gap": [
+          0.0213,
+          0.0143,
+          0.0298
+        ],
+        "referral_gap": [
+          -0.0776,
+          -0.0955,
+          -0.0577
+        ]
+      }
+    ],
+    "variants": {
+      "base": {
+        "roc_auc": 0.7892
+      },
+      "geography": {
+        "roc_auc": 0.7957
+      },
+      "reweighed": {
+        "roc_auc": 0.7859
+      }
+    }
+  },
+  "robustness": {
+    "drift": [
+      {
+        "train_year": 2021,
+        "test_year": 2022,
+        "roc_auc": 0.7768,
+        "wrong_auto_approval": 0.0531
+      },
+      {
+        "train_year": 2021,
+        "test_year": 2023,
+        "roc_auc": 0.7842,
+        "wrong_auto_approval": 0.052
+      },
+      {
+        "train_year": 2022,
+        "test_year": 2023,
+        "roc_auc": 0.7892,
+        "wrong_auto_approval": 0.0487
+      }
+    ],
+    "states": [
+      {
+        "state": "NC",
+        "rows": 126814,
+        "roc_auc_transfer": 0.81,
+        "roc_auc_local": 0.8137,
+        "wrong_auto_approval": 0.0326,
+        "black_referral_gap": [
+          0.2338,
+          0.2252,
+          0.2418
+        ]
+      },
+      {
+        "state": "OH",
+        "rows": 114248,
+        "roc_auc_transfer": 0.7956,
+        "roc_auc_local": 0.8054,
+        "wrong_auto_approval": 0.0304,
+        "black_referral_gap": [
+          0.2401,
+          0.2289,
+          0.2515
+        ]
+      },
+      {
+        "state": "AZ",
+        "rows": 84008,
+        "roc_auc_transfer": 0.8066,
+        "roc_auc_local": 0.8125,
+        "wrong_auto_approval": 0.0384,
+        "black_referral_gap": [
+          0.1275,
+          0.1107,
+          0.1425
+        ]
+      },
+      {
+        "state": "WA",
+        "rows": 71216,
+        "roc_auc_transfer": 0.7567,
+        "roc_auc_local": 0.7773,
+        "wrong_auto_approval": 0.033,
+        "black_referral_gap": [
+          0.1852,
+          0.1636,
+          0.2051
+        ]
+      }
+    ]
+  },
+  "leakage": {
+    "post_decision_auc": 1.0,
+    "selection_leak": {
+      "without": {
+        "roc_auc": 0.7892,
+        "auto_share_2pct": 0.009
+      },
+      "with": {
+        "roc_auc": 0.7988,
+        "auto_share_2pct": 0.122
+      }
+    }
+  },
+  "assumptions": {
+    "interest_rate": 0.068,
+    "tax_and_insurance_rate": 0.015,
+    "conforming_limit": 726200
+  },
+  "top_factors": {
+    "dti": 0.6266999840736389,
+    "property_value": 0.28519999980926514,
+    "ltv": 0.2728999853134155,
+    "loan_type": 0.2287999987602234,
+    "loan_amount": 0.2011999934911728,
+    "has_coapplicant": 0.09319999814033508,
+    "loan_to_income": 0.08720000088214874,
+    "income": 0.04639999940991402,
+    "loan_term": 0.04050000011920929,
+    "log_income": 0.010900000110268593,
+    "conforming_loan_limit": 0.004999999888241291
+  },
+  "denial_reasons": {
+    "Debt-to-income ratio": 0.3877,
+    "Credit history": 0.1286,
+    "Collateral": 0.1249,
+    "Incomplete application": 0.1147,
+    "Other": 0.0769,
+    "Unverifiable information": 0.0717,
+    "Insufficient cash": 0.0584,
+    "Employment history": 0.0364,
+    "Mortgage insurance denied": 0.0007
+  }
+}

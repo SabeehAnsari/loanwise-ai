@@ -14,6 +14,12 @@ SENDER_EMAIL = "onboarding@resend.dev"
 SENDER_NAME = "LoanWise AI"
 
 
+SUBJECTS = {
+    "APPROVED": "Your mortgage application has been approved",
+    "REFERRED": "Your mortgage application is with a loan officer",
+}
+
+
 def send_loan_email(
     applicant_email: str,
     applicant_name: str,
@@ -26,15 +32,13 @@ def send_loan_email(
     Parameters:
         applicant_email : recipient's email address
         applicant_name  : recipient's name for the subject line
-        decision        : APPROVED or DENIED
+        decision        : APPROVED or REFERRED
         email_body      : the full email text from email_agent.py
 
     Returns:
         dict with send status and message ID
     """
-    subject = (
-        f"Your Loan Application Has Been {decision.capitalize()} — LoanWise AI"
-    )
+    subject = SUBJECTS.get(decision, "An update on your mortgage application") + " — LoanWise AI"
 
     # Convert plain text to basic HTML for better email rendering
     # Escape first: the body is LLM output and must not be able to inject HTML
@@ -43,7 +47,7 @@ def send_loan_email(
     <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px;">
         <div style="background: #1a1a2e; padding: 20px; border-radius: 8px; margin-bottom: 20px;">
             <h1 style="color: #4a9eff; margin: 0; font-size: 24px;">LoanWise AI</h1>
-            <p style="color: #888; margin: 5px 0 0 0; font-size: 14px;">Intelligent Loan Approval System</p>
+            <p style="color: #888; margin: 5px 0 0 0; font-size: 14px;">Explained, audited mortgage decisions</p>
         </div>
         <div style="background: #f9f9f9; padding: 20px; border-radius: 8px; line-height: 1.6;">
             {html_body}

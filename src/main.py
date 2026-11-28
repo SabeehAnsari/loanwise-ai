@@ -3,6 +3,8 @@ import sys
 
 from fastapi import Depends, FastAPI, HTTPException, Request
 from fastapi.middleware.cors import CORSMiddleware
+from typing import Literal
+
 from pydantic import BaseModel, Field
 from slowapi import Limiter, _rate_limit_exceeded_handler
 from slowapi.errors import RateLimitExceeded
@@ -12,19 +14,24 @@ from slowapi.util import get_remote_address
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 
 from auth import get_current_user
-from bias_agent import build_fairness_gate, load_model_report
+from bias_agent import build_fairness_gate
 from database import get_user_applications, save_application
 from email_agent import generate_validated_email
 from email_sender import send_loan_email
 from marketing_agent import build_final_email, run_marketing_agent
 from rules import check_business_rules
-from scoring import load_model, score_application
+from scoring import load_card, load_model, score_application
+
+ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+if ROOT not in sys.path:
+    sys.path.insert(0, ROOT)
+from ml.serving import LOAN_TYPES, MODEL_VERSION, derived  # noqa: E402
 
 # ── App Setup ──────────────────────────────────────────────
 app = FastAPI(
     title="LoanWise AI API",
     description="AI-powered loan approval pipeline with fairness auditing, explanations and guarded LLM emails",
-    version="1.1.0"
+    version="2.0.0"
 )
 
 # Rate limiting (per client IP) to protect the paid OpenAI and email calls
@@ -47,30 +54,39 @@ app.add_middleware(
     allow_headers=["Authorization", "Content-Type"],
 )
 
-# Loaded once at startup: the model and its offline fairness audit
+# Loaded once at startup: the v2 model, its card (metrics, threshold, offline fairness audit)
 model = load_model()
-MODEL_REPORT = load_model_report()
-FAIRNESS_GATE = build_fairness_gate(MODEL_REPORT)
+MODEL_CARD = load_card()
+THRESHOLD = MODEL_CARD["policy"]["threshold"]
+FAIRNESS_GATE = build_fairness_gate(MODEL_CARD)
 
 
 # ── Request Schema ─────────────────────────────────────────
+NOT_PROVIDED = "Not provided"
+
+
 class LoanApplication(BaseModel):
     name: str = Field(min_length=2, max_length=100)
-    gender: int = Field(ge=0, le=1)              # 1 = Male, 0 = Female (audit only, not a model input)
-    married: int = Field(ge=0, le=1)             # 1 = Yes, 0 = No (audit only, not a model input)
-    dependents: int = Field(ge=0, le=3)          # 3 means 3+
-    education: int = Field(ge=0, le=1)           # 1 = Graduate, 0 = Not Graduate
-    self_employed: int = Field(ge=0, le=1)       # 1 = Yes, 0 = No
-    applicant_income: float = Field(ge=0, le=10_000_000)
-    coapplicant_income: float = Field(ge=0, le=10_000_000)
-    loan_amount: float = Field(ge=0, le=1_000_000)   # in thousands; business rules apply the real cap
-    loan_amount_term: float = Field(gt=0, le=600)    # in months
-    credit_history: float = Field(ge=0, le=1)        # 1.0 = Good, 0.0 = Poor
-    property_area: int = Field(ge=0, le=2)           # 0 = Rural, 1 = Semiurban, 2 = Urban
+    loan_amount: float = Field(gt=0, le=10_000_000)          # dollars
+    property_value: float = Field(gt=0, le=20_000_000)       # dollars
+    annual_income: float = Field(ge=0, le=10_000_000)        # household, before tax
+    monthly_debts: float = Field(ge=0, le=1_000_000)         # existing debt payments (car, cards, student)
+    loan_term: int = Field(ge=60, le=480)                    # months
+    loan_type: Literal[tuple(LOAN_TYPES)]
+    has_coapplicant: bool
+    # Fairness monitoring only: never model inputs (HMDA categories, all optional)
+    sex: Literal["Male", "Female", NOT_PROVIDED] = NOT_PROVIDED
+    race: Literal["White", "Black or African American", "Asian", "American Indian or Alaska Native",
+                  "Native Hawaiian or Other Pacific Islander", "Two or more races", NOT_PROVIDED] = NOT_PROVIDED
+    ethnicity: Literal["Hispanic or Latino", "Not Hispanic or Latino", NOT_PROVIDED] = NOT_PROVIDED
+    age: Literal["<25", "25-34", "35-44", "45-54", "55-64", "65-74", ">74", NOT_PROVIDED] = NOT_PROVIDED
 
 
-def decision_label(prediction: int) -> str:
-    return "APPROVED" if prediction == 1 else "DENIED"
+def shown_derived(app: dict) -> dict:
+    """Derived numbers returned to the app (rounded, JSON-safe)."""
+    d = derived(app)
+    return {"dti": round(d["dti"], 2), "ltv": round(d["ltv"], 2),
+            "monthly_payment": round(d["monthly_payment"], 2), "conforming": d["conforming"]}
 
 
 def persist(user: dict, application: LoanApplication, result: dict) -> None:
@@ -97,6 +113,7 @@ def root():
     return {
         "message": "LoanWise AI API is running",
         "version": app.version,
+        "model_version": MODEL_VERSION,
         "endpoints": ["/predict", "/health", "/model"]
     }
 
@@ -108,116 +125,80 @@ def health():
 
 @app.get("/model")
 def model_info():
-    """Public model card: features used, cross-validated metrics and fairness audit."""
-    return MODEL_REPORT
+    """Public model card: data, metrics, operating threshold, fairness audit and robustness."""
+    return MODEL_CARD
 
 
 @app.post("/predict")
 @limiter.limit("10/minute")
 def predict(request: Request, application: LoanApplication, user: dict = Depends(get_current_user)):
     """
-    Main pipeline endpoint:
+    Main pipeline endpoint (v2):
     0. Hard business rules
     1. XGBoost scoring + per-applicant SHAP explanation
     2. Fairness gate (model-level audit, computed offline)
-    3. Email generation with guardrails
-    4. Product recommendations
-    5. Send email and persist
+    3. Auto-approve if the score clears the operating threshold, otherwise refer to a loan officer
+       (the model never denies)
+    4. Guarded LLM letter, 5. rule-based products, 6. send email and persist
     """
     app_dict = application.model_dump()
+    base = {"model_version": MODEL_VERSION, "threshold": THRESHOLD, "derived": shown_derived(app_dict)}
 
     # ── Step 0: Hard Business Rules ────────────────────────
     rejection = check_business_rules(app_dict)
     if rejection:
-        result = {
-            "status": "REJECTED_BY_RULES",
-            "decision": "DENIED",
-            "probability": None,
-            "message": rejection,
-            "explanation": [],
-            "bias_report": None,
-            "email": None,
-            "marketing": None,
-        }
+        result = {**base, "status": "REJECTED_BY_RULES", "decision": "DENIED", "probability": None,
+                  "message": rejection, "explanation": [], "bias_report": None, "email": None, "marketing": None}
         persist(user, application, result)
         return result
 
     # ── Step 1: Score + Explain ────────────────────────────
-    scored = score_application(model, app_dict)
-    prediction = scored["prediction"]
+    scored = score_application(model, app_dict, THRESHOLD)
     probability = round(scored["probability"], 4)
     explanation = scored["explanation"]
 
     # ── Step 2: Fairness Gate ──────────────────────────────
     if FAIRNESS_GATE["needs_human_review"]:
-        result = {
-            "status": "HUMAN_REVIEW",
-            "decision": "PENDING",
-            "probability": probability,
-            "message": "Automated decisions are disabled: the deployed model failed its fairness audit",
-            "explanation": explanation,
-            "bias_report": FAIRNESS_GATE,
-            "email": None,
-            "marketing": None,
-        }
+        result = {**base, "status": "HUMAN_REVIEW", "decision": "PENDING", "probability": probability,
+                  "message": "Automated decisions are disabled: the deployed model failed its fairness audit",
+                  "explanation": explanation, "bias_report": FAIRNESS_GATE, "email": None, "marketing": None}
         persist(user, application, result)
         return result
 
-    # ── Step 3: Email Generation ───────────────────────────
-    email_data = {
-        "name": application.name,
-        "loan_amount": application.loan_amount,
-        "loan_term": application.loan_amount_term,
-        "self_employed": application.self_employed,
-        "education": application.education,
-        "credit_history": application.credit_history,
-        "property_area": application.property_area
-    }
-    email_result = generate_validated_email(email_data, prediction)
+    # ── Step 3: Auto-approve or refer ──────────────────────
+    decision = "APPROVED" if scored["auto_approve"] else "REFERRED"
+    message = None if decision == "APPROVED" else (
+        f"Approval probability {probability:.1%} is below the auto-approve threshold of {THRESHOLD:.0%}; "
+        "a loan officer will review the application")
 
+    # ── Step 4: Email Generation ───────────────────────────
+    profile = {**app_dict, **base["derived"]}
+    email_result = generate_validated_email(app_dict, decision)
     if email_result["status"] == "HUMAN_REVIEW":
-        result = {
-            "status": "HUMAN_REVIEW",
-            "decision": decision_label(prediction),
-            "probability": probability,
-            "message": "Email flagged for human review after failing guardrails",
-            "explanation": explanation,
-            "bias_report": FAIRNESS_GATE,
-            "email": {"status": "HUMAN_REVIEW", "attempts": email_result["attempts"], "body": None},
-            "marketing": None,
-        }
+        result = {**base, "status": "HUMAN_REVIEW", "decision": decision, "probability": probability,
+                  "message": "Email flagged for human review after failing guardrails",
+                  "explanation": explanation, "bias_report": FAIRNESS_GATE,
+                  "email": {"status": "HUMAN_REVIEW", "attempts": email_result["attempts"], "body": None},
+                  "marketing": None}
         persist(user, application, result)
         return result
 
-    # ── Step 4: Marketing Recommendations ─────────────────
-    total_income = application.applicant_income + application.coapplicant_income
-    marketing_result = run_marketing_agent({
-        "name": application.name,
-        "total_income": total_income,
-        "credit_history": application.credit_history,
-        "self_employed": application.self_employed,
-        "education": application.education,
-        "loan_amount": application.loan_amount,
-        "loan_term": application.loan_amount_term,
-        "property_area": application.property_area
-    }, prediction)
-
+    # ── Step 5: Product Recommendations ───────────────────
+    marketing_result = run_marketing_agent(profile, decision)
     final_email = build_final_email(email_result["email"], marketing_result["recommendation_text"])
 
-    # ── Step 5: Send Email + Persist ──────────────────────
+    # ── Step 6: Send Email + Persist ──────────────────────
     email_send_result = {"sent": False, "recipient": None, "error": "No email address on account"}
     if user["email"] and final_email:
-        email_send_result = send_loan_email(
-            applicant_email=user["email"],
-            applicant_name=application.name,
-            decision=decision_label(prediction),
-            email_body=final_email
-        )
+        email_send_result = send_loan_email(applicant_email=user["email"], applicant_name=application.name,
+                                            decision=decision, email_body=final_email)
 
     result = {
+        **base,
         "status": "SUCCESS",
-        "decision": decision_label(prediction),
+        "decision": decision,
         "probability": probability,
+        "message": message,
         "explanation": explanation,
         "bias_report": FAIRNESS_GATE,
         "email": {
@@ -225,12 +206,10 @@ def predict(request: Request, application: LoanApplication, user: dict = Depends
             "attempts": email_result["attempts"],
             "body": final_email,
             "sent": email_send_result["sent"],
-            "recipient": email_send_result["recipient"] if email_send_result["sent"] else None
+            "recipient": email_send_result["recipient"] if email_send_result["sent"] else None,
         },
-        "marketing": {
-            "eligible_products": marketing_result["eligible_products"],
-            "product_count": marketing_result["product_count"]
-        }
+        "marketing": {"eligible_products": marketing_result["eligible_products"],
+                      "product_count": marketing_result["product_count"]},
     }
     persist(user, application, result)
     return result

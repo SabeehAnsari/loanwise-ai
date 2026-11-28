@@ -200,7 +200,7 @@ def main():
     log("robustness: unseen states")
     state_res = states(chosen_model, t5, log=log)
 
-    v1 = json.loads((config.ROOT / "src" / "model_report.json").read_text())
+    v1 = json.loads((config.ROOT / "reports" / "v1" / "model_report.json").read_text())
     results = {
         "setup": {"state": config.STATE, "train_year": config.TRAIN_YEAR, "test_year": config.TEST_YEAR,
                   "drift_year": config.DRIFT_YEAR, "other_states": config.OTHER_STATES,
@@ -226,7 +226,8 @@ def main():
     }
     config.REPORT_DIR.mkdir(parents=True, exist_ok=True)
     (config.REPORT_DIR / "results.json").write_text(json.dumps(results, indent=2, default=float) + "\n")
-    chosen_model.model.save_model(str(config.REPORT_DIR / "hmda_xgb_monotonic.json"))
+    from .export import export
+    export(results, chosen_model)
 
     from .report import write_report
     write_report(results)

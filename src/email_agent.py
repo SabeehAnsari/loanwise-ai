@@ -15,34 +15,32 @@ def get_client() -> OpenAI:
     return _client
 
 
-def generate_loan_email(applicant_data: dict, prediction: int) -> str:
+DECISION_TEXT = {
+    "APPROVED": "APPROVED. State clearly that the mortgage application has been approved.",
+    "REFERRED": ("REFERRED FOR REVIEW. The application has NOT been approved or denied. State that it has "
+                 "been passed to a loan officer for review and that they will be in touch."),
+}
+
+
+def generate_loan_email(applicant_data: dict, decision: str) -> str:
     """
-    Generates a personalized loan decision email using OpenAI.
+    Generate a mortgage decision email with OpenAI.
 
-    Parameters:
-        applicant_data : dict of applicant features
-        prediction     : 0 (denied) or 1 (approved)
-
-    Returns:
-        str: the generated email text
+    decision: "APPROVED" (auto-approved) or "REFERRED" (sent to a loan officer).
+    The model never denies; rule rejections and review cases get no automated letter.
     """
-    decision_text = "APPROVED" if prediction == 1 else "DENIED"
-
     prompt = f"""
-You are a professional loan officer at a financial institution.
-Write a formal, empathetic email to a loan applicant informing them 
-of their loan decision.
+You are a professional mortgage officer at a financial institution.
+Write a formal, empathetic email to a mortgage applicant about their application.
 
 APPLICANT DETAILS:
 - Applicant Name: {applicant_data.get('name', 'Valued Customer')}
-- Loan Amount Requested: ${applicant_data.get('loan_amount', 'N/A')} thousand
+- Loan Amount Requested: ${applicant_data.get('loan_amount', 0):,.0f}
+- Property Value: ${applicant_data.get('property_value', 0):,.0f}
 - Loan Term: {applicant_data.get('loan_term', 'N/A')} months
-- Employment: {'Self-Employed' if applicant_data.get('self_employed') == 1 else 'Salaried'}
-- Education: {'Graduate' if applicant_data.get('education') == 1 else 'Not Graduate'}
-- Credit History: {'Good' if applicant_data.get('credit_history') == 1.0 else 'Poor'}
-- Property Area: {applicant_data.get('property_area', 'N/A')}
+- Loan Type: {applicant_data.get('loan_type', 'N/A')}
 
-DECISION: {decision_text}
+DECISION: {DECISION_TEXT[decision]}
 
 STRICT RULES YOU MUST FOLLOW:
 1. Do NOT invent or mention any specific interest rates
@@ -51,7 +49,7 @@ STRICT RULES YOU MUST FOLLOW:
 4. Do NOT mention any fees, charges, or penalties not provided
 5. Keep the email under 200 words
 6. Use a professional, empathetic tone
-7. State the decision explicitly in the first paragraph ("approved" or "not approved")
+7. State the decision explicitly in the first paragraph
 8. End with next steps appropriate to the decision
 9. Address the applicant by name
 10. Sign off as "The LoanWise AI Team"
@@ -63,15 +61,9 @@ Write only the email — no subject line, no extra commentary.
         model="gpt-4o-mini",
         max_tokens=500,
         messages=[
-            {
-                "role": "system",
-                "content": "You are a professional loan officer writing formal customer emails."
-            },
-            {
-                "role": "user",
-                "content": prompt
-            }
-        ]
+            {"role": "system", "content": "You are a professional mortgage officer writing formal customer emails."},
+            {"role": "user", "content": prompt},
+        ],
     )
     return response.choices[0].message.content
 
@@ -96,11 +88,19 @@ def mentions_approval(text: str) -> bool:
     return approved > negated or bool(re.search(r"\bcongratulat", text, re.IGNORECASE))
 
 
+_REVIEW_PATTERNS = [r"\breview", r"\bloan officer\b", r"\bunderwrit", r"\bfurther assessment\b",
+                    r"\bbeing assessed\b", r"\bpassed (?:it |your application )?(?:on )?to\b"]
+
+
+def mentions_review(text: str) -> bool:
+    return any(re.search(p, text, re.IGNORECASE) for p in _REVIEW_PATTERNS)
+
+
 def mentions_denial(text: str) -> bool:
     return any(re.search(p, text, re.IGNORECASE) for p in _DENIAL_PATTERNS)
 
 
-def validate_email(email_text: str, prediction: int) -> dict:
+def validate_email(email_text: str, decision: str) -> dict:
     """
     Checks the generated email against guardrail rules.
 
@@ -138,10 +138,11 @@ def validate_email(email_text: str, prediction: int) -> dict:
 
     # Guardrail 4: The email must state the actual decision, and not the opposite one
     approval, denial = mentions_approval(email_text), mentions_denial(email_text)
-    if prediction == 1 and (denial or not approval):
+    if decision == "APPROVED" and (denial or not approval):
         violations.append("GUARDRAIL FAILED: Email does not clearly state the approval")
-    if prediction == 0 and (approval or not denial):
-        violations.append("GUARDRAIL FAILED: Email does not clearly state the denial")
+    if decision == "REFERRED" and (approval or denial or not mentions_review(email_text)):
+        violations.append("GUARDRAIL FAILED: Email must say the application is under review, "
+                          "without claiming approval or denial")
 
     # Guardrail 5: Must be signed by LoanWise AI Team
     if "loanwise" not in email_text.lower():
@@ -154,14 +155,14 @@ def validate_email(email_text: str, prediction: int) -> dict:
     }
 
 
-def generate_validated_email(applicant_data: dict, prediction: int, max_retries: int = 3,
+def generate_validated_email(applicant_data: dict, decision: str, max_retries: int = 3,
                              generate=None) -> dict:
     """
     Full pipeline: generate email → validate → retry if needed.
 
     Parameters:
         applicant_data : dict of applicant features
-        prediction     : 0 (denied) or 1 (approved)
+        decision       : "APPROVED" or "REFERRED"
         max_retries    : number of attempts before escalating to human review
         generate       : email generator (defaults to the OpenAI-backed one; injectable for tests)
 
@@ -172,8 +173,8 @@ def generate_validated_email(applicant_data: dict, prediction: int, max_retries:
     validation = None
 
     for attempt in range(1, max_retries + 1):
-        email_text = generate(applicant_data, prediction)
-        validation = validate_email(email_text, prediction)
+        email_text = generate(applicant_data, decision)
+        validation = validate_email(email_text, decision)
 
         if validation['passed']:
             return {

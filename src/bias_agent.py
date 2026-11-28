@@ -1,57 +1,39 @@
 """
-Fairness gate.
+Fairness gate (v2).
 
-The audit is a property of the *deployed model*, not of an individual
-applicant: it is computed offline in notebooks/07_model_evaluation.ipynb on
-out-of-fold predictions (each applicant scored by a model that never saw them)
-and written to src/model_report.json. The API loads it once at startup.
+The audit is a property of the *deployed model*, computed offline by ``python -m ml.run`` on
+the held-out test year and written to the model card. The API loads it once at startup.
 
-If the deployed model fails its audit, every application is routed to human
-review instead of being decided automatically. Retraining a model that fails
-the audit therefore cannot silently ship automated decisions.
+Gate: if the model's average approval probability for any monitored group differs from its
+reference group by more than the card's limit, automated decisions are switched off and every
+application goes to human review.
+
+Disclosure: at the auto-approve threshold, referral gaps are larger than the average gaps.
+They don't switch automation off (referral means review by a person, never denial) but they
+are returned with every decision and shown in the app.
 """
-import json
-import os
-
-REPORT_PATH = os.path.join(os.path.dirname(os.path.abspath(__file__)), "model_report.json")
 
 
-def load_model_report(path: str = REPORT_PATH) -> dict:
-    with open(path, encoding="utf-8") as f:
-        return json.load(f)
-
-
-def compute_bias_score(gender_disparity: float, married_disparity: float, fnr_disparity: float) -> float:
-    """
-    Weighted fairness score (0 = no measured disparity).
-    Gender approval gap 40%, gender false-negative-rate gap 40%, marital approval gap 20%.
-    """
-    return round(0.40 * gender_disparity + 0.40 * fnr_disparity + 0.20 * married_disparity, 4)
-
-
-def build_fairness_gate(report: dict) -> dict:
-    """Turn the model report's audit section into the gate result returned by the API."""
-    audit = report["fairness_audit"]
-    m = audit["metrics"]
-    threshold = audit["threshold"]
-    score = compute_bias_score(m["gender_disparity"], m["married_disparity"], m["fnr_disparity"])
-    needs_review = score > threshold
-
+def build_fairness_gate(card: dict) -> dict:
+    f = card["fairness"]
+    gate = f["gate"]
+    needs_review = not gate["passed"]
     return {
         "scope": "model",
-        "model_version": report.get("model_version"),
-        "bias_score": score,
-        "threshold": threshold,
+        "model_version": card["model_version"],
+        "bias_score": gate["value"],
+        "threshold": gate["limit"],
+        "metric": gate["metric"],
+        "worst_group": gate["worst_group"],
         "needs_human_review": needs_review,
         "decision": "FLAG FOR HUMAN REVIEW" if needs_review else "CLEARED",
         "reason": (
-            f"Deployed model's bias score {score} exceeds threshold {threshold}; "
+            f"Largest average approval gap {gate['value']:.3f} exceeds the limit {gate['limit']:.2f}; "
             "automated decisions are disabled"
             if needs_review else
-            f"Deployed model passed its fairness audit (bias score {score} ≤ {threshold})"
+            f"Largest average approval gap {gate['value']:.3f} is within the limit {gate['limit']:.2f}"
         ),
-        "method": audit.get("method"),
-        "metrics": m,
-        "confidence_intervals": audit.get("confidence_intervals", {}),
-        "group_sizes": audit.get("group_sizes", {}),
+        "warning": f["warning"],
+        "operating_threshold": f["threshold"],
+        "groups": f["groups"],
     }

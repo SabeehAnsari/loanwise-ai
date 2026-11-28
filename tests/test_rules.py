@@ -1,6 +1,7 @@
 import pytest
 
-from rules import check_business_rules
+from rules import MAX_DTI, check_business_rules
+from ml.serving import estimated_dti
 
 
 def test_valid_application_passes(application):
@@ -8,12 +9,12 @@ def test_valid_application_passes(application):
 
 
 def test_minimum_income(application):
-    application.update(applicant_income=300, coapplicant_income=100)
-    assert "minimum combined monthly income" in check_business_rules(application)
+    application["annual_income"] = 9_999
+    assert "minimum household income" in check_business_rules(application)
 
 
-def test_income_exactly_at_minimum_passes(application):
-    application.update(applicant_income=400, coapplicant_income=100, loan_amount=10)
+def test_income_exactly_at_minimum_is_not_rejected_for_income(application):
+    application.update(annual_income=10_000, loan_amount=10_000, property_value=200_000, monthly_debts=0)
     assert check_business_rules(application) is None
 
 
@@ -23,20 +24,22 @@ def test_loan_amount_must_be_positive(application, amount):
     assert "greater than zero" in check_business_rules(application)
 
 
-def test_loan_cap(application):
-    application.update(loan_amount=10_001, applicant_income=10_000_000)
-    assert "maximum loan amount" in check_business_rules(application)
+def test_loan_cannot_exceed_property_value(application):
+    application.update(loan_amount=330_000, property_value=320_000)
+    assert "loan-to-value" in check_business_rules(application)
+
+
+def test_loan_equal_to_property_value_is_allowed(application):
+    application.update(loan_amount=320_000, property_value=320_000)
+    assert check_business_rules(application) is None
 
 
 def test_debt_to_income_cap(application):
-    # 300k over 12 months = 25k/month against 6.5k income
-    application.update(loan_amount=300, loan_amount_term=12)
+    application["monthly_debts"] = 5_000
+    assert estimated_dti(application) > MAX_DTI
     assert "debt-to-income" in check_business_rules(application)
 
 
-def test_debt_to_income_boundary(application):
-    # exactly 60% DTI is allowed: 3,600/month on 6,000 income
-    application.update(applicant_income=6000, coapplicant_income=0, loan_amount=43.2, loan_amount_term=12)
-    assert check_business_rules(application) is None
-    application["loan_amount"] = 43.3
-    assert check_business_rules(application) is not None
+def test_rule_order_reports_the_first_failure(application):
+    application.update(annual_income=5_000, loan_amount=400_000)        # fails income and LTV
+    assert "minimum household income" in check_business_rules(application)

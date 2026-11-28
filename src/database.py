@@ -11,7 +11,6 @@ def save_application(user_id: str, user_email: str,
                      form_data: dict, result: dict,
                      user_token: str) -> dict:
     bias = result.get("bias_report") or {}
-    metrics = bias.get("metrics") or {}
     email = result.get("email") or {}
     marketing = result.get("marketing") or {}
 
@@ -19,25 +18,15 @@ def save_application(user_id: str, user_email: str,
         "user_id": user_id,
         "user_email": user_email,
         "applicant_name": form_data.get("name"),
-        "gender": form_data.get("gender"),
-        "married": form_data.get("married"),
-        "dependents": form_data.get("dependents"),
-        "education": form_data.get("education"),
-        "self_employed": form_data.get("self_employed"),
-        "applicant_income": form_data.get("applicant_income"),
-        "coapplicant_income": form_data.get("coapplicant_income"),
+        # Generic columns shared with v1 rows (amounts are now in dollars, income is annual)
+        "applicant_income": form_data.get("annual_income"),
         "loan_amount": form_data.get("loan_amount"),
-        "loan_amount_term": form_data.get("loan_amount_term"),
-        "credit_history": form_data.get("credit_history"),
-        "property_area": form_data.get("property_area"),
+        "loan_amount_term": form_data.get("loan_term"),
         "decision": result.get("decision"),
         "probability": result.get("probability"),
         "status": result.get("status"),
         "bias_score": bias.get("bias_score"),
         "bias_decision": bias.get("decision"),
-        "gender_disparity": metrics.get("gender_disparity"),
-        "married_disparity": metrics.get("married_disparity"),
-        "fnr_disparity": metrics.get("fnr_disparity"),
         "email_status": email.get("status"),
         "email_attempts": email.get("attempts"),
         "email_body": email.get("body"),
@@ -46,6 +35,8 @@ def save_application(user_id: str, user_email: str,
         # Added later; see docs/supabase_schema.sql for the migration
         "explanation": result.get("explanation") or [],
         "message": result.get("message"),
+        "model_version": result.get("model_version"),
+        "inputs": {**form_data, **(result.get("derived") or {})},
     }
 
     # Act as the signed-in user so row-level security applies
@@ -68,7 +59,7 @@ def save_application(user_id: str, user_email: str,
         return rows[0] if rows else {}
 
 
-NEW_COLUMNS = ("explanation", "message")
+NEW_COLUMNS = ("explanation", "message", "model_version", "inputs")
 
 
 def _insert(client: httpx.Client, headers: dict, record: dict) -> httpx.Response:

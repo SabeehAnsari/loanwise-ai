@@ -12,18 +12,18 @@ import pytest
 
 @pytest.fixture
 def application():
-    """A typical, rule-compliant application in API format."""
+    """A typical, rule-compliant v2 mortgage application in API format."""
     return {
         "name": "Jane Doe",
-        "gender": 0,
-        "married": 1,
-        "dependents": 1,
-        "education": 1,
-        "self_employed": 0,
-        "applicant_income": 5000,
-        "coapplicant_income": 1500,
-        "loan_amount": 120,
-        "loan_amount_term": 360,
-        "credit_history": 1.0,
-        "property_area": 2,
+        "loan_amount": 280_000,
+        "property_value": 320_000,
+        "annual_income": 110_000,
+        "monthly_debts": 400,
+        "loan_term": 360,
+        "loan_type": "Conventional",
+        "has_coapplicant": True,
+        "sex": "Female",
+        "race": "Not provided",
+        "ethnicity": "Not provided",
+        "age": "35-44",
     }

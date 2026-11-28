@@ -13,82 +13,41 @@ def get_client() -> OpenAI:
         _client = OpenAI(api_key=os.getenv("OPENAI_API_KEY"))
     return _client
 
+# LoanWise's own (demo) mortgage catalogue. Eligibility is decided by these rules, never by the LLM.
+# Every applicant dict here carries the estimated "dti" and "ltv" (percent) from ml.serving.derived.
 LOAN_PRODUCTS = [
-    {
-        "name": "Personal Loan",
-        "description": "Unsecured personal loan for any purpose",
-        "min_income": 2500,
-        "max_loan": 50,
-        "requires_credit_history": False,
-        "suitable_for": "Anyone with stable income"
-    },
-    {
-        "name": "Home Improvement Loan",
-        "description": "Loan specifically for property renovation",
-        "min_income": 4000,
-        "max_loan": 150,
-        "requires_credit_history": True,
-        "suitable_for": "Property owners with good credit"
-    },
-    {
-        "name": "Education Loan",
-        "description": "Loan for higher education expenses",
-        "min_income": 2000,
-        "max_loan": 80,
-        "requires_credit_history": False,
-        "suitable_for": "Students or parents funding education"
-    },
-    {
-        "name": "Business Loan",
-        "description": "Loan for self-employed business owners",
-        "min_income": 5000,
-        "max_loan": 200,
-        "requires_credit_history": True,
-        "requires_self_employed": True,
-        "suitable_for": "Self-employed applicants with good credit"
-    },
-    {
-        "name": "Secured Loan",
-        "description": "Loan backed by collateral for lower risk",
-        "min_income": 1500,
-        "max_loan": 100,
-        "requires_credit_history": False,
-        "suitable_for": "Applicants with poor credit but assets"
-    }
+    {"name": "Rate lock (60 days)",
+     "description": "Fix today's rate while the purchase completes",
+     "suitable_for": "Approved applicants about to close",
+     "rule": lambda a, d: d == "APPROVED"},
+    {"name": "15-year fixed-rate mortgage",
+     "description": "Shorter term, less total interest",
+     "suitable_for": "Applicants with low existing debt",
+     "rule": lambda a, d: a["dti"] <= 36 and a["ltv"] <= 90},
+    {"name": "FHA-insured mortgage",
+     "description": "Government-insured option with a smaller down payment",
+     "suitable_for": "Buyers with a small deposit",
+     "rule": lambda a, d: a["ltv"] > 90 and a["loan_type"] != "FHA"},
+    {"name": "Home-buyer education course",
+     "description": "A short course on budgeting and the mortgage process",
+     "suitable_for": "Applicants whose application is under review or with high debt",
+     "rule": lambda a, d: d == "REFERRED" or a["dti"] > 43},
+    {"name": "Debt consolidation review",
+     "description": "A conversation about lowering monthly debt payments",
+     "suitable_for": "Applicants whose existing debts are a large share of income",
+     "rule": lambda a, d: a["monthly_debts"] * 12 > 0.2 * a["annual_income"]},
 ]
 
 
-def get_eligible_products(applicant_data: dict) -> list:
+def get_eligible_products(applicant_data: dict, decision: str) -> list:
     """
-    Filters loan products based on hard eligibility rules.
-    This runs BEFORE the LLM to reduce hallucination risk.
-    The LLM only writes recommendations — it never decides eligibility.
-
-    A product is offered only if the applicant meets its income floor and
-    credit requirement, is self-employed when the product requires it, and
-    the requested amount (in thousands) fits within the product's max_loan.
+    Filter the catalogue with hard rules. This runs BEFORE the LLM, which only writes
+    the recommendation text: it never decides who is eligible.
     """
-    eligible = []
-    total_income = applicant_data.get('total_income', 0)
-    credit_history = applicant_data.get('credit_history', 0)
-    self_employed = applicant_data.get('self_employed', 0)
-    loan_amount = applicant_data.get('loan_amount', 0)
-
-    for product in LOAN_PRODUCTS:
-        if total_income < product['min_income']:
-            continue
-        if product['requires_credit_history'] and credit_history != 1.0:
-            continue
-        if product.get('requires_self_employed') and self_employed != 1:
-            continue
-        if loan_amount > product['max_loan']:
-            continue
-        eligible.append(product)
-
-    return eligible
+    return [p for p in LOAN_PRODUCTS if p["rule"](applicant_data, decision)]
 
 
-def generate_recommendations(applicant_data: dict, eligible_products: list, prediction: int) -> str:
+def generate_recommendations(applicant_data: dict, eligible_products: list, decision: str) -> str:
     """
     Uses OpenAI to write personalized recommendation text
     based on the rule-filtered eligible products.
@@ -102,9 +61,9 @@ def generate_recommendations(applicant_data: dict, eligible_products: list, pred
     ])
 
     decision_context = (
-        "approved for their requested loan"
-        if prediction == 1
-        else "not approved for their requested loan at this time"
+        "approved for their mortgage"
+        if decision == "APPROVED"
+        else "waiting for a loan officer to review their mortgage application"
     )
 
     prompt = f"""
@@ -115,10 +74,8 @@ Based on their profile, they are eligible for the following products:
 {products_text}
 
 APPLICANT PROFILE:
-- Total Monthly Income: ${applicant_data.get('total_income', 'N/A')}
-- Credit History: {'Good' if applicant_data.get('credit_history') == 1.0 else 'Poor'}
-- Employment: {'Self-Employed' if applicant_data.get('self_employed') == 1 else 'Salaried'}
-- Education: {'Graduate' if applicant_data.get('education') == 1 else 'Not Graduate'}
+- Loan type requested: {applicant_data.get('loan_type', 'N/A')}
+- Loan term: {applicant_data.get('loan_term', 'N/A')} months
 
 Write a short, friendly paragraph (max 100 words) recommending these products.
 - Mention each eligible product by name
@@ -146,7 +103,7 @@ Write a short, friendly paragraph (max 100 words) recommending these products.
     return response.choices[0].message.content
 
 
-def run_marketing_agent(applicant_data: dict, prediction: int) -> dict:
+def run_marketing_agent(applicant_data: dict, decision: str) -> dict:
     """
     Full marketing agent pipeline:
     1. Filter eligible products by hard rules
@@ -155,12 +112,12 @@ def run_marketing_agent(applicant_data: dict, prediction: int) -> dict:
 
     Parameters:
         applicant_data : dict of applicant features
-        prediction     : 0 (denied) or 1 (approved)
+        decision       : "APPROVED" or "REFERRED"
 
     Returns:
         dict with eligible_products, recommendation_text, and product_count
     """
-    eligible_products = get_eligible_products(applicant_data)
+    eligible_products = get_eligible_products(applicant_data, decision)
 
     if not eligible_products:
         return {
@@ -170,7 +127,7 @@ def run_marketing_agent(applicant_data: dict, prediction: int) -> dict:
         }
 
     recommendation_text = generate_recommendations(
-        applicant_data, eligible_products, prediction
+        applicant_data, eligible_products, decision
     )
 
     return {

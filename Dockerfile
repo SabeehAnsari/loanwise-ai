@@ -19,8 +19,10 @@ COPY requirements.txt .
 # The cache mount keeps downloaded wheels between rebuilds.
 RUN --mount=type=cache,target=/root/.cache/pip     sed 's/^xgboost==/xgboost-cpu==/' requirements.txt > /tmp/requirements.txt     && pip install -r /tmp/requirements.txt
 
-# Source plus the model artefacts it loads (loan_model.json, model_report.json).
+# API source, the v2 model and card (src/models/), and the shared ml package the API
+# imports for training/serving parity (ml/serving.py, ml/prepare.py, ml/models.py).
 COPY src/ ./src/
+COPY ml/ ./ml/
 
 RUN useradd --create-home --uid 10001 app
 USER app
