@@ -1,6 +1,8 @@
 # LoanWise AI
 
-**An end-to-end, AI-assisted loan decisioning platform:** a React frontend, a FastAPI backend serving a cross-validated XGBoost model with per-applicant SHAP explanations, a fairness audit, and LLM-generated decision emails with guardrails.
+**An end-to-end, AI-assisted mortgage decisioning platform:** a React frontend, a FastAPI backend serving a monotonic XGBoost model trained on 151,421 real US lending decisions (HMDA), per-applicant SHAP explanations, a fairness audit, and LLM-generated decision letters with guardrails.
+
+**Live demo: [loanwise-i25w.onrender.com](https://loanwise-i25w.onrender.com)** · create a free account to run an application. Hosted on Render's free plan, so the first request after a quiet spell can take up to a minute while the API wakes. · [Case study](docs/case-study.md)
 
 ![Python](https://img.shields.io/badge/Python-3.11%2B-3776AB?logo=python&logoColor=white)
 ![FastAPI](https://img.shields.io/badge/FastAPI-009688?logo=fastapi&logoColor=white)
@@ -11,7 +13,7 @@
 ![Supabase](https://img.shields.io/badge/Supabase-3ECF8E?logo=supabase&logoColor=white)
 [![CI](https://github.com/SabeehAnsari/loanwise-ai/actions/workflows/ci.yml/badge.svg)](https://github.com/SabeehAnsari/loanwise-ai/actions/workflows/ci.yml)
 
-> **Educational project.** LoanWise AI is built on a small public dataset to demonstrate full stack and applied-ML engineering. It is **not** intended for real lending decisions. See [Limitations](#limitations).
+> **Educational project.** LoanWise AI is built on public HMDA data to demonstrate full stack and applied-ML engineering. It is **not** intended for real lending decisions. See [Limitations](#limitations).
 
 ## Screenshots
 
