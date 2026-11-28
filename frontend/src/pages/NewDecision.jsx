@@ -17,7 +17,7 @@ const store = {
 
 function Welcome({ firstRun, name, onSample, onDismiss }) {
   const { report } = useModelReport()
-  const m = report?.evaluation?.metrics
+  const m = report?.metrics
   return (
     <section className="sheet welcome">
       <h2>{firstRun ? `Welcome, ${name}. Run your first decision.` : "Ready when you are."}</h2>
@@ -28,7 +28,7 @@ function Welcome({ firstRun, name, onSample, onDismiss }) {
       </p>
       {firstRun && (
         <ol className="steps">
-          <li><span className="n">1</span><span><b>Choose an applicant.</b> A sample or your own numbers. Gender and marital status are audit-only.</span></li>
+          <li><span className="n">1</span><span><b>Describe the home and loan.</b> A sample or your own numbers. Sex, race, ethnicity and age are optional and audit-only.</span></li>
           <li><span className="n">2</span><span><b>Watch the pipeline.</b> The sidebar lights each stage: rules, model, fairness, letter, products.</span></li>
           <li><span className="n">3</span><span><b>Read the evidence.</b> Every run is saved to History and opens as its own page.</span></li>
         </ol>
@@ -43,10 +43,10 @@ function Welcome({ firstRun, name, onSample, onDismiss }) {
       </div>
       {m && (
         <div className="figs">
-          <div className="fig"><b>{m.roc_auc.mean.toFixed(3)}</b><span>ROC-AUC (rule: {report.evaluation.credit_history_rule_baseline.roc_auc.toFixed(3)})</span></div>
-          <div className="fig"><b>{m.accuracy.mean.toFixed(3)}</b><span>Accuracy, CV ×10</span></div>
-          <div className="fig"><b>{report.fairness_audit.bias_score.toFixed(3)}</b><span>Bias score, limit {report.fairness_audit.threshold}</span></div>
-          <div className="fig"><b>{report.training_rows}</b><span>Training rows</span></div>
+          <div className="fig"><b>{m.roc_auc.toFixed(3)}</b><span>ROC-AUC on {report.data.test.year}</span></div>
+          <div className="fig"><b>{(report.policy.test_auto_approved_share * 100).toFixed(0)}%</b><span>Auto-approved, the rest go to a person</span></div>
+          <div className="fig"><b>{(report.policy.threshold * 100).toFixed(0)}%</b><span>Auto-approve threshold</span></div>
+          <div className="fig"><b>{report.data.train.rows.toLocaleString("en-US")}</b><span>Real {report.data.train.year} decisions trained on</span></div>
         </div>
       )}
       <div style={{ display: "flex", gap: 16, marginTop: 18, flexWrap: "wrap" }}>

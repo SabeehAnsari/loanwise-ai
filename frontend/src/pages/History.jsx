@@ -4,16 +4,16 @@ import { ErrorPanel } from "../components/ResultView"
 import { Chevron, Plus, Search } from "../components/Icons"
 import { useApplications } from "../lib/useApplications"
 import { verdictOf } from "../pipeline"
-import { formatWhen } from "../lib/records"
+import { formatWhen, money } from "../lib/records"
 
 const FILTERS = [
-  ["all", "All"], ["approved", "Approved"], ["denied", "Denied"], ["rules", "Rules"], ["review", "Review"],
+  ["all", "All"], ["approved", "Approved"], ["referred", "Referred"], ["rules", "Rules"], ["review", "Review"],
 ]
 
 function kindOf(row) {
   if (row.status === "REJECTED_BY_RULES") return "rules"
   if (row.status === "HUMAN_REVIEW") return "review"
-  return row.decision === "APPROVED" ? "approved" : "denied"
+  return row.decision === "APPROVED" ? "approved" : "referred"
 }
 
 function VerdictCell({ row }) {
@@ -29,7 +29,7 @@ export default function History() {
   const navigate = useNavigate()
 
   const counts = useMemo(() => {
-    const c = { all: 0, approved: 0, denied: 0, rules: 0, review: 0 }
+    const c = { all: 0, approved: 0, referred: 0, rules: 0, review: 0 }
     for (const r of rows || []) { c.all += 1; c[kindOf(r)] += 1 }
     return c
   }, [rows])
@@ -110,7 +110,7 @@ export default function History() {
                       <td className="name"><Link to={`/app/decisions/${r.id}`} onClick={(e) => e.stopPropagation()}>{r.applicant_name || "Unnamed"}</Link></td>
                       <td><VerdictCell row={r} /></td>
                       <td className="num">{r.probability != null ? `${(r.probability * 100).toFixed(1)}%` : "—"}</td>
-                      <td className="num hide-sm">{r.loan_amount != null ? `$${Number(r.loan_amount).toLocaleString("en-US")}k · ${r.loan_amount_term} mo` : "—"}</td>
+                      <td className="num hide-sm">{r.loan_amount != null ? `${money(r.loan_amount)} · ${r.loan_amount_term / 12} yr` : "—"}</td>
                       <td className="when hide-sm">{formatWhen(Date.parse(r.created_at))}</td>
                       <td className="chev"><Chevron size={16} /></td>
                     </tr>
@@ -121,7 +121,7 @@ export default function History() {
           </div>
           {rows && rows.length > 0 && (
             <p className="caption">
-              {counts.all} decisions · {counts.approved} approved · {counts.denied} denied by the model · {counts.rules} stopped by rules · {counts.review} sent to review
+              {counts.all} decisions · {counts.approved} auto-approved · {counts.referred} referred to a loan officer · {counts.rules} stopped by rules · {counts.review} held for review
             </p>
           )}
         </>

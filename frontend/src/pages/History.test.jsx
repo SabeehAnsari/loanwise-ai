@@ -2,15 +2,16 @@ import { afterEach, describe, expect, it, vi } from "vitest"
 import { screen } from "@testing-library/react"
 import userEvent from "@testing-library/user-event"
 import { json, renderApp } from "../test/renderApp"
-import { ROW, USER } from "../test/fixtures"
+import { ROW, USER, V1_ROW } from "../test/fixtures"
 
 afterEach(() => vi.unstubAllGlobals())
 
 const ROWS = [
   ROW,
-  { ...ROW, id: "app-2", applicant_name: "Daniel Okafor", decision: "DENIED", probability: 0.19 },
+  { ...ROW, id: "app-2", applicant_name: "Daniel Okafor", decision: "REFERRED", probability: 0.87 },
   { ...ROW, id: "app-3", applicant_name: "Mara Lindqvist", status: "REJECTED_BY_RULES", decision: "DENIED", probability: null },
   { ...ROW, id: "app-4", applicant_name: "John Smith", status: "HUMAN_REVIEW" },
+  V1_ROW,
 ]
 
 describe("History", () => {
@@ -19,7 +20,10 @@ describe("History", () => {
     expect(await screen.findByRole("link", { name: "Priya Raman" })).toHaveAttribute("href", "/app/decisions/app-1")
     expect(screen.getByText("Denied by rules")).toBeInTheDocument()
     expect(screen.getByText("In review")).toBeInTheDocument()
-    expect(screen.getByText(/4 decisions · 1 approved · 1 denied by the model · 1 stopped by rules · 1 sent to review/)).toBeInTheDocument()
+    expect(screen.getByText("Referred", { selector: ".status" })).toBeInTheDocument()
+    expect(screen.getAllByText("$280,000 · 30 yr").length).toBe(4)
+    expect(screen.getByText(/4 decisions · 1 auto-approved · 1 referred to a loan officer · 1 stopped by rules · 1 held for review/)).toBeInTheDocument()
+    expect(screen.queryByText("Old Run")).not.toBeInTheDocument()          // v1 runs are hidden
   })
 
   it("filters by outcome and searches by name", async () => {

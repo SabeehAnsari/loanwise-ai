@@ -7,13 +7,13 @@
       "state": "GA",
       "year": 2022,
       "rows": 151421,
-      "approval_rate": 0.8966
+      "approval_rate": 0.896646
     },
     "test": {
       "state": "GA",
       "year": 2023,
       "rows": 120170,
-      "approval_rate": 0.8927
+      "approval_rate": 0.892735
     }
   },
   "features": [
@@ -81,56 +81,56 @@
     ]
   },
   "metrics": {
-    "roc_auc": 0.7892,
+    "roc_auc": 0.789182,
     "roc_auc_ci": [
-      0.7847,
-      0.7934
+      0.78465,
+      0.793402
     ],
-    "pr_auc_denial": 0.537,
-    "brier": 0.0678,
-    "ece": 0.0033
+    "pr_auc_denial": 0.536964,
+    "brier": 0.067845,
+    "ece": 0.003345
   },
   "comparison": [
     {
       "name": "Majority class (approve everyone)",
       "roc_auc": 0.5,
-      "pr_auc_denial": 0.1073
+      "pr_auc_denial": 0.107265
     },
     {
       "name": "One-line rule: approve if DTI <= 43%",
       "roc_auc": 0.6139,
-      "pr_auc_denial": 0.1392
+      "pr_auc_denial": 0.139222
     },
     {
       "name": "Logistic regression",
-      "roc_auc": 0.7255,
-      "pr_auc_denial": 0.405
+      "roc_auc": 0.725482,
+      "pr_auc_denial": 0.404955
     },
     {
       "name": "XGBoost (unconstrained)",
-      "roc_auc": 0.7986,
-      "pr_auc_denial": 0.5555
+      "roc_auc": 0.798582,
+      "pr_auc_denial": 0.555502
     },
     {
       "name": "XGBoost (monotonic)",
-      "roc_auc": 0.7892,
-      "pr_auc_denial": 0.537
+      "roc_auc": 0.789182,
+      "pr_auc_denial": 0.536964
     }
   ],
   "policy": {
     "threshold": 0.92,
     "error_budget": 0.05,
     "chosen_on": "2022 out-of-fold predictions",
-    "test_auto_approved_share": 0.6917,
-    "test_wrong_auto_approval": 0.0487,
-    "test_denials_referred": 0.6859
+    "test_auto_approved_share": 0.691687,
+    "test_wrong_auto_approval": 0.048713,
+    "test_denials_referred": 0.685881
   },
   "fairness": {
     "threshold": 0.92,
     "gate": {
       "metric": "Largest gap in average approval probability between a monitored group and its reference",
       "limit": 0.1,
-      "value": 0.0618,
+      "value": 0.061818,
       "worst_group": "Black or African American vs White",
       "passed": true
     },
@@ -142,19 +142,19 @@
         "reference": "Male",
         "n": 32404,
         "lender_gap": [
-          -0.0159,
-          -0.0209,
-          -0.0107
+          -0.015915,
+          -0.020868,
+          -0.010663
         ],
         "model_gap": [
-          -0.02,
-          -0.0224,
-          -0.0175
+          -0.019951,
+          -0.022373,
+          -0.017498
         ],
         "referral_gap": [
-          0.0803,
-          0.0742,
-          0.0879
+          0.080282,
+          0.074186,
+          0.087882
         ]
       },
       {
@@ -163,19 +163,19 @@
         "reference": "Male",
         "n": 36765,
         "lender_gap": [
-          0.0314,
-          0.0274,
-          0.0353
+          0.031368,
+          0.027401,
+          0.035264
         ],
         "model_gap": [
-          0.0253,
-          0.0234,
-          0.0276
+          0.025273,
+          0.023367,
+          0.027647
         ],
         "referral_gap": [
-          -0.096,
-          -0.1021,
-          -0.0903
+          -0.095958,
+          -0.102092,
+          -0.09031
         ]
       },
       {
@@ -184,18 +184,18 @@
         "reference": "White",
         "n": 28206,
         "lender_gap": [
-          -0.0977,
-          -0.1028,
-          -0.0922
+          -0.097685,
+          -0.102844,
+          -0.092159
         ],
         "model_gap": [
-          -0.0618,
-          -0.0647,
-          -0.0591
+          -0.061818,
+          -0.064686,
+          -0.059074
         ],
         "referral_gap": [
-          0.2171,
-          0.2097,
+          0.217051,
+          0.209654,
           0.224
         ]
       },
@@ -205,19 +205,19 @@
         "reference": "White",
         "n": 9893,
         "lender_gap": [
-          -0.0284,
-          -0.0347,
-          -0.0226
+          -0.028396,
+          -0.03472,
+          -0.022605
         ],
         "model_gap": [
-          -0.006,
-          -0.0096,
-          -0.0029
+          -0.005987,
+          -0.009585,
+          -0.002874
         ],
         "referral_gap": [
-          -0.0612,
-          -0.07,
-          -0.0532
+          -0.061189,
+          -0.070049,
+          -0.053209
         ]
       },
       {
@@ -226,19 +226,19 @@
         "reference": "Not Hispanic or Latino",
         "n": 11099,
         "lender_gap": [
-          -0.0185,
-          -0.0251,
-          -0.0122
+          -0.018498,
+          -0.025141,
+          -0.012236
         ],
         "model_gap": [
-          -0.0162,
+          -0.016165,
           -0.0198,
-          -0.0125
+          -0.01249
         ],
         "referral_gap": [
-          0.0547,
-          0.045,
-          0.0639
+          0.054661,
+          0.044985,
+          0.063858
         ]
       },
       {
@@ -247,19 +247,19 @@
         "reference": "35-44",
         "n": 6665,
         "lender_gap": [
-          0.0132,
-          0.0046,
-          0.0208
+          0.013177,
+          0.004626,
+          0.020816
         ],
         "model_gap": [
-          -0.005,
-          -0.01,
-          -0.0005
+          -0.004983,
+          -0.009973,
+          -0.000518
         ],
         "referral_gap": [
-          0.0719,
-          0.0599,
-          0.0856
+          0.071911,
+          0.059861,
+          0.085642
         ]
       },
       {
@@ -268,19 +268,19 @@
         "reference": "35-44",
         "n": 6425,
         "lender_gap": [
-          0.0192,
-          0.0109,
-          0.027
+          0.019183,
+          0.010938,
+          0.027008
         ],
         "model_gap": [
-          0.0105,
-          0.0058,
-          0.0148
+          0.010517,
+          0.005791,
+          0.014833
         ],
         "referral_gap": [
-          -0.0576,
-          -0.0688,
-          -0.0465
+          -0.05762,
+          -0.068848,
+          -0.046515
         ]
       },
       {
@@ -289,31 +289,31 @@
         "reference": "35-44",
         "n": 1875,
         "lender_gap": [
-          0.0349,
-          0.0213,
-          0.0472
+          0.034903,
+          0.021307,
+          0.047154
         ],
         "model_gap": [
-          0.0213,
-          0.0143,
-          0.0298
+          0.021299,
+          0.014302,
+          0.029837
         ],
         "referral_gap": [
-          -0.0776,
-          -0.0955,
-          -0.0577
+          -0.077612,
+          -0.095497,
+          -0.057704
         ]
       }
     ],
     "variants": {
       "base": {
-        "roc_auc": 0.7892
+        "roc_auc": 0.789182
       },
       "geography": {
-        "roc_auc": 0.7957
+        "roc_auc": 0.795694
       },
       "reweighed": {
-        "roc_auc": 0.7859
+        "roc_auc": 0.785866
       }
     }
   },
@@ -322,69 +322,69 @@
       {
         "train_year": 2021,
         "test_year": 2022,
-        "roc_auc": 0.7768,
-        "wrong_auto_approval": 0.0531
+        "roc_auc": 0.77684,
+        "wrong_auto_approval": 0.053055
       },
       {
         "train_year": 2021,
         "test_year": 2023,
-        "roc_auc": 0.7842,
-        "wrong_auto_approval": 0.052
+        "roc_auc": 0.784162,
+        "wrong_auto_approval": 0.05205
       },
       {
         "train_year": 2022,
         "test_year": 2023,
-        "roc_auc": 0.7892,
-        "wrong_auto_approval": 0.0487
+        "roc_auc": 0.789182,
+        "wrong_auto_approval": 0.048713
       }
     ],
     "states": [
       {
         "state": "NC",
         "rows": 126814,
-        "roc_auc_transfer": 0.81,
-        "roc_auc_local": 0.8137,
-        "wrong_auto_approval": 0.0326,
+        "roc_auc_transfer": 0.809978,
+        "roc_auc_local": 0.813726,
+        "wrong_auto_approval": 0.032622,
         "black_referral_gap": [
-          0.2338,
-          0.2252,
-          0.2418
+          0.233779,
+          0.225182,
+          0.241803
         ]
       },
       {
         "state": "OH",
         "rows": 114248,
-        "roc_auc_transfer": 0.7956,
-        "roc_auc_local": 0.8054,
-        "wrong_auto_approval": 0.0304,
+        "roc_auc_transfer": 0.795645,
+        "roc_auc_local": 0.805444,
+        "wrong_auto_approval": 0.030404,
         "black_referral_gap": [
-          0.2401,
-          0.2289,
-          0.2515
+          0.240103,
+          0.228881,
+          0.251506
         ]
       },
       {
         "state": "AZ",
         "rows": 84008,
-        "roc_auc_transfer": 0.8066,
-        "roc_auc_local": 0.8125,
-        "wrong_auto_approval": 0.0384,
+        "roc_auc_transfer": 0.806612,
+        "roc_auc_local": 0.812502,
+        "wrong_auto_approval": 0.03845,
         "black_referral_gap": [
-          0.1275,
-          0.1107,
-          0.1425
+          0.127515,
+          0.110656,
+          0.142526
         ]
       },
       {
         "state": "WA",
         "rows": 71216,
-        "roc_auc_transfer": 0.7567,
-        "roc_auc_local": 0.7773,
-        "wrong_auto_approval": 0.033,
+        "roc_auc_transfer": 0.756728,
+        "roc_auc_local": 0.777345,
+        "wrong_auto_approval": 0.033009,
         "black_referral_gap": [
-          0.1852,
-          0.1636,
-          0.2051
+          0.185217,
+          0.163562,
+          0.205088
         ]
       }
     ]
@@ -393,12 +393,12 @@
     "post_decision_auc": 1.0,
     "selection_leak": {
       "without": {
-        "roc_auc": 0.7892,
-        "auto_share_2pct": 0.009
+        "roc_auc": 0.789182,
+        "auto_share_2pct": 0.008996
       },
       "with": {
-        "roc_auc": 0.7988,
-        "auto_share_2pct": 0.122
+        "roc_auc": 0.798822,
+        "auto_share_2pct": 0.122002
       }
     }
   },

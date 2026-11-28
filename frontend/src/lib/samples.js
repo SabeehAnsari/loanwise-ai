@@ -1,28 +1,29 @@
 // Synthetic sample applicants, so a reviewer can run the pipeline in one click.
+// Each was scored against the served v2 model when chosen: auto-approved, referred, stopped by rules.
 export const SAMPLES = [
   {
     id: "strong",
     label: "Strong applicant",
-    hint: "Likely approved",
-    data: { name: "Priya Raman", gender: 0, married: 1, dependents: 1, education: 1, self_employed: 0,
-      applicant_income: 5400, coapplicant_income: 1800, loan_amount: 128, loan_amount_term: 360,
-      credit_history: 1, property_area: 2 },
+    hint: "Likely auto-approved",
+    data: { name: "Priya Raman", loan_amount: 280000, property_value: 350000, annual_income: 125000,
+      monthly_debts: 350, loan_term: 360, loan_type: "Conventional", has_coapplicant: true,
+      sex: "Female", race: "Asian", ethnicity: "Not Hispanic or Latino", age: "35-44" },
   },
   {
-    id: "defaults",
-    label: "Prior defaults",
-    hint: "Likely denied",
-    data: { name: "Daniel Okafor", gender: 1, married: 0, dependents: 2, education: 0, self_employed: 1,
-      applicant_income: 3100, coapplicant_income: 0, loan_amount: 160, loan_amount_term: 360,
-      credit_history: 0, property_area: 0 },
+    id: "stretch",
+    label: "Stretched budget",
+    hint: "Likely referred to a loan officer",
+    data: { name: "Daniel Okafor", loan_amount: 310000, property_value: 320000, annual_income: 72000,
+      monthly_debts: 900, loan_term: 360, loan_type: "FHA", has_coapplicant: false,
+      sex: "Male", race: "Black or African American", ethnicity: "Not Hispanic or Latino", age: "25-34" },
   },
   {
     id: "rules",
-    label: "Fails rules",
+    label: "Loan above value",
     hint: "Stopped at stage 1",
-    data: { name: "Mara Lindqvist", gender: 0, married: 0, dependents: 0, education: 1, self_employed: 0,
-      applicant_income: 2200, coapplicant_income: 0, loan_amount: 300, loan_amount_term: 120,
-      credit_history: 1, property_area: 1 },
+    data: { name: "Mara Lindqvist", loan_amount: 420000, property_value: 400000, annual_income: 95000,
+      monthly_debts: 300, loan_term: 360, loan_type: "Conventional", has_coapplicant: false,
+      sex: "Not provided", race: "Not provided", ethnicity: "Not provided", age: "Not provided" },
   },
 ]
 

@@ -1,28 +1,29 @@
 import { describe, expect, it } from "vitest"
-import { render, screen } from "@testing-library/react"
+import { render, screen, within } from "@testing-library/react"
 import BiasReport from "./BiasReport"
 import { BIAS } from "../test/fixtures"
 
 describe("BiasReport", () => {
-  it("shows a cleared audit with gaps, intervals and group rates", () => {
+  it("shows the gate, the published warning and every monitored group", () => {
     render(<BiasReport bias={BIAS} />)
-    expect(screen.getByText("Cleared")).toBeInTheDocument()
-    expect(screen.getByText("3.9%")).toBeInTheDocument()
-    expect(screen.getByText("0.2% – 12.8%")).toBeInTheDocument()
-    expect(screen.getByText("0.032")).toBeInTheDocument()
-    expect(screen.getByText("n = 112")).toBeInTheDocument()
+    expect(screen.getByText("Gate cleared")).toBeInTheDocument()
+    expect(screen.getByText(`${(BIAS.bias_score * 100).toFixed(1)} points`)).toBeInTheDocument()
+    expect(screen.getByRole("note")).toHaveTextContent(/referred to a person/)
+    expect(screen.getAllByRole("row")).toHaveLength(BIAS.groups.length + 1)
   })
 
-  it("warns that automation is off when the audit fails", () => {
+  it("highlights large referral gaps", () => {
+    render(<BiasReport bias={BIAS} />)
+    const black = BIAS.groups.find((g) => g.group.startsWith("Black"))
+    const row = screen.getByRole("row", { name: /Black or African American/ })
+    const cell = within(row).getAllByRole("cell").at(-1)
+    expect(cell).toHaveTextContent(`+${(black.referral_gap[0] * 100).toFixed(1)}`)
+    expect(cell).toHaveStyle({ fontWeight: "600" })
+  })
+
+  it("warns that automation is off when the gate fails", () => {
     render(<BiasReport bias={{ ...BIAS, decision: "FLAG FOR HUMAN REVIEW" }} />)
     expect(screen.getByText(/automation off/i)).toBeInTheDocument()
-  })
-
-  it("omits CI and rate sections for stored runs without them", () => {
-    render(<BiasReport bias={{ decision: "CLEARED", bias_score: 0.03, threshold: 0.2, metrics: { gender_disparity: 0.04 }, stored: true }} />)
-    expect(screen.queryByText("95% CI")).not.toBeInTheDocument()
-    expect(screen.queryByText(/approval rate by group/i)).not.toBeInTheDocument()
-    expect(screen.getByText(/as recorded when this application was run/)).toBeInTheDocument()
   })
 
   it("renders nothing without a report", () => {

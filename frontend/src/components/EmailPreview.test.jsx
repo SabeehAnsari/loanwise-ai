@@ -37,7 +37,7 @@ describe("EmailPreview", () => {
 describe("Products", () => {
   it("lists eligible products", () => {
     render(<Products marketing={APPROVED.marketing} />)
-    expect(screen.getByText("Fixed-rate Refinance")).toBeInTheDocument()
+    expect(screen.getByText("Rate lock (60 days)")).toBeInTheDocument()
   })
 
   it("says when nothing matches", () => {

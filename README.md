@@ -16,48 +16,50 @@
 ## Screenshots
 
 <p align="center">
-  <img src="docs/screenshots/landing.png" width="48%" alt="Landing page: headline, real model figures, and a five-stage switcher over a sample decision sheet with its SHAP factors" />
-  <img src="docs/screenshots/app-first-run.png" width="48%" alt="The app on first sign-in: sidebar with navigation and the five-stage pipeline, the grouped application form, and the first-run walkthrough with sample applicants" />
+  <img src="docs/screenshots/landing.png" width="48%" alt="Landing page: headline trained on 151,421 real US lending decisions, model figures, and a five-stage switcher over a sample applicant scored by the deployed model" />
+  <img src="docs/screenshots/app-decision.png" width="48%" alt="The app after running the Strong applicant sample: mortgage form, sidebar pipeline with the deciding stage lit, an auto-approved verdict at 97.3% against the 92% threshold, estimated debt-to-income and loan-to-value, and the SHAP factors" />
 </p>
 
 The app has a public landing page, sign-in, and a signed-in workspace with three pages: **New decision** (form plus the result, with the sidebar pipeline lighting the stage that decided the outcome), **History** (every saved run, filterable, each opening as its own decision page) and **Model & fairness** (the model card, baselines, inputs, business rules and the fairness audit). The visual system ("Glass & Light") is documented in [`DESIGN.md`](DESIGN.md).
 
 ## Overview
 
-A user signs in, submits a loan application, and the backend runs it through a multi-stage pipeline: hard business rules, ML scoring with an explanation, a fairness gate, an LLM-written decision email validated by guardrails, and product recommendations. The result, fairness metrics and email are shown in the UI, emailed to the signed-in user's address, and stored in PostgreSQL.
+A user signs in, submits a mortgage application, and the backend runs it through a multi-stage pipeline: hard business rules, scoring by a model trained on 151,421 real US lending decisions (HMDA) with a per-applicant explanation, a fairness gate, an auto-approve-or-refer decision (the model never denies), an LLM-written letter validated by guardrails, and product recommendations. The result, fairness metrics and email are shown in the UI, emailed to the signed-in user's address, and stored in PostgreSQL.
 
 ## Features
 
 - **Full stack web app**: responsive React 19 + Vite + Tailwind CSS UI with email/password authentication (Supabase Auth, JWT-based sessions).
-- **Explainable interface**: a sidebar pipeline shows which stage passed, failed or was skipped and lights the one that decided the outcome; SHAP factors are drawn as a diverging bar chart; the fairness audit shows each gap with its 95% CI against the limit; rule rejections show which business rule failed. One-click sample applicants (with a first-run walkthrough), a live repayment-to-income check, a decision history with per-decision pages, and a public landing page and model card built from `GET /model`. Design records live in [`PRODUCT.md`](PRODUCT.md) and [`DESIGN.md`](DESIGN.md).
+- **Explainable interface**: a sidebar pipeline shows which stage passed, failed or was skipped and lights the one that decided the outcome; SHAP factors are drawn as a diverging bar chart; the fairness audit shows each gap with its 95% CI against the limit; rule rejections show which business rule failed. One-click sample applicants (with a first-run walkthrough), live loan-to-value and debt-to-income estimates, a decision history with per-decision pages, and a public landing page and model card built from `GET /model`. Design records live in [`PRODUCT.md`](PRODUCT.md) and [`DESIGN.md`](DESIGN.md).
 - **Typed REST API**: FastAPI with range-checked Pydantic validation and auto-generated OpenAPI docs at `/docs`.
 - **Secured API**: protected endpoints verify the user's Supabase JWT server-side, CORS is restricted to configured origins, `/predict` is rate-limited per IP, and LLM output is HTML-escaped before it is emailed.
-- **Rigorous model evaluation**: seven candidates, including majority-class and credit-history-rule baselines, compared with repeated stratified cross-validation. Preprocessing is fitted inside each fold to avoid leakage.
-- **Protected attributes excluded**: gender and marital status are *not* model inputs. Removing them cost no accuracy, and a test proves that flipping them cannot change a score.
+- **Rigorous model evaluation**: trained on one year of HMDA decisions and tested once on the next; baselines include a one-line DTI rule and logistic regression; leakage and separation audits; drift across years and transfer to four unseen states (see [ML v2](#ml-v2-850000-real-mortgage-decisions)).
+- **Protected attributes excluded**: sex, race, ethnicity and age are collected (optionally) for the audit only and are *not* model inputs; a test proves changing them cannot change a score. Census-tract geography is excluded too, because it acts as a proxy for race.
 - **Per-applicant explanations**: every decision shows its top factors, computed with TreeSHAP (XGBoost's built-in `pred_contribs`).
-- **Fairness audit**: approval-rate and false-negative-rate gaps by gender and marital status, measured on out-of-fold predictions with bootstrap confidence intervals. If the deployed model fails the audit, automated decisions are switched off.
+- **Fairness audit**: approval and referral gaps by sex, race, ethnicity and age on held-out data, with bootstrap confidence intervals. If the deployed model's average approval gap exceeds its limit, automated decisions switch off; the larger referral gaps at the operating threshold are disclosed with every decision.
 - **Business-rule layer** that runs *before* the model, so clearly ineligible applications never reach it.
 - **LLM email generation with guardrails**: GPT-generated decision emails are validated (no invented rates or payment amounts, the correct decision stated without contradiction, length, required signature) and regenerated up to 3 times before escalating to human review.
 - **Product recommendations**: eligibility is decided by deterministic rules; the LLM only writes the recommendation text.
 - **Persistence**: every application, including rule rejections and human-review cases, is stored in Supabase (PostgreSQL) under row-level security.
-- **Tested**: 73 pytest tests (rules, guardrails, feature parity between training and serving, scoring invariants, persistence, end-to-end API with all external services stubbed) and 78 Vitest + React Testing Library UI tests (form validation, pipeline stages, routing and auth guards, running a decision, history filters, decision pages) run in GitHub Actions together with frontend lint and build.
+- **Tested**: 134 pytest tests (ML pipeline, training/serving parity, rules, guardrails including referral letters, monotonic and protected-attribute scoring invariants, persistence, end-to-end API with all external services stubbed) and 83 Vitest + React Testing Library UI tests (form validation, pipeline stages, routing and auth guards, running a decision, history filters, decision pages) run in GitHub Actions together with frontend lint and build.
 
 ## Architecture
 
 ```mermaid
 flowchart LR
     UI["React + Vite UI<br/>(Supabase Auth)"] -->|POST /predict| API[FastAPI]
-    API --> RULES{"Business rules<br/>income / loan cap / DTI"}
+    API --> RULES{"Business rules<br/>income / LTV / DTI"}
     RULES -->|fail| DENY["Denied by rules"]
     RULES -->|pass| MODEL["XGBoost scoring<br/>+ SHAP explanation"]
     MODEL --> FAIR{"Model passed<br/>fairness audit?"}
     FAIR -->|no| HR["Human review"]
-    FAIR -->|yes| EMAIL["LLM email<br/>+ guardrails, max 3 tries"]
+    FAIR -->|yes| DECIDE{"Score above the<br/>auto-approve threshold?"}
+    DECIDE -->|yes| EMAIL["LLM letter<br/>+ guardrails, max 3 tries"]
+    DECIDE -->|no: refer to a loan officer| EMAIL
     EMAIL -->|all attempts fail| HR
     EMAIL --> MKT["Product recommendations"]
     MKT --> SEND["Send email<br/>(Resend)"]
     SEND --> DB[("Supabase<br/>PostgreSQL")]
-    NB["Notebook 07<br/>(offline)"] -.->|loan_model.json<br/>model_report.json| API
+    NB["ml/ pipeline<br/>(offline, HMDA)"] -.->|hmda_v2.json<br/>model card| API
 ```
 
 ## Tech stack
@@ -74,7 +76,7 @@ flowchart LR
 
 ## ML v2: 850,000 real mortgage decisions
 
-The app's current model (v1, below) was trained on 614 rows. **v2** replaces the data with public [HMDA](https://ffiec.cfpb.gov/data-browser/) records: every Georgia home-purchase decision in 2022 (151,421 applications, used to train) and 2023 (120,170, used once to test). Georgia 2021 and 2023 data from North Carolina, Ohio, Arizona and Washington test drift and generalisation (852,883 applications in all). It's a reproducible, tested pipeline in [`ml/`](ml/). Read the one-page write-up first: **[case study](docs/case-study.md)**. Full auto-generated results: [`reports/ml/REPORT.md`](reports/ml/REPORT.md).
+The app serves **v2**. The original model (v1, below) was trained on 614 rows; v2 replaces the data with public [HMDA](https://ffiec.cfpb.gov/data-browser/) records: every Georgia home-purchase decision in 2022 (151,421 applications, used to train) and 2023 (120,170, used once to test). Georgia 2021 and 2023 data from North Carolina, Ohio, Arizona and Washington test drift and generalisation (852,883 applications in all). It's a reproducible, tested pipeline in [`ml/`](ml/). Read the one-page write-up first: **[case study](docs/case-study.md)**. Full auto-generated results: [`reports/ml/REPORT.md`](reports/ml/REPORT.md).
 
 | Model, trained on 2022, tested on 2023 | ROC-AUC | Denial PR-AUC |
 |---|---|---|
@@ -93,7 +95,7 @@ python -m ml.run          # downloads ~430 MB once (checksummed), then a few min
 python -m pytest tests/ml_pipeline
 ```
 
-## Model evaluation (v1, the model the app currently serves)
+## Model evaluation (v1, archived)
 
 Data: the public *Loan Prediction* dataset (614 labelled applications, 68.7% approved). Protocol, from [`notebooks/07_model_evaluation.ipynb`](notebooks/07_model_evaluation.ipynb): repeated stratified 5-fold cross-validation (10 repeats, 50 fits per model, the same splits for every model), with imputation and feature engineering fitted inside each training fold.
 
@@ -143,8 +145,7 @@ Every point estimate fell after the protected attributes were removed. The inter
 .
 ├── src/                       # FastAPI backend
 │   ├── main.py                # API routes and pipeline orchestration
-│   ├── features.py            # Feature engineering shared by training, serving and tests
-│   ├── scoring.py             # Model loading, scoring and TreeSHAP explanations
+│   ├── scoring.py             # v2 scoring via ml/serving.py + TreeSHAP explanations
 │   ├── rules.py               # Hard business rules (run before the model)
 │   ├── bias_agent.py          # Fairness gate built from the offline audit
 │   ├── email_agent.py         # LLM email generation + guardrail validation
@@ -152,10 +153,10 @@ Every point estimate fell after the protected attributes were removed. The inter
 │   ├── email_sender.py        # Resend integration
 │   ├── database.py            # Supabase REST persistence
 │   ├── auth.py                # Supabase JWT verification (FastAPI dependency)
-│   ├── loan_model.json        # Deployed XGBoost model (portable JSON, no pickle)
-│   └── model_report.json      # CV metrics + fairness audit for the deployed model
+│   └── models/                # Deployed v2 model (XGBoost JSON, no pickle) + model card
 ├── ml/                        # v2 pipeline on HMDA: download (checksummed), prepare, models,
-│                              # evaluate, run (one command), report
+│                              # evaluate, robustness, serving (form -> features), export
+├── reports/v1/                # Archived v1 model, features and report
 ├── reports/ml/                # Generated results: REPORT.md, results.json, figures, model
 ├── data/hmda/manifest.json    # Source URLs and SHA-256 of the HMDA extracts (raw files not committed)
 ├── docs/case-study.md         # One-page write-up of the v2 findings
@@ -222,7 +223,7 @@ cp frontend/.env.example frontend/.env.local
 
 Run [`docs/supabase_schema.sql`](docs/supabase_schema.sql) in the Supabase SQL editor to create the `applications` table and Row Level Security policies.
 
-Already have the table from an earlier version? Run the two `alter table … add column if not exists` lines at the end of that file, so each application also stores its SHAP factors and rejection message for the decision pages. Until you do, applications still save, just without those two fields.
+Already have the table from an earlier version? Run the four `alter table … add column if not exists` lines at the end of that file. They add `explanation`, `message`, `model_version` and `inputs`, which v2 needs: History only shows rows with a `model_version`, so until you migrate, new applications still save but won't appear there.
 
 #### 3. Run the backend
 
@@ -290,47 +291,50 @@ Protected endpoints expect a Supabase access token: `Authorization: Bearer <toke
 ```json
 {
   "name": "Jane Doe",
-  "gender": 0,
-  "married": 1,
-  "dependents": 1,
-  "education": 1,
-  "self_employed": 0,
-  "applicant_income": 5000,
-  "coapplicant_income": 1500,
-  "loan_amount": 120,
-  "loan_amount_term": 360,
-  "credit_history": 1.0,
-  "property_area": 2
+  "loan_amount": 280000,
+  "property_value": 350000,
+  "annual_income": 125000,
+  "monthly_debts": 350,
+  "loan_term": 360,
+  "loan_type": "Conventional",
+  "has_coapplicant": true,
+  "sex": "Female",
+  "race": "Not provided",
+  "ethnicity": "Not provided",
+  "age": "35-44"
 }
 ```
 
-The decision email goes to the authenticated user's own address. `loan_amount` is in thousands and `loan_amount_term` in months. The response contains the `decision`, model `probability`, an `explanation` (the top SHAP factors for this applicant), the `bias_report` (the model-level fairness audit), the generated `email`, and `marketing` recommendations. `gender` and `married` are collected for the audit only and do not affect the score. When a case is escalated the `status` is `HUMAN_REVIEW`; when it fails a business rule it is `REJECTED_BY_RULES`.
+Amounts are in dollars, `annual_income` is household income before tax, `monthly_debts` are existing debt payments and `loan_term` is in months. `sex`, `race`, `ethnicity` and `age` are optional, collected for the audit only, and never affect the score. The response contains the `decision` (`APPROVED` or `REFERRED`; the model never denies), the model `probability` and operating `threshold`, `derived` estimates (debt-to-income, loan-to-value, monthly payment, conforming), an `explanation` (top SHAP factors), the `bias_report` (the model-level fairness gate and disclosed referral gaps), the guarded `email`, and `marketing` products. When a business rule fails the `status` is `REJECTED_BY_RULES` and the decision `DENIED`; when the fairness gate or the email guardrails escalate, it is `HUMAN_REVIEW`.
 
 ### Business rules (evaluated before the model)
 
 | Rule | Condition for rejection |
 |---|---|
-| Minimum income | Combined monthly income < $500 |
-| Loan cap | Loan amount > $10,000,000 |
+| Minimum income | Household income < $10,000 a year |
 | Positive amount | Loan amount ≤ 0 |
-| Debt-to-income | Estimated monthly payment / income > 60% |
+| Loan-to-value | Loan amount > property value |
+| Debt-to-income | (existing debts + estimated mortgage payment, tax and insurance) / monthly income > 60% |
+
+The mortgage payment is estimated at an assumed 6.8% rate plus 1.5% of the property value a year for tax and insurance (see `ml/serving.py`); the model card publishes these assumptions.
 
 ## Design decisions
 
 - **Deterministic rules before and around the LLM.** Eligibility and approval are never decided by the language model; it only writes text, and its output is validated before use.
 - **Fail safe, not silent.** Any case that trips the fairness gate or fails email guardrails is escalated to human review instead of being auto-decided.
-- **One feature pipeline.** `src/features.py` is imported by the training notebook, the API and the tests, and a test checks that the training and serving paths produce identical features.
-- **Baselines first.** A model is only worth deploying if it beats simple rules. Here it matches the credit-history rule on accuracy and beats it on ranking, and the README reports that honestly.
+- **One feature pipeline.** `ml/serving.py` turns a form into exactly the features `ml/prepare.py` derives from HMDA records (including HMDA's banded debt-to-income encoding), and parity tests check the two agree. The API imports the same package the model was trained with.
+- **Baselines first.** A model is only worth deploying if it beats simple rules: v2 scores ROC-AUC 0.789 against 0.614 for a one-line debt-to-income rule.
+- **Refer, never deny.** Below the operating threshold (chosen on training data for a 5% wrong-approval budget) a person decides, so model error costs review time rather than a wrongful denial.
 - **Portable model artefact.** The model is saved as XGBoost JSON rather than a pickle, so loading it cannot execute arbitrary code.
 
 ## Limitations
 
 This is a learning project, and these limitations are deliberate to state:
 
-- **Not for real lending.** The model is trained on ~600 public records from an unknown population and has never been validated on real applicants.
-- **Fairness through unawareness is not enough.** Gender and marital status are excluded as inputs, but correlated features can still carry their effect. The audit measures outcomes, but with 112 female applicants its confidence intervals are wide.
-- **Model-level audit.** The fairness gate describes the deployed model as a whole. Individual transparency comes from SHAP explanations, which describe the model's reasoning, not causal effects.
-- **Simplified rules.** The debt-to-income rule ignores interest, and the guardrails are regex-based, so they can miss unusual wording.
+- **Not for real lending.** The model learns what Georgia lenders decided in 2022, including any bias in those decisions; it does not predict whether a borrower would repay.
+- **No credit scores.** Public HMDA data has none, and credit history and incomplete applications cause about a quarter of denials, which caps accuracy. The form therefore doesn't ask for one.
+- **Fairness through unawareness is not enough.** Protected attributes are excluded, but correlated features still carry their effect: at the auto-approve threshold, Black applicants the lender approved are about 22 points more likely to be referred to a person. This is disclosed, not solved.
+- **Estimated affordability.** Debt-to-income uses an assumed interest rate, tax and insurance; lenders use the real figures. The guardrails are regex-based, so they can miss unusual wording.
 - **Email sending** uses Resend's shared test sender, which only delivers to the account owner's address until a domain is verified.
 
 ## Roadmap
@@ -346,7 +350,7 @@ This is a learning project, and these limitations are deliberate to state:
 - [x] Vitest tests for the UI
 - [x] Dockerfile and docker-compose for one-command setup
 - [x] ML v2 on HMDA decisions: temporal holdout, leakage and separation audits, monotonic XGBoost, fairness at the operating threshold, drift (2021–2023) and four unseen states ([case study](docs/case-study.md))
-- [ ] Serve the v2 HMDA model in the app (new form fields, rules and tests)
+- [x] Serve the v2 HMDA model in the app: mortgage form, rules, refer-not-deny decisions, referral letters, model card, tests
 - [ ] Deployment (frontend + API) with a live demo link
 
 ## Data

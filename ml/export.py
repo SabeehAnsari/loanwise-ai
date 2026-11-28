@@ -24,7 +24,7 @@ GATE_LIMIT = 0.10
 LABELS = {"derived_sex": "Sex", "derived_race": "Race", "derived_ethnicity": "Ethnicity", "applicant_age": "Age"}
 
 
-def _r(x, d=4):
+def _r(x, d=6):
     return round(float(x), d)
 
 

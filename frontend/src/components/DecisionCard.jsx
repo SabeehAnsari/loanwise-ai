@@ -3,18 +3,21 @@ import { verdictOf } from "../pipeline"
 import { formatWhen } from "../lib/records"
 import { ArrowLeft, ArrowRight } from "./Icons"
 
-const THRESHOLD = 0.5
+const money = (n) => "$" + Math.round(n).toLocaleString("en-US")
 
 export function Verdict({ result, showLink = false }) {
   const v = verdictOf(result)
   const hasProb = typeof result.probability === "number"
   const pct = hasProb ? result.probability * 100 : null
+  const cut = typeof result.threshold === "number" ? result.threshold * 100 : null
   const fill = v.tone === "pass" ? "var(--pass)" : v.tone === "fail" ? "var(--fail)" : "var(--warn)"
-  const version = result.bias_report?.model_version
+  const version = result.model_version || result.bias_report?.model_version
+  const d = result.derived
 
   let fallback = null
-  if (!result.message && v.tone === "pass") fallback = "Passed the business rules, scored above the cut-off, and the deployed model is cleared by its fairness audit."
-  if (!result.message && v.tone === "fail" && v.by === "model") fallback = "Passed the business rules but scored below the cut-off. The factors below show what pulled it down."
+  if (!result.message && result.decision === "APPROVED") {
+    fallback = "Passed the business rules and cleared the auto-approve threshold. The deployed model is cleared by its fairness gate."
+  }
 
   return (
     <section className="block" aria-labelledby="verdict-word">
@@ -34,25 +37,38 @@ export function Verdict({ result, showLink = false }) {
           <p className="verdict-prob"><b>{pct.toFixed(1)}%</b><span>approval probability</span></p>
         )}
       </div>
-      {hasProb && (
+      {hasProb && cut != null && (
         <div className="prob-scale" role="img"
-          aria-label={`Approval probability ${pct.toFixed(1)} percent against a 50 percent cut-off`}>
+          aria-label={`Approval probability ${pct.toFixed(1)} percent against an auto-approve threshold of ${cut.toFixed(0)} percent`}>
           <span className="track" />
           <span className="fill" style={{ width: `${pct}%`, background: fill }} />
-          <span className="cut" style={{ left: `${THRESHOLD * 100}%` }} />
-          <span className="cut-label" style={{ left: `${THRESHOLD * 100}%` }}>50% cut-off</span>
+          <span className="cut" style={{ left: `${cut}%` }} />
+          <span className="cut-label" style={{ left: `${cut}%`, transform: cut > 80 ? "translateX(-100%)" : undefined }}>auto-approve at {cut.toFixed(0)}%</span>
         </div>
       )}
       {(result.message || fallback) && <p className="verdict-msg">{result.message || fallback}</p>}
+      {result.decision === "REFERRED" && (
+        <p className="caption" style={{ marginTop: 8 }}>
+          The model never denies an application. Below the threshold, a loan officer makes the decision.
+        </p>
+      )}
+      {d && (
+        <dl className="derived">
+          <div><dt>Est. debt-to-income</dt><dd>{Number(d.dti).toFixed(1)}%</dd></div>
+          <div><dt>Loan-to-value</dt><dd>{Number(d.ltv).toFixed(1)}%</dd></div>
+          <div><dt>Est. payment</dt><dd>{money(d.monthly_payment)}/mo</dd></div>
+          <div><dt>Loan limit</dt><dd>{d.conforming ? "Conforming" : "Jumbo"}</dd></div>
+        </dl>
+      )}
     </section>
   )
 }
 
 const RULES = [
-  { key: "income", label: "Combined monthly income", limit: "at least $500", match: "minimum combined monthly income" },
+  { key: "income", label: "Household income", limit: "at least $10,000 a year", match: "minimum household income" },
   { key: "positive", label: "Loan amount", limit: "greater than zero", match: "greater than zero" },
-  { key: "cap", label: "Loan amount cap", limit: "at most $10,000,000", match: "maximum loan" },
-  { key: "dti", label: "Repayment-to-income", limit: "at most 60%, before interest", match: "debt-to-income" },
+  { key: "ltv", label: "Loan-to-value", limit: "at most 100% of the property value", match: "loan-to-value" },
+  { key: "dti", label: "Estimated debt-to-income", limit: "at most 60%", match: "debt-to-income" },
 ]
 
 // Which business rule stopped the application, and what never ran.

@@ -352,6 +352,9 @@ code { font-family: ui-monospace, monospace; font-size: 0.92em; background: var(
 .verdict-word[data-tone="warn"] { color: var(--warn); }
 .verdict-prob b { display: block; font-size: clamp(28px, 5.4cqi, 44px); font-weight: 300; letter-spacing: -0.035em; line-height: 1; }
 .verdict-prob span { font-size: 12.5px; color: var(--muted); }
+.derived { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 12px; margin: 18px 0 0; padding-top: 14px; border-top: 1px solid var(--line); }
+.derived dt { font-size: 12.5px; color: var(--muted); }
+.derived dd { margin: 2px 0 0; font-size: 16px; font-weight: 550; letter-spacing: -0.01em; }
 .verdict-msg { font-size: 15px; color: var(--ink-2); margin-top: 18px; max-width: 64ch; }
 .prob-scale { margin-top: 20px; position: relative; height: 26px; }
 .prob-scale .track { position: absolute; top: 8px; left: 0; right: 0; height: 6px; border-radius: 6px; background: var(--line-2); }
@@ -638,6 +641,7 @@ code { font-family: ui-monospace, monospace; font-size: 0.92em; background: var(
   .fields { grid-template-columns: minmax(0, 1fr); }
   .span-2 { grid-column: auto; }
   .figs { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .derived { grid-template-columns: repeat(2, minmax(0, 1fr)); }
   .steps { grid-template-columns: minmax(0, 1fr); }
   .shap-row, .shap-legend { grid-template-columns: minmax(90px, 120px) minmax(0, 1fr) 50px; gap: 10px; font-size: 13.5px; }
   .table .plot { display: none; }

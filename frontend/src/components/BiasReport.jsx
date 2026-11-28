@@ -1,42 +1,14 @@
 import { Alert, Check } from "./Icons"
 
-const pct = (v) => (v != null ? (v * 100).toFixed(1) + "%" : "—")
-const AXIS_MAX = 0.25
+const pts = (v) => (v == null ? "—" : `${v > 0 ? "+" : v < 0 ? "−" : ""}${Math.abs(v * 100).toFixed(1)}`)
+const ciText = (g) => (g ? `${pts(g[1])} to ${pts(g[2])}` : "")
 
-// Dot-and-whisker of a gap with its 95% CI, on a 0–0.25 axis with the limit marked.
-function CiPlot({ value, ci, limit }) {
-  const x = (v) => `${Math.min(v / AXIS_MAX, 1) * 100}%`
-  return (
-    <div className="ci" aria-hidden="true">
-      <span className="ci-axis" />
-      {ci && <span className="ci-range" style={{ left: x(ci[0]), width: `calc(${x(ci[1])} - ${x(ci[0])})` }} />}
-      <span className="ci-limit" style={{ left: x(limit) }} />
-      {value != null && <span className="ci-point" style={{ left: x(value) }} />}
-    </div>
-  )
-}
-
+// v2 audit of the deployed model on the 2023 test year: the gate (average approval gap) and the
+// disclosed referral gaps at the operating threshold, per monitored group.
 export default function BiasReport({ bias, title = "Fairness audit", plain = false }) {
   if (!bias) return null
   const cleared = bias.decision === "CLEARED"
-  const threshold = bias.threshold ?? 0.2
-  const ci = bias.confidence_intervals || {}
-  const sizes = bias.group_sizes || {}
-  const m = bias.metrics || {}
-
-  const gaps = [
-    { key: "gender_disparity", label: "Gender approval gap" },
-    { key: "married_disparity", label: "Marital approval gap" },
-    { key: "fnr_disparity", label: "False-negative gap" },
-  ]
-  const rates = [
-    { label: "Male", value: m.male_approval_rate, n: sizes.male },
-    { label: "Female", value: m.female_approval_rate, n: sizes.female },
-    { label: "Married", value: m.married_approval_rate, n: sizes.married },
-    { label: "Single", value: m.single_approval_rate, n: sizes.single },
-  ]
-  const hasRates = rates.some((r) => r.value != null)
-  const hasCi = Object.keys(ci).length > 0
+  const groups = bias.groups || []
 
   return (
     <section className={plain ? "" : "block"} aria-labelledby="fair-h">
@@ -44,60 +16,57 @@ export default function BiasReport({ bias, title = "Fairness audit", plain = fal
         <h3 id="fair-h" className="panel-title">{title}</h3>
         <span className="status" data-tone={cleared ? "pass" : "fail"}>
           {cleared ? <Check size={14} /> : <Alert size={14} />}
-          {cleared ? "Cleared" : "Failed: automation off"}
+          {cleared ? "Gate cleared" : "Failed: automation off"}
         </span>
       </div>
 
-      <table className="table">
-        <thead>
-          <tr>
-            <th scope="col">Measure</th>
-            <th scope="col" className="num">Value</th>
-            {hasCi && <th scope="col" className="num">95% CI</th>}
-            <th scope="col" className="plot"><span className="sr-only">Plot</span>
-              <div className="ci-scale" aria-hidden="true">
-                <span style={{ left: 0 }}>0</span>
-                <span className="ci-scale-limit" style={{ left: `${(threshold / AXIS_MAX) * 100}%` }}>limit {threshold.toFixed(2)}</span>
-              </div>
-            </th>
-          </tr>
-        </thead>
-        <tbody>
-          {gaps.map((g) => (
-            <tr key={g.key}>
-              <td>{g.label}</td>
-              <td className="num">{pct(m[g.key])}</td>
-              {hasCi && <td className="num" style={{ color: "var(--muted)" }}>{ci[g.key] ? `${pct(ci[g.key][0])} – ${pct(ci[g.key][1])}` : "—"}</td>}
-              <td className="plot"><CiPlot value={m[g.key]} ci={ci[g.key]} limit={threshold} /></td>
-            </tr>
-          ))}
-          <tr className="em">
-            <td>Bias score <span style={{ color: "var(--muted)", fontWeight: 400, fontSize: 13 }}>(combined)</span></td>
-            <td className="num">{bias.bias_score != null ? bias.bias_score.toFixed(3) : "—"}</td>
-            {hasCi && <td className="num" style={{ color: "var(--muted)", fontWeight: 400 }}>{ci.bias_score ? `${ci.bias_score[0].toFixed(3)} – ${ci.bias_score[1].toFixed(3)}` : "—"}</td>}
-            <td className="plot"><CiPlot value={bias.bias_score} ci={ci.bias_score} limit={threshold} /></td>
-          </tr>
-        </tbody>
-      </table>
+      <p style={{ fontSize: 14.5, color: "var(--ink-2)", maxWidth: "70ch" }}>
+        Largest gap in average approval probability: <b>{(bias.bias_score * 100).toFixed(1)} points</b>
+        {bias.worst_group ? ` (${bias.worst_group})` : ""}, against a limit of {(bias.threshold * 100).toFixed(0)}.
+      </p>
 
-      {hasRates && (
-        <div className="figs" aria-label="Approval rate by group">
-          <p className="figs-title">Approval rate by group</p>
-          {rates.map((r) => (
-            <div key={r.label} className="fig">
-              <b>{pct(r.value)}</b>
-              <span>{r.label}</span>
-              {r.n && <small>n = {r.n}</small>}
-            </div>
-          ))}
+      {bias.warning && (
+        <div className="alert" data-tone="warn" style={{ marginTop: 12 }} role="note">
+          <Alert size={16} />
+          <span>{bias.warning}</span>
         </div>
       )}
 
+      {groups.length > 0 && (
+        <table className="table" style={{ marginTop: 14 }}>
+          <thead>
+            <tr>
+              <th scope="col">Group vs reference</th>
+              <th scope="col" className="num">n</th>
+              <th scope="col" className="num">Lenders</th>
+              <th scope="col" className="num">Model, average</th>
+              <th scope="col" className="num">Referred at threshold</th>
+            </tr>
+          </thead>
+          <tbody>
+            {groups.map((g) => {
+              const big = g.referral_gap[0] >= 0.05   // only gaps that disadvantage the group
+              return (
+                <tr key={`${g.attribute}-${g.group}`}>
+                  <td>{g.group} <span style={{ color: "var(--muted)" }}>vs {g.reference}</span></td>
+                  <td className="num" style={{ color: "var(--muted)" }}>{g.n.toLocaleString("en-US")}</td>
+                  <td className="num" title={ciText(g.lender_gap)}>{pts(g.lender_gap[0])}</td>
+                  <td className="num" title={ciText(g.model_gap)}>{pts(g.model_gap[0])}</td>
+                  <td className="num" title={ciText(g.referral_gap)}
+                    style={big ? { color: "var(--warn)", fontWeight: 600 } : undefined}>{pts(g.referral_gap[0])}</td>
+                </tr>
+              )
+            })}
+          </tbody>
+        </table>
+      )}
+
       <p className="caption">
-        Measured on out-of-fold predictions across the training data, so it is the same for every applicant.
-        Gender and marital status are not model inputs; they are used only for this audit. Above {threshold.toFixed(2)},
-        automated decisions switch off and every application goes to human review.
-        {bias.stored && " Values as recorded when this application was run."}
+        Gaps in percentage points on the held-out 2023 Georgia data. Lenders and Model compare approval rates;
+        Referred compares how often applicants the lender approved would be sent to a loan officer instead of
+        auto-approved{bias.operating_threshold ? ` at the ${(bias.operating_threshold * 100).toFixed(0)}% threshold` : ""}.
+        Sex, race, ethnicity and age are never model inputs; they are used only for this audit, which describes the
+        model, not this applicant.{bias.stored && " Gate status as recorded when this application was run."}
       </p>
     </section>
   )

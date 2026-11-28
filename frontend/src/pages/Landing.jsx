@@ -3,22 +3,26 @@ import { Link } from "react-router"
 import BiasReport from "../components/BiasReport"
 import { ArrowRight, Brand, Check, Github, Product } from "../components/Icons"
 import { useAuth } from "../lib/auth"
-import { auditToBias } from "../lib/records"
-import { MAJORITY_BASELINE, PUBLISHED_REPORT, useModelReport } from "../useModelReport"
+import { cardToBias } from "../lib/records"
+import { PUBLISHED_REPORT, useModelReport } from "../useModelReport"
 
 const REPO = "https://github.com/SabeehAnsari/loanwise-ai"
 const f3 = (v) => v.toFixed(3)
+const pct = (v, d = 1) => `${(v * 100).toFixed(d)}%`
+const pts = (v) => `${v > 0 ? "+" : "−"}${Math.abs(v * 100).toFixed(1)}`
 
-// Synthetic sample used to demonstrate the stages; model figures elsewhere are real.
-const SAMPLE_FACTORS = [
-  ["Credit history", 1.42], ["Total income", 0.28], ["Income-to-loan ratio", -0.19], ["Property area", 0.12],
-]
+// The "Strong applicant" sample (synthetic person) and the deployed v2 model's real output for it.
+const SAMPLE = {
+  name: "Priya Raman", probability: 0.9734, dti: 25.1, ltv: 80.0, payment: 1825,
+  factors: [["Debt-to-income ratio", 0.607], ["Loan-to-value ratio", 0.355], ["Property value", 0.1935], ["Co-applicant", 0.157]],
+  products: ["Rate lock (60 days)", "15-year fixed-rate mortgage"],
+}
 
 function Bars() {
-  const max = 1.42
+  const max = Math.max(...SAMPLE.factors.map(([, v]) => Math.abs(v)))
   return (
     <ul className="shap" style={{ marginTop: 18 }}>
-      {SAMPLE_FACTORS.map(([label, v]) => (
+      {SAMPLE.factors.map(([label, v]) => (
         <li key={label} className="shap-row">
           <span>{label}</span>
           <span className="shap-axis" aria-hidden="true"><span className={`shap-bar ${v > 0 ? "pos" : "neg"}`} style={{ width: `${(Math.abs(v) / max) * 50}%` }} /></span>
@@ -29,15 +33,17 @@ function Bars() {
   )
 }
 
-function StagePane({ id, report }) {
-  const audit = report.fairness_audit
+function StagePane({ id, card }) {
+  const t = card.policy.threshold
+  const gate = card.fairness.gate
   if (id === "rules") return (
     <div className="demo-pane" key={id}>
       <h3>Rules screen it before any model does.</h3>
       <p>Four hard rules run first. A clearly ineligible application is denied here and never reaches the model.</p>
       <table className="table" style={{ marginTop: 18 }}>
         <tbody>
-          {[["Combined monthly income", "$7,200", "≥ $500"], ["Loan amount", "$128,000", "> 0"], ["Loan amount cap", "$128,000", "≤ $10M"], ["Repayment-to-income", "4.9%", "≤ 60%"]].map(([k, v, lim]) => (
+          {[["Household income", "$125,000 / yr", "≥ $10,000"], ["Loan amount", "$280,000", "> 0"],
+            ["Loan-to-value", `${SAMPLE.ltv.toFixed(1)}%`, "≤ 100%"], ["Est. debt-to-income", `${SAMPLE.dti.toFixed(1)}%`, "≤ 60%"]].map(([k, v, lim]) => (
             <tr key={k}><td>{k}</td><td className="num" style={{ color: "var(--muted)" }}>{lim}</td><td className="num">{v}</td><td className="num"><span className="status" data-tone="pass">Passed</span></td></tr>
           ))}
         </tbody>
@@ -46,27 +52,34 @@ function StagePane({ id, report }) {
   )
   if (id === "model") return (
     <div className="demo-pane" key={id}>
-      <div className="masthead"><b>Priya Raman</b><span>Synthetic sample · {report.model_version}</span></div>
-      <div className="verdict-line"><span className="verdict-word" data-tone="pass">Approved</span><p className="verdict-prob"><b>84.2%</b><span>approval probability</span></p></div>
-      <div className="prob-scale"><span className="track" /><span className="fill" style={{ width: "84.2%", background: "var(--pass)" }} /><span className="cut" style={{ left: "50%" }} /></div>
+      <div className="masthead"><b>{SAMPLE.name}</b><span>Sample applicant · {card.model_version}</span></div>
+      <div className="verdict-line"><span className="verdict-word" data-tone="pass">Approved</span><p className="verdict-prob"><b>{pct(SAMPLE.probability)}</b><span>approval probability</span></p></div>
+      <div className="prob-scale"><span className="track" /><span className="fill" style={{ width: pct(SAMPLE.probability), background: "var(--pass)" }} /><span className="cut" style={{ left: pct(t) }} /></div>
       <Bars />
-      <p className="demo-label">Synthetic sample applicant. Pick another stage above to see its evidence.</p>
+      <p className="demo-label">A sample applicant scored by the deployed model. Pick another stage above to see its evidence.</p>
     </div>
   )
   if (id === "fairness") return (
     <div className="demo-pane" key={id}>
-      <h3>An audit that can switch automation off.</h3>
-      <p>Approval and error-rate gaps by gender and marital status, measured on out-of-fold predictions. Above the limit, every application goes to a person.</p>
-      <div className="big-num" style={{ fontSize: 72, marginTop: 20 }}>{f3(audit.bias_score)}<small>bias score against a {audit.threshold.toFixed(2)} limit · 95% CI {f3(audit.confidence_intervals.bias_score[0])}–{f3(audit.confidence_intervals.bias_score[1])}</small></div>
+      <h3>An audit that is published, not hidden.</h3>
+      <p>
+        Gaps by sex, race, ethnicity and age on {card.data.test.rows.toLocaleString("en-US")} held-out decisions. The gate
+        switches automation off above its limit; the larger gaps at the threshold are disclosed with every decision.
+      </p>
+      <div className="figs" style={{ borderTop: 0, paddingTop: 0 }}>
+        <div className="fig"><b>{(gate.value * 100).toFixed(1)}</b><span>Largest average gap (points), limit {(gate.limit * 100).toFixed(0)}</span></div>
+        <div className="fig"><b>{pts(card.fairness.groups.find((g) => g.group.startsWith("Black")).referral_gap[0])}</b><span>Black–White referral gap at the threshold</span></div>
+      </div>
     </div>
   )
   if (id === "email") return (
     <div className="demo-pane" key={id}>
       <h3>A letter that must pass guardrails.</h3>
-      <p>An LLM writes the decision letter. Rule-based checks reject it and try again, up to three times, before a person takes over.</p>
+      <p>An LLM writes the letter. Rule-based checks reject it and try again, up to three times, before a person takes over.</p>
       <ul className="products" style={{ marginTop: 14 }}>
-        {["No invented interest rates or payment amounts", "States the actual decision, without contradiction", "Within length limits", "Signed by the LoanWise AI team"].map((t) => (
-          <li key={t}><Check size={17} style={{ color: "var(--pass)" }} />{t}</li>
+        {["No invented interest rates or payment amounts", "States the actual decision, without contradiction",
+          "A referral never reads as an approval or a denial", "Signed by the LoanWise AI team"].map((x) => (
+          <li key={x}><Check size={17} style={{ color: "var(--pass)" }} />{x}</li>
         ))}
       </ul>
     </div>
@@ -76,22 +89,22 @@ function StagePane({ id, report }) {
       <h3>Products chosen by rules, not by the model.</h3>
       <p>Eligibility is deterministic. The language model only writes the recommendation text.</p>
       <ul className="products" style={{ marginTop: 14 }}>
-        {["Home Improvement Line of Credit", "Fixed-rate Refinance"].map((p) => <li key={p}><Product size={18} />{p}</li>)}
+        {SAMPLE.products.map((p) => <li key={p}><Product size={18} />{p}</li>)}
       </ul>
-      <p className="demo-label">Synthetic sample</p>
+      <p className="demo-label">For the sample applicant</p>
     </div>
   )
 }
 
 const TABS = [
   ["rules", "1", "Rules", "Passed"],
-  ["model", "2", "Model", "84.2%"],
+  ["model", "2", "Model", pct(SAMPLE.probability)],
   ["fairness", "3", "Fairness", "Cleared"],
   ["email", "4", "Letter", "1 try"],
-  ["products", "5", "Products", "2 eligible"],
+  ["products", "5", "Products", `${SAMPLE.products.length} eligible`],
 ]
 
-function StageDemo({ report }) {
+function StageDemo({ card }) {
   const [active, setActive] = useState("model")
   const refs = useRef([])
   const onKey = (e, i) => {
@@ -114,7 +127,7 @@ function StageDemo({ report }) {
         ))}
       </div>
       <div className="sheet demo-sheet" role="tabpanel" id="stage-pane" aria-labelledby={`tab-${active}`}>
-        <StagePane id={active} report={report} />
+        <StagePane id={active} card={card} />
       </div>
     </div>
   )
@@ -123,9 +136,9 @@ function StageDemo({ report }) {
 export default function Landing() {
   const { user } = useAuth()
   const { report: live } = useModelReport()
-  const report = live || PUBLISHED_REPORT
-  const m = report.evaluation.metrics
-  const base = report.evaluation.credit_history_rule_baseline
+  const card = live || PUBLISHED_REPORT
+  const p = card.policy
+  const rule = card.comparison.find((c) => c.name.startsWith("One-line rule"))
   const tryHref = user ? "/app/new?sample=strong" : "/signup?sample=strong"
 
   return (
@@ -149,22 +162,23 @@ export default function Landing() {
       <main className="wrap">
         <section className="hero">
           <div>
-            <h1>Loan decisions that <span>show their working.</span></h1>
+            <h1>Mortgage decisions that <span>show their working.</span></h1>
             <p className="lede">
-              Rules screen every application, XGBoost scores it, SHAP explains it, a fairness gate audits it,
-              and guardrails check the letter before it is sent.
+              Trained on {card.data.train.rows.toLocaleString("en-US")} real US lending decisions. Rules screen every
+              application, XGBoost scores it, SHAP explains it, a fairness gate audits it, and guardrails check the letter.
+              The model approves or refers to a person. It never denies on its own.
             </p>
             <div className="ctas">
               <Link to={tryHref} className="btn btn-primary btn-lg">Try the demo <ArrowRight size={18} className="nudge" /></Link>
               <a href="#evidence" className="btn btn-glass btn-lg">Read the model card</a>
             </div>
             <div className="facts">
-              <span><b>{f3(m.roc_auc.mean)}</b>ROC-AUC vs {f3(base.roc_auc)} rule</span>
-              <span><b>{report.training_rows}</b>applications, CV ×10</span>
-              <span><b>{f3(report.fairness_audit.bias_score)}</b>bias score, limit {report.fairness_audit.threshold.toFixed(2)}</span>
+              <span><b>{f3(card.metrics.roc_auc)}</b>ROC-AUC on {card.data.test.year}</span>
+              <span><b>{pct(p.test_auto_approved_share, 0)}</b>approved automatically</span>
+              <span><b>{pct(p.test_wrong_auto_approval)}</b>of those, lender denied</span>
             </div>
           </div>
-          <StageDemo report={report} />
+          <StageDemo card={card} />
         </section>
 
         <section className="band" id="how" aria-labelledby="how-h">
@@ -174,9 +188,9 @@ export default function Landing() {
           </div>
           <ol className="how">
             {[
-              ["Business rules", "Income, the loan cap and repayment-to-income are checked first. Fail one and the model never runs."],
-              ["Model + SHAP", "A shallow XGBoost model scores the application; TreeSHAP shows the factors that moved this score."],
-              ["Fairness gate", "The deployed model's group gaps are audited offline. Over the limit, automation switches off."],
+              ["Business rules", "Income, loan-to-value and estimated debt-to-income are checked first. Fail one and the model never runs."],
+              ["Model + SHAP", "Monotonic XGBoost scores the application; TreeSHAP shows the factors that moved this score."],
+              ["Fairness gate", "The deployed model's group gaps are audited on held-out data. Over the limit, automation switches off."],
               ["Email guardrails", "An LLM drafts the letter; rule checks reject invented numbers or a contradicted decision."],
               ["Products", "Eligible products come from deterministic rules; the LLM only writes the wording."],
             ].map(([t, d]) => (
@@ -187,28 +201,39 @@ export default function Landing() {
 
         <section className="band split" id="evidence" aria-labelledby="ev-h">
           <div className="band-head">
-            <h2 id="ev-h">It barely beats a one-line rule. It says so.</h2>
-            <p>Accuracy is within a point of &ldquo;approve if credit history is clean&rdquo;. Where the model earns its place is ranking risk inside the good-credit group.</p>
+            <h2 id="ev-h">Tested on next year&rsquo;s applicants, and on states it never saw.</h2>
+            <p>
+              Trained on {card.data.train.state} {card.data.train.year}, tested once on {card.data.test.year}. The textbook
+              &ldquo;approve if debt-to-income is at most 43%&rdquo; rule scores {f3(rule.roc_auc)}. Applied unchanged to North
+              Carolina, Ohio, Arizona and Washington, the model stays close to models trained in each state.
+            </p>
           </div>
           <div className="sheet panel">
             <table className="table">
-              <thead><tr><th scope="col">Model</th><th scope="col" className="num">Accuracy</th><th scope="col" className="num">Balanced</th><th scope="col" className="num">ROC-AUC</th></tr></thead>
+              <thead><tr><th scope="col">Model</th><th scope="col" className="num">ROC-AUC</th><th scope="col" className="num">Denial PR-AUC</th></tr></thead>
               <tbody>
-                <tr><td>Majority class</td><td className="num">{f3(MAJORITY_BASELINE.accuracy)}</td><td className="num">{f3(MAJORITY_BASELINE.balanced_accuracy)}</td><td className="num">{f3(MAJORITY_BASELINE.roc_auc)}</td></tr>
-                <tr><td>Credit-history rule</td><td className="num">{f3(base.accuracy)}</td><td className="num">{f3(base.balanced_accuracy)}</td><td className="num">{f3(base.roc_auc)}</td></tr>
-                <tr className="em"><td>LoanWise XGBoost</td><td className="num">{f3(m.accuracy.mean)}</td><td className="num">{f3(m.balanced_accuracy.mean)}</td><td className="num">{f3(m.roc_auc.mean)}</td></tr>
+                {card.comparison.filter((c) => c.name !== "Majority class (approve everyone)").map((c) => (
+                  <tr key={c.name} className={c.name === "XGBoost (monotonic)" ? "em" : ""}>
+                    <td>{c.name === "XGBoost (monotonic)" ? "LoanWise (monotonic XGBoost)" : c.name}</td>
+                    <td className="num">{f3(c.roc_auc)}</td><td className="num">{f3(c.pr_auc_denial)}</td>
+                  </tr>
+                ))}
               </tbody>
             </table>
-            <p className="caption">{report.training_rows} public applications. Gender and marital status are not model inputs; removing them cost no accuracy.</p>
+            <p className="caption">Public HMDA records. Sex, race, ethnicity and age are never inputs; they are used only to audit outcomes.</p>
           </div>
         </section>
 
         <section className="band split" id="fairness" aria-labelledby="fair-band-h">
           <div className="band-head">
-            <h2 id="fair-band-h">Audited before it is trusted.</h2>
-            <p>Each applicant is scored by a model that never saw them, and the gaps between groups come with bootstrap confidence intervals. The intervals are wide, because the data is small, and the page shows that rather than hiding it.</p>
+            <h2 id="fair-band-h">Fairer on average is not fair at the threshold.</h2>
+            <p>
+              The model explains about two-thirds of lenders&rsquo; average racial gap from finances alone. But at the
+              auto-approve threshold, small average gaps become large referral gaps. That pattern appeared in every state
+              tested, so it is shown here and with every decision rather than hidden.
+            </p>
           </div>
-          <div className="sheet panel"><BiasReport bias={auditToBias(report.fairness_audit, report.model_version)} title="Deployed model" plain /></div>
+          <div className="sheet panel"><BiasReport bias={cardToBias(card)} title="Deployed model" plain /></div>
         </section>
 
         <section className="glass closing">
@@ -220,7 +245,7 @@ export default function Landing() {
         </section>
 
         <footer className="footer">
-          <span>LoanWise AI · an educational project on a public 614-row dataset. Not for real lending decisions.</span>
+          <span>LoanWise AI · an educational project on public HMDA data. Not for real lending decisions.</span>
           <span>React · FastAPI · XGBoost · Supabase · <a href={REPO} target="_blank" rel="noreferrer">GitHub</a></span>
         </footer>
       </main>

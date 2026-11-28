@@ -1,6 +1,6 @@
 // Turns a /predict response into the five pipeline stages shown in the rail.
 export const STAGES = [
-  { id: "rules", short: "Rules", name: "Business rules", desc: "Income, cap, repayment" },
+  { id: "rules", short: "Rules", name: "Business rules", desc: "Income, loan-to-value, debt-to-income" },
   { id: "model", short: "Model", name: "Model + SHAP", desc: "XGBoost score, top factors" },
   { id: "fairness", short: "Fairness", name: "Fairness gate", desc: "Model-level audit" },
   { id: "email", short: "Letter", name: "Email guardrails", desc: "LLM letter, 3 attempts" },
@@ -23,7 +23,7 @@ export function stageResults(result) {
   const out = { rules: { tone: "pass", value: "Passed" } }
   const pct = typeof result.probability === "number" ? `${(result.probability * 100).toFixed(1)}%` : "—"
   out.model = {
-    tone: result.decision === "APPROVED" ? "pass" : result.decision === "DENIED" ? "fail" : "warn",
+    tone: result.decision === "APPROVED" ? "pass" : "warn",
     value: pct,
   }
 
@@ -54,9 +54,11 @@ export function stageResults(result) {
   return out
 }
 
+// The v2 model never denies: it auto-approves or refers the application to a loan officer.
 export function verdictOf(result) {
   if (result.status === "REJECTED_BY_RULES") return { word: "Denied", tone: "fail", by: "business rules" }
   if (result.status === "HUMAN_REVIEW") return { word: "In review", tone: "warn", by: "human review" }
   if (result.decision === "APPROVED") return { word: "Approved", tone: "pass", by: "model" }
+  if (result.decision === "REFERRED") return { word: "Referred", tone: "warn", by: "model" }
   return { word: "Denied", tone: "fail", by: "model" }
 }

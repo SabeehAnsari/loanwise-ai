@@ -12,7 +12,7 @@ describe("New decision", () => {
   it("greets first-time users with a walkthrough", async () => {
     renderApp("/app/new", { user: USER })
     expect(await screen.findByRole("heading", { name: /welcome, alex reviewer/i })).toBeInTheDocument()
-    expect(screen.getByText(/choose an applicant/i)).toBeInTheDocument()
+    expect(screen.getByText(/describe the home and loan/i)).toBeInTheDocument()
   })
 
   it("hides the walkthrough once dismissed", async () => {

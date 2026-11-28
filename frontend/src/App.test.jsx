@@ -8,7 +8,7 @@ afterEach(() => vi.unstubAllGlobals())
 describe("routing", () => {
   it("shows the public landing page to signed-out visitors", async () => {
     renderApp("/")
-    expect(await screen.findByRole("heading", { level: 1, name: /loan decisions that show their working/i })).toBeInTheDocument()
+    expect(await screen.findByRole("heading", { level: 1, name: /mortgage decisions that show their working/i })).toBeInTheDocument()
     expect(screen.getAllByRole("link", { name: /try the demo/i })[0]).toHaveAttribute("href", "/signup?sample=strong")
   })
 

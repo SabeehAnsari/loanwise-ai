@@ -83,7 +83,7 @@ export default function AppShell() {
             </div>
             <Pipeline result={shown.result} loading={shown.loading} label={shown.result ? "This decision" : "Runs in order"} />
             <div className="side-foot">
-              <p className="side-note">Educational project on a public 614-row dataset. Not for real lending decisions.</p>
+              <p className="side-note">Educational project on public HMDA data. Not for real lending decisions.</p>
               <div className="account">
                 <span className="avatar" aria-hidden="true">{name.charAt(0).toUpperCase()}</span>
                 <div className="account-text">

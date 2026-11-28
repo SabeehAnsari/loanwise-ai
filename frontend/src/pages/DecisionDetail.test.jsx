@@ -9,8 +9,9 @@ describe("Decision detail", () => {
   it("shows the saved decision and its inputs", async () => {
     renderApp("/app/decisions/app-1", { user: USER, applications: [ROW] })
     expect(await screen.findByRole("heading", { name: "Approved" })).toBeInTheDocument()
-    expect(screen.getByText("Credit history", { selector: "span" })).toBeInTheDocument()
-    expect(screen.getByText("$128,000")).toBeInTheDocument()
+    expect(screen.getByText("Debt-to-income ratio", { selector: "span" })).toBeInTheDocument()
+    expect(screen.getByText("$350,000")).toBeInTheDocument()          // property value from the stored inputs
+    expect(screen.getByText("Asian", { selector: "dd" })).toBeInTheDocument()   // monitoring field, as recorded
     const back = screen.getAllByRole("link", { name: /^history$/i })
     expect(back.every((a) => a.getAttribute("href") === "/app/history")).toBe(true)
   })

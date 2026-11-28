@@ -10,7 +10,7 @@ describe("stageResults", () => {
   it("marks every stage after a full approval and lights the model", () => {
     const s = stageResults(APPROVED)
     expect(s.rules).toEqual({ tone: "pass", value: "Passed" })
-    expect(s.model).toEqual({ tone: "pass", value: "84.2%" })
+    expect(s.model).toEqual({ tone: "pass", value: "97.3%" })
     expect(s.fairness).toEqual({ tone: "pass", value: "Cleared" })
     expect(s.email).toEqual({ tone: "pass", value: "1 try" })
     expect(s.products).toEqual({ tone: "pass", value: "1 eligible" })
@@ -43,7 +43,11 @@ describe("stageResults", () => {
   })
 
   it("colours the model stage by the decision", () => {
-    expect(stageResults({ ...APPROVED, decision: "DENIED" }).model.tone).toBe("fail")
+    expect(stageResults({ ...APPROVED, decision: "REFERRED" }).model.tone).toBe("warn")
+  })
+
+  it("never reports the model as denying", () => {
+    expect(verdictOf({ ...APPROVED, decision: "REFERRED" })).toEqual({ word: "Referred", tone: "warn", by: "model" })
   })
 })
 
